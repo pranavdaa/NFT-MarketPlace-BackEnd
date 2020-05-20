@@ -26,6 +26,8 @@ $ npx prisma migrate up --experimental
 
 # create prisma client
 $ prisma generate
+# or
+$ npx prisma generate
 ```
 
 #### development
@@ -45,5 +47,7 @@ $ npx prisma migrate save --experimental
 
 # create prisma client to use new updates in modal
 $ prisma generate
+# or
+$ npx prisma generate
 
 ```

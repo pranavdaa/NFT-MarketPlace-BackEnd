@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = "***"
 }
 
 model bids {
@@ -21,19 +21,6 @@ model bids {
 }
 
 model categories {
-<<<<<<< HEAD
-  active            Boolean?            @default(true)
-  created           DateTime            @default(now())
-  description       String?
-  id                Int                 @default(autoincrement()) @id
-  img_url           String?
-  name              String              @unique
-  updated           DateTime            @default(now())
-  url               String?
-  categoryaddresses categoryaddresses[]
-  tokens            tokens[]
-  orders            orders[]
-=======
   active              Boolean?              @default(true)
   created             DateTime              @default(now())
   description         String?
@@ -45,7 +32,6 @@ model categories {
   categoriesaddresses categoriesaddresses[]
   orders              orders[]
   tokens              tokens[]
->>>>>>> origin/new--user-module
 }
 
 model categoriesaddresses {
@@ -94,32 +80,6 @@ model favorites {
 }
 
 model orders {
-<<<<<<< HEAD
-  active               Boolean?    @default(true)
-  created              DateTime    @default(now())
-  expiry_date          DateTime?
-  id                   Int         @default(autoincrement()) @id
-  maker_address        Int
-  maker_token_id       Int
-  maker_category       Int
-  min_price            Float
-  price                Float
-  signature            String
-  status               Int?        @default(0)
-  taker_address        Int?
-  taker_amount         Float?
-  taker_token          Int
-  txhash               String?
-  type                 String
-  updated              DateTime    @default(now())
-  views                Int?        @default(0)
-  maker_addressTousers users       @relation("orders_maker_addressTousers", fields: [maker_address], references: [id])
-  tokens               tokens      @relation(fields: [maker_token_id], references: [id])
-  categories           categories  @relation(fields: [maker_category], references: [id])
-  taker_addressTousers users?      @relation("orders_taker_addressTousers", fields: [taker_address], references: [id])
-  erc20tokens          erc20tokens @relation(fields: [taker_token], references: [id])
-  bids                 bids[]
-=======
   active         Boolean?    @default(true)
   categories_id  Int
   created        DateTime    @default(now())
@@ -144,7 +104,6 @@ model orders {
   taker_users    users?      @relation("taker_orders", fields: [taker_address], references: [id])
   tokens         tokens      @relation(fields: [tokens_id], references: [id])
   bids           bids[]
->>>>>>> origin/new--user-module
 }
 
 model tokens {
