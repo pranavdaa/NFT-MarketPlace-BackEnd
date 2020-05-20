@@ -8,49 +8,94 @@ const prisma = new PrismaClient()
 
 class OrderService {
 
-    async placeOrder(params) {
-
-        try {
-            let order = await prisma.orders.create({
-                data: {
-                    expiry_date: params.expiry,
-                    maker_addressTousers: { connect: { id: parseInt(params.maker_address) } },
-                    tokens: { connect: { id: parseInt(params.maker_token) } },
-                    categories: { connect: { id: parseInt(params.maker_amount) } },
-                    min_price: params.min_price,
-                    price: params.price,
-                    signature: params.signature,
-                    erc20tokens: { connect: { id: parseInt(params.taker_token) } },
-                    type: params.type,
-                }
-            })
-            return order;
-        } catch (err) {
-            throw err;
+  async placeFixedOrder(params) {
+    try {
+      let order = await prisma.orders.create({
+        data: {
+          maker_users: { connect: { id: parseInt(params.maker_address) } },
+          categories: { connect: { id: parseInt(params.maker_token) } },
+          tokens: { connect: { id: parseInt(params.maker_token_id) } },
+          price: params.price,
+          min_price: params.price,
+          signature: params.signature,
+          erc20tokens: { connect: { id: parseInt(params.taker_token) } },
+          type: params.type,
         }
+      })
+      return order;
+    } catch (err) {
+      throw err;
     }
+  }
 
-    // async getOrders() {
-    //     try {
+  async placeNegotiationOrder(params) {
 
-    //         let orders = await prisma.orders.findMany();
-    //         return orders;
-    //     } catch (err) {
-    //         throw err;
-    //     }
-    // }
+    try {
+      let order = await prisma.orders.create({
+        data: {
+          maker_users: { connect: { id: parseInt(params.maker_address) } },
+          categories: { connect: { id: parseInt(params.maker_token) } },
+          tokens: { connect: { id: parseInt(params.maker_token_id) } },
+          min_price: params.min_price,
+          price: params.price,
+          signature: params.signature,
+          erc20tokens: { connect: { id: parseInt(params.taker_token) } },
+          type: params.type,
+        }
+      })
+      return order;
+    } catch (err) {
+      throw err;
+    }
+  }
 
-    // async getOrder(params) {
-    //     try {
+  async placeAuctionOrder(params) {
 
-    //         let order = await prisma.orders.findOne({
-    //             where: { id: parseInt(params.id) }
-    //         });
-    //         return order;
-    //     } catch (err) {
-    //         throw err;
-    //     }
-    // }
+    try {
+      let order = await prisma.orders.create({
+        data: {
+          expiry_date: new Date(parseInt(params.expiry_date)),
+          maker_users: { connect: { id: parseInt(params.maker_address) } },
+          categories: { connect: { id: parseInt(params.maker_token) } },
+          tokens: { connect: { id: parseInt(params.maker_token_id) } },
+          min_price: params.min_price,
+          price: params.min_price,
+          signature: params.signature,
+          erc20tokens: { connect: { id: parseInt(params.taker_token) } },
+          type: params.type,
+        }
+      })
+      return order;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async getOrders() {
+    try {
+      let order = await prisma.orders.findMany({
+        where: {
+          status: 0
+        },
+        select: {
+          id: true,
+          created: true,
+          min_price: true,
+          price: true,
+          status: true,
+          type: true,
+          categories: true,
+          tokens: true,
+          erc20tokens: true,
+          views: true
+        }
+      })
+      console.log(order)
+      return order;
+    } catch (err) {
+      throw err;
+    }
+  }
 
 }
 

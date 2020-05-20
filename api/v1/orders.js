@@ -20,62 +20,57 @@ let orderServiceInstance = new OrderService();
  */
 
 router.post('/', [
-    body('maker_address', 'A valid address is required').exists(),
-    body('maker_token_id', 'A valid id time is required').exists(),
-    body('maker_token', 'A valid id is required').exists(),
-    body('taker_token', 'A valid id is required').exists(),
-    body('signature', 'A valid signature is required').exists(),
-    body('order_type', 'A valid type is required').exists().isIn(['FIXED', 'NEGOTIATION', 'AUCTION']),
+  body('maker_address', 'A valid address is required').exists(),
+  body('maker_token_id', 'A valid id time is required').exists(),
+  body('maker_token', 'A valid id is required').exists(),
+  body('taker_token', 'A valid id is required').exists(),
+  body('signature', 'A valid signature is required').exists(),
+  body('type', 'A valid type is required').exists().isIn(['FIXED', 'NEGOTIATION', 'AUCTION']),
 ], async (req, res, next) => {
 
-    try {
+  try {
 
-        const errors = validationResult(req);
+    const errors = validationResult(req);
 
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array() });
-        }
-
-        let params = req.body;
-
-        switch (type) {
-            case 'FIXED': {
-                if (!params.price) {
-                    return res.status(400).json({ message: 'input validation failed' })
-                }
-                params.min_price = params.price;
-                params.expiry = 0;
-                orderServiceInstance.placeOrder(params)
-                break;
-            }
-            case 'NEGOTIATION': {
-
-                if (!params.min_price || !params.price) {
-                    return res.status(400).json({ message: 'input validation failed' })
-                }
-                params.expiry = 0;
-                orderServiceInstance.placeOrder(params)
-                break;
-            }
-            case 'AUCTION': {
-                if (!params.min_price || !params.expiry) {
-                    return res.status(400).json({ message: 'input validation failed' })
-                }
-                params.price = params.min_price;
-                orderServiceInstance.placeOrder(params)
-                break;
-            }
-        }
-        let orderAdd = await orderServiceInstance.createorder(req.body);
-        if (orderAdd) {
-            return res.status(200).json({ message: 'order addedd successfully', data: orderAdd.id })
-        } else {
-            return res.status(400).json({ message: 'order addition failed' })
-        }
-    } catch (err) {
-        console.log(err)
-        return res.status(500).json({ message: 'Internal Server error.Please try again' })
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: errors.array() });
     }
+
+    let params = req.body;
+    let orderAdd;
+
+    switch (params.type) {
+      case 'FIXED': {
+        if (!params.price) {
+          return res.status(400).json({ message: 'input validation failed' })
+        }
+        orderAdd = await orderServiceInstance.placeFixedOrder(params)
+        break;
+      }
+      case 'NEGOTIATION': {
+        if (!params.min_price || !params.price) {
+          return res.status(400).json({ message: 'input validation failed' })
+        }
+        orderAdd = await orderServiceInstance.placeNegotiationOrder(params)
+        break;
+      }
+      case 'AUCTION': {
+        if (!params.min_price || !params.expiry_date) {
+          return res.status(400).json({ message: 'input validation failed' })
+        }
+        orderAdd = await orderServiceInstance.placeAuctionOrder(params)
+        break;
+      }
+    }
+    if (orderAdd) {
+      return res.status(200).json({ message: 'order addedd successfully', data: orderAdd.id })
+    } else {
+      return res.status(400).json({ message: 'order addition failed' })
+    }
+  } catch (err) {
+    console.log(err)
+    return res.status(500).json({ message: 'Internal Server error.Please try again' })
+  }
 })
 
 
@@ -84,18 +79,18 @@ router.post('/', [
  */
 
 router.get('/', async (req, res, next) => {
-    try {
+  try {
 
-        let orders = await orderServiceInstance.getorders();
-        if (orders) {
-            return res.status(200).json({ message: 'orders retrieved successfully', data: orders })
-        } else {
-            return res.status(400).json({ message: 'order retrieved failed' })
-        }
-    } catch (err) {
-        console.log(err)
-        return res.status(500).json({ message: 'Internal Server error.Please try again' })
+    let orders = await orderServiceInstance.getOrders();
+    if (orders) {
+      return res.status(200).json({ message: 'orders retrieved successfully', data: orders })
+    } else {
+      return res.status(400).json({ message: 'order retrieved failed' })
     }
+  } catch (err) {
+    console.log(err)
+    return res.status(500).json({ message: 'Internal Server error.Please try again' })
+  }
 })
 
 module.exports = router;

@@ -12,7 +12,7 @@ const erc20tokens = require('./erc20tokens')
 
 router.use('/categories', categories)
 router.use('/users', users)
-router.use('/order', orders)
+router.use('/orders', orders)
 router.use('/tokens', tokens)
 router.use('/erc20tokens', erc20tokens)
 
