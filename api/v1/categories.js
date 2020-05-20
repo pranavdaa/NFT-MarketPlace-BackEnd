@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router();
-const { query, body, validationResult } = require('express-validator');
+const { query, validationResult } = require('express-validator');
 const CategoryService = require('../services/categoryService')
 let categoryServiceInstance = new CategoryService();
 const multer = require('multer');
@@ -32,15 +32,17 @@ const upload = multer({
  *  @param categoryImage type: image-file 
  */
 
-router.post('/', [
-    body('name', 'A valid name is required').exists(),
-    body('description', 'A valid description is required'),
-    body('url', 'A valid url is required'),
-    body('matic_address', 'A valid address is required').exists(),
-    body('ethereum_address', 'A valid address is required').exists(),
-], upload.single('categoryImage'), async (req, res, next) => {
+router.post('/', upload.single('categoryImage'), async (req, res, next) => {
 
     try {
+
+        if (!req.body.name || !req.body.matic_address || !req.body.ethereum_address) {
+            return res.status(400).json({ message: 'input validation failed' })
+        }
+
+        if (req.body.matic_address.length() !== 42 || req.body.ethereum_address.length() !== 42) {
+            return res.status(400).json({ message: 'input validation failed' })
+        }
 
         let categoryExists = await categoryServiceInstance.categoryExists(req.body)
 
@@ -87,15 +89,49 @@ router.get('/', async (req, res, next) => {
  *  @param id type: integer
  */
 
-router.get('/:id', [body('name', 'A valid id is required').exists()
+router.get('/:id', [query('id', 'A valid id is required').exists()
 ], async (req, res, next) => {
     try {
+
+        const errors = validationResult(req);
+
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: errors.array() });
+        }
 
         let category = await categoryServiceInstance.getCategory(req.params);
         if (category) {
             return res.status(200).json({ message: 'Category retrieved successfully', data: category })
         } else {
             return res.status(400).json({ message: 'Category retrieved failed' })
+        }
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ message: 'Internal Server error.Please try again' })
+    }
+})
+
+/**
+ *  Gets tokens that belong to a category 
+ *  @param id type: integer
+ */
+
+router.get('/:id/tokens', [
+    query('id', 'A valid id is required').exists()
+], async (req, res, next) => {
+    try {
+
+        const errors = validationResult(req);
+
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: errors.array() });
+        }
+
+        let token = await categoryServiceInstance.getTokensFromCategory(req.params);
+        if (token) {
+            return res.status(200).json({ message: 'Tokens retrieved successfully', data: token })
+        } else {
+            return res.status(400).json({ message: 'Tokens retrieved failed' })
         }
     } catch (err) {
         console.log(err)

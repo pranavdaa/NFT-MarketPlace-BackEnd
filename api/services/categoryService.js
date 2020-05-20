@@ -67,6 +67,19 @@ class CategoryService {
             throw err;
         }
     }
+
+    async getTokensFromCategory(params) {
+        try {
+
+            let tokens = await prisma.categories.findOne({
+                select: { tokens: true },
+                where: { id: parseInt(params.id) },
+            });
+            return tokens;
+        } catch (err) {
+            throw err;
+        }
+    }
 }
 
 module.exports = CategoryService
