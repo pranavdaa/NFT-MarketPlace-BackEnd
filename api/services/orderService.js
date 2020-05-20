@@ -90,7 +90,6 @@ class OrderService {
           views: true
         }
       })
-      console.log(order)
       return order;
     } catch (err) {
       throw err;
