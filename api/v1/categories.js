@@ -24,15 +24,20 @@ const upload = multer({
 
 /**
  *  Adds a new category of NFT token
- *  @params address
+ *  @params name type: name
+ *  @params description type: description
+ *  @params url type: string
+ *  @params matic_address type: string
+ *  @params ethereum_address type: string
+ *  @param categoryImage type: image-file 
  */
 
 router.post('/', [
     body('name', 'A valid name is required').exists(),
-    body('decription', 'A valid name is required').exists(),
-    body('url', 'A valid name is required').exists(),
-    body('matic_address', 'A valid name is required').exists(),
-    body('ethereum_address', 'A valid name is required').exists(),
+    body('description', 'A valid description is required'),
+    body('url', 'A valid url is required'),
+    body('matic_address', 'A valid address is required').exists(),
+    body('ethereum_address', 'A valid address is required').exists(),
 ], upload.single('categoryImage'), async (req, res, next) => {
 
     try {
@@ -78,10 +83,12 @@ router.get('/', async (req, res, next) => {
 
 
 /**
- *  Gets all the category details 
+ *  Gets single category detail 
+ *  @param id type: integer
  */
 
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', [body('name', 'A valid id is required').exists()
+], async (req, res, next) => {
     try {
 
         let category = await categoryServiceInstance.getCategory(req.params);
