@@ -21,20 +21,6 @@ class UserService {
     }
   }
 
-  async getUser(params) {
-    try {
-      let user = await prisma.users.findOne({
-        where: {
-          id: parseInt(params.userId),
-          active: true
-        }
-      });
-      return user;
-    } catch (err) {
-      throw err;
-    }
-  }
-
   async getUsers() {
     try {
       let users = await prisma.users.findMany({
@@ -48,14 +34,26 @@ class UserService {
     }
   }
 
+  async getUser(params) {
+    try {
+      let user = await prisma.users.findOne({
+        where: {
+          id: parseInt(params.userId)
+        }
+      });
+      return user;
+    } catch (err) {
+      throw err;
+    }
+  }
+
   async getUsersTokens(params) {
     try {
-      let tokens = await prisma.tokens.findMany({
+      let tokens = await prisma.users.findOne({
         where: {
-          owner: parseInt(params.userId),
-          active: true
+          id: parseInt(params.userId)
         },
-        include: { categories: true }
+        select: { tokens: true }
       });
       return tokens;
     } catch (err) {
@@ -63,14 +61,41 @@ class UserService {
     }
   }
 
+  async getUsersMakerOrders(params) {
+    try {
+      let orders = await prisma.users.findOne({
+        where: {
+          id: parseInt(params.userId)
+        },
+        select: { orders_orders_maker_addressTousers: true }
+      });
+      return orders;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async getUsersTakerOrders(params) {
+    try {
+      let orders = await prisma.users.findOne({
+        where: {
+          id: parseInt(params.userId)
+        },
+        select: { orders_orders_taker_addressTousers: true }
+      });
+      return orders;
+    } catch (err) {
+      throw err;
+    }
+  }
+
   async getUsersBids(params) {
     try {
-      let bids = await prisma.bids.findMany({
+      let bids = await prisma.users.findMany({
         where: {
-          users: parseInt(params.userId),
-          active: true
+          id: parseInt(params.userId),
         },
-        include: { orders_bids: true }
+        select: { bids: true }
       });
       return bids;
     } catch (err) {
@@ -80,12 +105,34 @@ class UserService {
 
   async getUsersFavorite(params) {
     try {
-      let favorites = await prisma.favorites.findMany({
+      let favorites = await prisma.users.findOne({
         where: {
-          users: parseInt(params.userId)
+          id: parseInt(params.userId)
         },
-        include: { tokens: true }
+        select: { favorites: true }
       });
+      return favorites;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async createUsersFavorite(params) {
+    try {
+      let favorites = await prisma.favorites.create({
+        data: {
+          users_favorites: {
+            connect: {
+              id: parseInt(params.userId)
+            }
+          },
+          tokens: {
+            connect: {
+              id: parseInt(params.tokenId)
+            }
+          }
+        }
+      })
       return favorites;
     } catch (err) {
       throw err;

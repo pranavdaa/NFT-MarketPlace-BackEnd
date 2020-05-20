@@ -95,6 +95,40 @@ router.get('/:userId/tokens', async (req, res, next) => {
 })
 
 /**
+ *  Gets users own token orders(maker order)
+ */
+router.get('/:userId/maker-orders', async (req, res, next) => {
+  try {
+    let orders = await userServiceInstance.getUsersMakerOrders(req.params);
+    if (orders.length > 0) {
+      return res.status(200).json({ message: 'User\'s orders retrieved successfully', data: orders })
+    } else {
+      return res.status(404).json({ message: 'User\'s orders not found' })
+    }
+  } catch (err) {
+    console.log(err)
+    return res.status(500).json({ message: 'Internal Server error. Please try again!' })
+  }
+})
+
+/**
+ *  Gets users buy token orders(taker order)
+ */
+router.get('/:userId/taker-orders', async (req, res, next) => {
+  try {
+    let orders = await userServiceInstance.getUsersTakerOrders(req.params);
+    if (orders.length > 0) {
+      return res.status(200).json({ message: 'User\'s orders retrieved successfully', data: orders })
+    } else {
+      return res.status(404).json({ message: 'User\'s orders not found' })
+    }
+  } catch (err) {
+    console.log(err)
+    return res.status(500).json({ message: 'Internal Server error. Please try again!' })
+  }
+})
+
+/**
  *  Gets users bids on orders
  */
 router.get('/:userId/bids', async (req, res, next) => {
@@ -127,5 +161,27 @@ router.get('/:userId/favorites', async (req, res, next) => {
     return res.status(500).json({ message: 'Internal Server error. Please try again!' })
   }
 })
+
+/**
+ *  Gets users favorites tokens
+ */
+router.post('/:userId/favorites',
+  [
+    body('tokenId', 'A token id is required').exists()
+  ],
+  async (req, res, next) => {
+    req.body['userId'] = req.params.userId
+    try {
+      let favorites = await userServiceInstance.createUsersFavorite(req.body);
+      if (favorites.length > 0) {
+        return res.status(200).json({ message: 'User\'s favorites retrieved successfully', data: favorites })
+      } else {
+        return res.status(404).json({ message: 'Token not found' })
+      }
+    } catch (err) {
+      console.log(err)
+      return res.status(500).json({ message: 'Internal Server error. Please try again!' })
+    }
+  })
 
 module.exports = router;

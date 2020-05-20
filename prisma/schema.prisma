@@ -105,7 +105,7 @@ model orders {
 
 model tokens {
   active      Boolean?    @default(true)
-  address     String
+  token_id    String
   category    Int
   created     DateTime    @default(now())
   description String?
