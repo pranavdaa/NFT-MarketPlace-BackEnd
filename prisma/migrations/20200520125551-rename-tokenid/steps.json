@@ -1,0 +1,28 @@
+{
+  "version": "0.3.14-fixed",
+  "steps": [
+    {
+      "tag": "CreateField",
+      "model": "tokens",
+      "field": "token_id",
+      "type": "String",
+      "arity": "Required"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "tokens",
+          "field": "token_id"
+        },
+        "directive": "unique"
+      }
+    },
+    {
+      "tag": "DeleteField",
+      "model": "tokens",
+      "field": "address"
+    }
+  ]
+}
