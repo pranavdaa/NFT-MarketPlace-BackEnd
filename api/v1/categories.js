@@ -40,7 +40,7 @@ router.post('/', upload.single('categoryImage'), async (req, res, next) => {
             return res.status(400).json({ message: 'input validation failed' })
         }
 
-        if (req.body.matic_address.length() !== 42 || req.body.ethereum_address.length() !== 42) {
+        if (req.body.matic_address.length !== 42 || req.body.ethereum_address.length !== 42) {
             return res.status(400).json({ message: 'input validation failed' })
         }
 

@@ -2,4 +2,6 @@
 # INSTEAD EXECUTE `prisma migrate fix`
 # Prisma Migrate lockfile v1
 # Read more about conflict resolution here: TODO
+
 20200520172524-initial
+20200520180926-added-unique
