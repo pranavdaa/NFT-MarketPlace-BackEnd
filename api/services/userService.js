@@ -67,7 +67,7 @@ class UserService {
         where: {
           id: parseInt(params.userId)
         },
-        select: { orders_orders_maker_addressTousers: true }
+        select: { maker_orders: true }
       });
       return orders;
     } catch (err) {
@@ -81,7 +81,7 @@ class UserService {
         where: {
           id: parseInt(params.userId)
         },
-        select: { orders_orders_taker_addressTousers: true }
+        select: { taker_orders: true }
       });
       return orders;
     } catch (err) {
@@ -121,7 +121,7 @@ class UserService {
     try {
       let favorites = await prisma.favorites.create({
         data: {
-          users_favorites: {
+          users: {
             connect: {
               id: parseInt(params.userId)
             }

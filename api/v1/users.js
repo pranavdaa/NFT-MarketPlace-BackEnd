@@ -4,8 +4,6 @@ const { query, body, validationResult } = require('express-validator');
 const UserService = require('../services/userService')
 let userServiceInstance = new UserService();
 
-
-
 /**
  * User routes
  */
@@ -20,6 +18,12 @@ router.post('/', [
 ],
   async (req, res, next) => {
     try {
+
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ error: errors.array() });
+      }
+
       let userExists = await userServiceInstance.userExists(req.body)
 
       if (userExists) {
@@ -163,14 +167,22 @@ router.get('/:userId/favorites', async (req, res, next) => {
 })
 
 /**
- *  Gets users favorites tokens
+ *  Adds tokens to users favorites list
  */
 router.post('/:userId/favorites',
   [
     body('tokenId', 'A token id is required').exists()
   ],
   async (req, res, next) => {
+
     req.body['userId'] = req.params.userId
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: errors.array() });
+    }
+
+    // implement token exists
+
     try {
       let favorites = await userServiceInstance.createUsersFavorite(req.body);
       if (favorites.length > 0) {
