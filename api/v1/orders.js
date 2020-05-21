@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router();
-const { query, body, validationResult } = require('express-validator');
+const { check, validationResult } = require('express-validator');
 const OrderService = require('../services/orderService')
 let orderServiceInstance = new OrderService();
 
@@ -20,12 +20,12 @@ let orderServiceInstance = new OrderService();
  */
 
 router.post('/', [
-  body('maker_address', 'A valid address is required').exists(),
-  body('maker_token_id', 'A valid id time is required').exists(),
-  body('maker_token', 'A valid id is required').exists(),
-  body('taker_token', 'A valid id is required').exists(),
-  body('signature', 'A valid signature is required').exists(),
-  body('type', 'A valid type is required').exists().isIn(['FIXED', 'NEGOTIATION', 'AUCTION']),
+  check('maker_address', 'A valid address is required').exists(),
+  check('maker_token_id', 'A valid id time is required').exists(),
+  check('maker_token', 'A valid id is required').exists(),
+  check('taker_token', 'A valid id is required').exists(),
+  check('signature', 'A valid signature is required').exists(),
+  check('type', 'A valid type is required').exists().isIn(['FIXED', 'NEGOTIATION', 'AUCTION']),
 ], async (req, res, next) => {
 
   try {
@@ -92,5 +92,137 @@ router.get('/', async (req, res, next) => {
     return res.status(500).json({ message: 'Internal Server error.Please try again' })
   }
 })
+
+/**
+ *  Gets single order details 
+ */
+
+router.get('/:id', async (req, res, next) => {
+  try {
+
+    let order = await orderServiceInstance.getOrder(req.params);
+    if (order) {
+      return res.status(200).json({ message: 'order retrieved successfully', data: order })
+    } else {
+      return res.status(400).json({ message: 'orde retrieved failed' })
+    }
+  } catch (err) {
+    console.log(err)
+    return res.status(500).json({ message: 'Internal Server error.Please try again' })
+  }
+})
+
+/**
+ *  Buy order
+ *  @params taker_address type: int
+ *  @params id type: int
+ *  @params maker_token type: int
+ *  @params bid type: string
+ */
+
+router.patch('/:id/buy', [
+  check('id', 'A valid order id is required').exists(),
+  check('taker_address', 'A valid address is required').exists(),
+], async (req, res, next) => {
+
+  try {
+
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: errors.array() });
+    }
+
+    let order = await orderServiceInstance.orderExists(req.params);
+
+    if (!order || order.status !== 0) {
+      return res.status(200).json({ message: 'Invalid order' })
+    }
+
+    let params = req.params;
+    let orderAdd;
+
+    switch (params.type) {
+      case 'FIXED': {
+
+        orderAdd = await orderServiceInstance.buyFixedOrder(params)
+        break;
+
+      }
+      case 'NEGOTIATION':
+      case 'AUCTION':
+        {
+
+          if (!params.bid) {
+            return res.status(400).json({ message: 'input validation failed' })
+          }
+          orderAdd = await orderServiceInstance.makeBid(params)
+          break;
+
+        }
+
+    }
+    if (orderAdd) {
+      return res.status(200).json({ message: 'order addedd successfully', data: orderAdd.id })
+    } else {
+      return res.status(400).json({ message: 'order addition failed' })
+    }
+  } catch (err) {
+    console.log(err)
+    return res.status(500).json({ message: 'Internal Server error.Please try again' })
+  }
+})
+
+/**
+ *  cancel order 
+ */
+
+router.patch('/cancelbid/:id', async (req, res, next) => {
+  try {
+
+
+    let order = await orderServiceInstance.orderExists(req.params);
+
+    if (!order || order.status !== 0) {
+      return res.status(200).json({ message: 'Invalid order' })
+    }
+
+    let cancel = await orderServiceInstance.cancelBid(req.params);
+    if (cancel) {
+      return res.status(200).json({ message: 'order cancelled successfully', data: cancel })
+    } else {
+      return res.status(400).json({ message: 'orde cancel failed' })
+    }
+  } catch (err) {
+    console.log(err)
+    return res.status(500).json({ message: 'Internal Server error.Please try again' })
+  }
+})
+
+/**
+ *  cancel bid 
+ */
+
+router.patch('/bid/:id/cancel', async (req, res, next) => {
+  try {
+
+    let bid = await orderServiceInstance.bidExists(req.params);
+
+    if (!bid || bid.status !== 0) {
+      return res.status(200).json({ message: 'Invalid bid' })
+    }
+
+    let cancel = await orderServiceInstance.cancelBid(req.params);
+    if (cancel) {
+      return res.status(200).json({ message: 'bid cancelled successfully', data: cancel })
+    } else {
+      return res.status(400).json({ message: 'bid cancel failed' })
+    }
+  } catch (err) {
+    console.log(err)
+    return res.status(500).json({ message: 'Internal Server error.Please try again' })
+  }
+})
+
 
 module.exports = router;

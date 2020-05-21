@@ -1,6 +1,9 @@
 const express = require('express')
 const router = express.Router({ mergeParams: true })
-const { query, body, validationResult } = require('express-validator');
+const { check, validationResult } = require('express-validator');
+const jwt = require("jsonwebtoken");
+const auth = require('../utils/auth')
+const verifyToken = require('../middlewares/verifyToken')
 const UserService = require('../services/userService')
 let userServiceInstance = new UserService();
 
@@ -14,7 +17,7 @@ let userServiceInstance = new UserService();
  */
 
 router.post('/', [
-  body('address', 'A valid ethereum address is required').exists().isLength({ min: 42, max: 42 })
+  check('address', 'A valid ethereum address is required').exists().isLength({ min: 42, max: 42 })
 ],
   async (req, res, next) => {
     try {
@@ -66,7 +69,7 @@ router.get('/', async (req, res, next) => {
  *  Gets single the user details 
  */
 
-router.get('/:userId', async (req, res, next) => {
+router.get('/:userId', verifyToken, async (req, res, next) => {
   try {
     let users = await userServiceInstance.getUser(req.params);
     if (users) {
@@ -171,7 +174,7 @@ router.get('/:userId/favorites', async (req, res, next) => {
  */
 router.post('/:userId/favorites',
   [
-    body('tokenId', 'A token id is required').exists()
+    check('tokenId', 'A token id is required').exists()
   ],
   async (req, res, next) => {
 
@@ -189,6 +192,44 @@ router.post('/:userId/favorites',
         return res.status(200).json({ message: 'User\'s favorites retrieved successfully', data: favorites })
       } else {
         return res.status(404).json({ message: 'Token not found' })
+      }
+    } catch (err) {
+      console.log(err)
+      return res.status(500).json({ message: 'Internal Server error. Please try again!' })
+    }
+  })
+
+
+/**
+*  Adds the address of a new user
+*  @params address String
+*/
+
+router.post('/auth', [
+  check('signature', 'A valid signature is required').exists(),
+  check('userId', 'A valid id is required').exists()
+],
+  async (req, res, next) => {
+    try {
+
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ error: errors.array() });
+      }
+
+      let user = await userServiceInstance.getUser(req.body);
+
+      if (!user) {
+        return res.status(400).json({ message: 'User not found' })
+      }
+
+      if (auth.isValidSignature({ owner: user.address, signature: req.body.signature })) {
+        var token = jwt.sign({ userId: user.id }, process.env.jwt_secret, {
+          expiresIn: "24h"
+        });
+        return res.status(200).json({ message: 'User authorized successfully', data: user, auth_token: token })
+      } else {
+        return res.status(400).json({ message: 'User authorization failed' })
       }
     } catch (err) {
       console.log(err)
