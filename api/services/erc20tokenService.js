@@ -11,6 +11,7 @@ class Erc20tokenService {
   async adderc20token(params) {
 
     try {
+
       let address = []
       for (let key in params.addresses) {
         address.push(

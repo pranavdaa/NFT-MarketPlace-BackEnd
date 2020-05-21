@@ -63,7 +63,7 @@ class UserService {
 
   async getUsersMakerOrders(params) {
     try {
-      let orders = await prisma.users.findOne({
+      let orders = await prisma.users.findMany({
         where: {
           id: parseInt(params.userId)
         },
@@ -117,7 +117,7 @@ class UserService {
     }
   }
 
-  async createUsersFavorite(params) {
+  async createUsersFavorite(params, tokenId) {
     try {
       let favorites = await prisma.favorites.create({
         data: {
@@ -128,7 +128,7 @@ class UserService {
           },
           tokens: {
             connect: {
-              id: parseInt(params.tokenId)
+              id: parseInt(tokenId)
             }
           }
         }

@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "migrate-save": "npx prisma migrate save --experimental",
+    "migrate-up": "npx prisma migrate up --experimental && npx prisma generate",
     "dev": "nodemon --quiet server.js"
   },
   "repository": {

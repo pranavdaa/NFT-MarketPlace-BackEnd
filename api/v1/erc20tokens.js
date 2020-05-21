@@ -24,18 +24,17 @@ const upload = multer({
 
 /**
  *  Adds a new erc20token
- *  @params name type: name
- *  @params symbol type: description
- *  @params decimal type: string
- *  @params matic_address type: string
- *  @params ethereum_address type: string
+ *  @params name type: String
+ *  @params symbol type: String
+ *  @params decimal type: String
+ *  @params addresses type: Object
  */
 
 router.post('/', [
-  body('name', 'A valid name is required').exists(),
-  body('symbol', 'A valid sumbol is required').exists(),
-  body('decimal', 'A valid decimal required').exists(),
-  body('addresses', 'A valid address is required').exists(),
+  check('name', 'A valid name is required').exists(),
+  check('symbol', 'A valid sumbol is required').exists(),
+  check('decimal', 'A valid decimal required').exists(),
+  check('addresses', 'A valid address is required').exists(),
 ], async (req, res, next) => {
 
   try {

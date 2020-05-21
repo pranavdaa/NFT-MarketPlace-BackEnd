@@ -17,7 +17,7 @@ let userServiceInstance = new UserService();
  */
 
 router.post('/', [
-  check('address', 'A valid ethereum address is required').exists().isLength({ min: 42, max: 42 })
+  check('address', 'A valid address is required').exists().isLength({ min: 42, max: 42 })
 ],
   async (req, res, next) => {
     try {
@@ -28,9 +28,8 @@ router.post('/', [
       }
 
       let userExists = await userServiceInstance.userExists(req.body)
-
       if (userExists) {
-        return res.status(200).json({ message: 'User already exists' })
+        return res.status(200).json({ message: 'User already exists', data: userExists })
       }
 
       let user = await userServiceInstance.createUser(req.body);
@@ -39,6 +38,7 @@ router.post('/', [
       } else {
         return res.status(400).json({ message: 'User addition failed' })
       }
+
     } catch (err) {
       console.log(err)
       return res.status(500).json({ message: 'Internal Server error. Please try again!' })
@@ -52,12 +52,14 @@ router.post('/', [
 
 router.get('/', async (req, res, next) => {
   try {
+
     let users = await userServiceInstance.getUsers();
     if (users.length > 0) {
       return res.status(200).json({ message: 'Users retrieved successfully', data: users })
     } else {
       return res.status(404).json({ message: 'No user found' })
     }
+
   } catch (err) {
     console.log(err)
     return res.status(500).json({ message: 'Internal Server error. Please try again!' })
@@ -66,11 +68,20 @@ router.get('/', async (req, res, next) => {
 
 
 /**
- *  Gets single the user details 
+ *  Gets single user detail 
+ *  @params userId type: Integer
  */
 
-router.get('/:userId', verifyToken, async (req, res, next) => {
+router.get('/:userId', [
+  check('userId', 'A valid id is required').exists()
+], async (req, res, next) => {
   try {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: errors.array() });
+    }
+
     let users = await userServiceInstance.getUser(req.params);
     if (users) {
       return res.status(200).json({ message: 'Users retrieved successfully', data: users })
@@ -86,9 +97,24 @@ router.get('/:userId', verifyToken, async (req, res, next) => {
 
 /**
  *  Gets users tokens
+ *  @params userId type: Integer 
  */
-router.get('/:userId/tokens', async (req, res, next) => {
+
+router.get('/:userId/tokens', [
+  check('userId', 'A valid user is required').exists()
+], async (req, res, next) => {
   try {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: errors.array() });
+    }
+
+    let user = await userServiceInstance.getUser(req.params);
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' })
+    }
+
     let tokens = await userServiceInstance.getUsersTokens(req.params);
     if (tokens.length > 0) {
       return res.status(200).json({ message: 'User\'s tokens retrieved successfully', data: tokens })
@@ -102,16 +128,32 @@ router.get('/:userId/tokens', async (req, res, next) => {
 })
 
 /**
- *  Gets users own token orders(maker order)
+ *  Gets users token sell orders(maker order)
+ *  @params userId type: Integer 
  */
-router.get('/:userId/maker-orders', async (req, res, next) => {
+
+router.get('/:userId/makerorders', [
+  check('userId', 'A valid user is required').exists()
+], async (req, res, next) => {
   try {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: errors.array() });
+    }
+
+    let user = await userServiceInstance.getUser(req.params);
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' })
+    }
+
     let orders = await userServiceInstance.getUsersMakerOrders(req.params);
     if (orders.length > 0) {
       return res.status(200).json({ message: 'User\'s orders retrieved successfully', data: orders })
     } else {
       return res.status(404).json({ message: 'User\'s orders not found' })
     }
+
   } catch (err) {
     console.log(err)
     return res.status(500).json({ message: 'Internal Server error. Please try again!' })
@@ -119,16 +161,32 @@ router.get('/:userId/maker-orders', async (req, res, next) => {
 })
 
 /**
- *  Gets users buy token orders(taker order)
+ *  Gets users token buy orders(taker order)
+ *  @params userId type: Integer
  */
-router.get('/:userId/taker-orders', async (req, res, next) => {
+
+router.get('/:userId/takerorders', [
+  check('userId', 'A valid user is required').exists()
+], async (req, res, next) => {
   try {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: errors.array() });
+    }
+
+    let user = await userServiceInstance.getUser(req.params);
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' })
+    }
+
     let orders = await userServiceInstance.getUsersTakerOrders(req.params);
     if (orders.length > 0) {
       return res.status(200).json({ message: 'User\'s orders retrieved successfully', data: orders })
     } else {
       return res.status(404).json({ message: 'User\'s orders not found' })
     }
+
   } catch (err) {
     console.log(err)
     return res.status(500).json({ message: 'Internal Server error. Please try again!' })
@@ -137,15 +195,31 @@ router.get('/:userId/taker-orders', async (req, res, next) => {
 
 /**
  *  Gets users bids on orders
+ *  @params userId type: Integer 
  */
-router.get('/:userId/bids', async (req, res, next) => {
+
+router.get('/:userId/bids', [
+  check('userId', 'A valid user is required').exists()
+], async (req, res, next) => {
   try {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: errors.array() });
+    }
+
+    let user = await userServiceInstance.getUser(req.params);
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' })
+    }
+
     let bids = await userServiceInstance.getUsersBids(req.params);
     if (bids.length > 0) {
       return res.status(200).json({ message: 'User\'s bids retrieved successfully', data: bids })
     } else {
       return res.status(404).json({ message: 'User\'s bids not found' })
     }
+
   } catch (err) {
     console.log(err)
     return res.status(500).json({ message: 'Internal Server error. Please try again!' })
@@ -154,15 +228,30 @@ router.get('/:userId/bids', async (req, res, next) => {
 
 /**
  *  Gets users favorites tokens
+ *  @params userId type: Integer 
  */
-router.get('/:userId/favorites', async (req, res, next) => {
+router.get('/:userId/favorites', [
+  check('userId', 'A valid user is required').exists()
+], async (req, res, next) => {
   try {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: errors.array() });
+    }
+
+    let user = await userServiceInstance.getUser(req.params);
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' })
+    }
+
     let favorites = await userServiceInstance.getUsersFavorite(req.params);
     if (favorites.length > 0) {
       return res.status(200).json({ message: 'User\'s favorites retrieved successfully', data: favorites })
     } else {
       return res.status(404).json({ message: 'Favorite tokens not found' })
     }
+
   } catch (err) {
     console.log(err)
     return res.status(500).json({ message: 'Internal Server error. Please try again!' })
@@ -171,38 +260,44 @@ router.get('/:userId/favorites', async (req, res, next) => {
 
 /**
  *  Adds tokens to users favorites list
+ *  @params userId type: Integer
+ *  @params tokenId type: Integer 
  */
-router.post('/:userId/favorites',
-  [
-    check('tokenId', 'A token id is required').exists()
-  ],
-  async (req, res, next) => {
 
-    req.body['userId'] = req.params.userId
+router.post('/:userId/favorites', [
+  check('userId', 'A valid user is required').exists()
+], async (req, res, next) => {
+
+  try {
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ error: errors.array() });
     }
 
-    // implement token exists
-
-    try {
-      let favorites = await userServiceInstance.createUsersFavorite(req.body);
-      if (favorites.length > 0) {
-        return res.status(200).json({ message: 'User\'s favorites retrieved successfully', data: favorites })
-      } else {
-        return res.status(404).json({ message: 'Token not found' })
-      }
-    } catch (err) {
-      console.log(err)
-      return res.status(500).json({ message: 'Internal Server error. Please try again!' })
+    let user = await userServiceInstance.getUser(req.params);
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' })
     }
-  })
+
+    let favorites = await userServiceInstance.createUsersFavorite(req.params, req.body.tokenId);
+    if (favorites.length > 0) {
+      return res.status(200).json({ message: 'User\'s favorites added successfully', data: favorites })
+    } else {
+      return res.status(404).json({ message: 'User\'s favorites addition failed' })
+    }
+
+  } catch (err) {
+    console.log(err)
+    return res.status(500).json({ message: 'Internal Server error. Please try again!' })
+  }
+})
 
 
 /**
 *  Adds the address of a new user
-*  @params address String
+*  @params signature type: String
+*  @params userId type: Integer
 */
 
 router.post('/auth', [
@@ -223,7 +318,7 @@ router.post('/auth', [
         return res.status(400).json({ message: 'User not found' })
       }
 
-      if (auth.isValidSignature({ owner: user.address, signature: req.body.signature })) {
+      if (auth.isValidSignature(user.address, req.body.signature)) {
         var token = jwt.sign({ userId: user.id }, process.env.jwt_secret, {
           expiresIn: "24h"
         });

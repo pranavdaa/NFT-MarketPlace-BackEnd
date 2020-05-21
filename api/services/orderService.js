@@ -137,13 +137,13 @@ class OrderService {
     }
   }
 
-  async buyFixedOrder(params) {
+  async buyFixedOrder(params, body) {
     try {
 
       let order = await prisma.orders.update({
         where: { id: parseInt(params.id) },
         data: {
-          maker_users: { connect: { id: parseInt(params.taker_address) } },
+          taker_users: { connect: { id: parseInt(body.taker_address) } },
           status: 2
         },
       })
@@ -153,14 +153,14 @@ class OrderService {
     }
   }
 
-  async makeBid(params) {
+  async makeBid(params, body) {
     const order = await prisma.orders.update({
       where: { id: parseInt(params.id) },
       data: {
         bids: {
           create: [{
-            price: params.bid,
-            users: { connect: { id: parseInt(params.taker_address) } },
+            price: body.bid,
+            users: { connect: { id: parseInt(body.taker_address) } },
           }],
         },
       },
@@ -201,6 +201,23 @@ class OrderService {
         }
       })
       return bid;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async executeOrder(params, body) {
+    try {
+
+      let order = await prisma.orders.update({
+        where: { id: parseInt(params.id) },
+        data: {
+          taker_users: { connect: { id: parseInt(body.taker_address) } },
+          taker_amount: body.taker_amount,
+          status: 2
+        },
+      })
+      return order;
     } catch (err) {
       throw err;
     }

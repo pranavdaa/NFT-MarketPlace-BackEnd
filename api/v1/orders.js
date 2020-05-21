@@ -145,7 +145,7 @@ router.patch('/:id/buy', [
     switch (params.type) {
       case 'FIXED': {
 
-        orderAdd = await orderServiceInstance.buyFixedOrder(params)
+        orderAdd = await orderServiceInstance.buyFixedOrder(params, req.body)
         break;
 
       }
@@ -156,7 +156,7 @@ router.patch('/:id/buy', [
           if (!params.bid) {
             return res.status(400).json({ message: 'input validation failed' })
           }
-          orderAdd = await orderServiceInstance.makeBid(params)
+          orderAdd = await orderServiceInstance.makeBid(params, req.body)
           break;
 
         }
@@ -217,6 +217,52 @@ router.patch('/bid/:id/cancel', async (req, res, next) => {
       return res.status(200).json({ message: 'bid cancelled successfully', data: cancel })
     } else {
       return res.status(400).json({ message: 'bid cancel failed' })
+    }
+  } catch (err) {
+    console.log(err)
+    return res.status(500).json({ message: 'Internal Server error.Please try again' })
+  }
+})
+
+/**
+ *  Buy order
+ *  @params taker_address type: int
+ *  @params id type: int
+ *  @params maker_token type: int
+ *  @params bid type: string
+ */
+
+router.patch('/:id/execute', [
+  check('id', 'A valid order id is required').exists(),
+  check('taker_address', 'A valid address is required').exists(),
+  check('take_amount', 'A valid amount is required').exists()
+], async (req, res, next) => {
+
+  try {
+
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: errors.array() });
+    }
+
+    let order = await orderServiceInstance.orderExists(req.params);
+
+    if (!order || order.status !== 0 || (order.type !== 'NEGOTIATION' && order.type !== 'AUCTION')) {
+      return res.status(200).json({ message: 'Invalid order' })
+    }
+
+    let params = req.params;
+
+    if (!params.bid) {
+      return res.status(400).json({ message: 'input validation failed' })
+    }
+    let orderExecute = await orderServiceInstance.executeOrder(params, req.body)
+
+    if (orderExecute) {
+      return res.status(200).json({ message: 'order addedd successfully', data: orderExecute.id })
+    } else {
+      return res.status(400).json({ message: 'order addition failed' })
     }
   } catch (err) {
     console.log(err)

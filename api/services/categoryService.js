@@ -11,6 +11,17 @@ class CategoryService {
   async createCategory(params, path) {
 
     try {
+
+      let address = []
+      for (let key in params.addresses) {
+        address.push(
+          {
+            chain_id: key,
+            address: params.addresses[key],
+          }
+        )
+      }
+
       let category = await prisma.categories.create({
         data: {
           name: params.name,
@@ -18,11 +29,7 @@ class CategoryService {
           url: params.url,
           img_url: path,
           categoriesaddresses: {
-            create: [{
-              address: params.matic_address, chain_id: "0"
-            }, {
-              address: params.ethereum_address, chain_id: "1"
-            }]
+            create: address
           }
         }
       })
