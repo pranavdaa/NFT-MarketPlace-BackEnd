@@ -13,7 +13,6 @@ async function verifyToken(req, res, next) {
         if (err) {
             return res.status(401).json({ message: 'Unauthorized access' });
         }
-        console.log(decoded)
         let user = await userServiceInstance.getUser(decoded);
         if (!user) {
             return res.status(401).json({ message: 'Unauthorized access' });

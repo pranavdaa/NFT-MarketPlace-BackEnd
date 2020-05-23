@@ -8,7 +8,7 @@ const prisma = new PrismaClient()
 
 class TokenService {
 
-  async createToken(params, path) {
+  async createToken(params, file) {
 
     try {
       let token = await prisma.tokens.create({
@@ -16,10 +16,10 @@ class TokenService {
           name: params.name,
           description: params.description,
           metadata: params.metadata,
-          img_url: path,
-          users: { connect: { id: parseInt(params.owner) } },
+          img_url: file ? file.path : "",
+          users: { connect: { id: parseInt(params.userId) } },
           token_id: params.token_id,
-          categories: { connect: { id: parseInt(params.category) } }
+          categories: { connect: { id: parseInt(params.categoryId) } }
         }
       })
       return token;
@@ -54,7 +54,7 @@ class TokenService {
     try {
 
       let token = await prisma.tokens.findOne({
-        where: { id: parseInt(params.id) }
+        where: { id: parseInt(params.tokenId) }
       });
       return token;
     } catch (err) {
@@ -66,7 +66,7 @@ class TokenService {
     try {
 
       let tokens = await prisma.tokens.findMany({
-        where: { owner: parseInt(params.id) }
+        where: { owner: parseInt(params.userId) }
       });
       return tokens;
     } catch (err) {

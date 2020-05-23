@@ -1,4 +1,5 @@
 let signUtil = require('eth-sig-util')
+var ethUtil = require('ethereumjs-util')
 
 function getSignTypedData({ owner }) {
     return {
@@ -36,7 +37,7 @@ function isValidSignature({ owner, signature }) {
         })
     } catch (e) { }
 
-    if (!recovered || recovered !== owner) {
+    if (!recovered || ethUtil.toChecksumAddress(recovered) !== ethUtil.toChecksumAddress(owner)) {
         return false
     }
     return true

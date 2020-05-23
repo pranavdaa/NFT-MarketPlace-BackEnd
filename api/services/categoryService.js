@@ -12,16 +12,6 @@ class CategoryService {
 
     try {
 
-      let address = []
-      for (let key in params.addresses) {
-        address.push(
-          {
-            chain_id: key,
-            address: params.addresses[key],
-          }
-        )
-      }
-
       let category = await prisma.categories.create({
         data: {
           name: params.name,
@@ -29,7 +19,7 @@ class CategoryService {
           url: params.url,
           img_url: path,
           categoriesaddresses: {
-            create: address
+            create: JSON.parse(params.address)
           }
         }
       })
@@ -62,11 +52,23 @@ class CategoryService {
     }
   }
 
+  async categoryAddressExists(params) {
+    try {
+
+      let categories = await prisma.categoriesaddresses.findOne({
+        where: { address: params.address }
+      });
+      return categories;
+    } catch (err) {
+      throw err;
+    }
+  }
+
   async getCategory(params) {
     try {
 
       let categories = await prisma.categories.findOne({
-        where: { id: parseInt(params.id) }
+        where: { id: parseInt(params.categoryId) }
       });
       return categories;
     } catch (err) {
@@ -79,9 +81,9 @@ class CategoryService {
 
       let tokens = await prisma.categories.findOne({
         select: { tokens: true },
-        where: { id: parseInt(params.id) },
+        where: { id: parseInt(params.categoryId) },
       });
-      return tokens;
+      return tokens.tokens;
     } catch (err) {
       throw err;
     }

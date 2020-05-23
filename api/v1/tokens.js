@@ -1,54 +1,54 @@
 const express = require('express')
 const router = express.Router();
-const { query, check, validationResult } = require('express-validator');
+const { check, validationResult } = require('express-validator');
 const TokenService = require('../services/tokenService')
 let tokenServiceInstance = new TokenService();
-const multer = require('multer');
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, './public/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, new Date().toISOString() + file.originalname);
-  }
-});
-
-const upload = multer({
-  storage: storage,
-});
+const CategoryService = require('../services/categoryService')
+let categoryServiceInstance = new CategoryService();
+const upload = require('../utils/upload')
+const verifyToken = require('../middlewares/verifyToken')
 
 /**
- * Category routes
+ * Token routes
  */
 
 /**
  *  Adds a new token for a particular category
  *  @params name type: name
  *  @params description type: description
- *  @params category type: integer
+ *  @params categoryId type: integer
  *  @params metadata type: string
- *  @params owner type: integer
  *  @params token_id type: string
  *  @param tokenImage type: image-file 
  */
 
-router.post('/', upload.single('tokenImage'), async (req, res, next) => {
+router.post('/', verifyToken, upload.single('tokenImage'), async (req, res) => {
 
   try {
 
+    let userId = req.userId;
+    let { categoryId, token_id, name } = req.body
 
-    if (!req.body.category || !req.body.owner || !req.body.token_id) {
+    if (!categoryId || !token_id || !name) {
       return res.status(400).json({ message: 'input validation failed' })
     }
 
-    let tokenExists = await tokenServiceInstance.tokenExists(req.body)
+    let category = await categoryServiceInstance.getCategory({ categoryId })
 
-    if (tokenExists.length > 0) {
-      return res.status(200).json({ message: 'Token already exists', data: tokenExists })
+    if (!category) {
+      return res.status(400).json({ message: 'Category doesnt exist' })
     }
 
-    let token = await tokenServiceInstance.createToken(req.body, req.file.path);
+    // Token validation correction needed. Does not consider composite key now.
+
+    let tokens = await tokenServiceInstance.tokenExists(req.body)
+
+    if (tokens.length > 0) {
+      return res.status(400).json({ message: 'Token already exist' })
+    }
+
+    req.body.userId = userId;
+    let token = await tokenServiceInstance.createToken(req.body, req.file);
     if (token) {
       return res.status(200).json({ message: 'Token addedd successfully', data: token })
     } else {
@@ -65,7 +65,7 @@ router.post('/', upload.single('tokenImage'), async (req, res, next) => {
  *  Gets all the token details 
  */
 
-router.get('/', async (req, res, next) => {
+router.get('/', verifyToken, async (req, res) => {
   try {
 
     let tokens = await tokenServiceInstance.getTokens();
@@ -87,9 +87,9 @@ router.get('/', async (req, res, next) => {
  *  @param id type: integer
  */
 
-router.get('/:id', [
-  check('id', 'A valid id is required').exists()
-], async (req, res, next) => {
+router.get('/:tokenId', [
+  check('tokenId', 'A valid id is required').exists()
+], verifyToken, async (req, res) => {
   try {
 
     const errors = validationResult(req);
@@ -102,7 +102,7 @@ router.get('/:id', [
     if (token) {
       return res.status(200).json({ message: 'Token retrieved successfully', data: token })
     } else {
-      return res.status(400).json({ message: 'Token retrieved failed' })
+      return res.status(400).json({ message: 'Token does not exist' })
     }
   } catch (err) {
     console.log(err)

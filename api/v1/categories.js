@@ -1,22 +1,11 @@
 const express = require('express')
 const router = express.Router();
-const { query, check, validationResult } = require('express-validator');
+const { check, validationResult } = require('express-validator');
 const CategoryService = require('../services/categoryService')
 let categoryServiceInstance = new CategoryService();
-const multer = require('multer');
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, './public/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, new Date().toISOString() + file.originalname);
-  }
-});
-
-const upload = multer({
-  storage: storage,
-});
+const upload = require('../utils/upload')
+const validate = require('../utils/validate')
+const verifyToken = require('../middlewares/verifyToken')
 
 /**
  * Category routes
@@ -27,18 +16,31 @@ const upload = multer({
  *  @params name type: String
  *  @params description type: String
  *  @params url type: String
- *  @params addresses type: Object
+ *  @params address type: Array of Objects
  *  @param categoryImage type: file 
  */
 
-router.post('/', upload.single('categoryImage'), async (req, res, next) => {
+router.post('/', upload.single('categoryImage'), async (req, res) => {
 
   try {
+
+    let { name, address } = req.body
+
+    if (!name || !address) {
+      return res.status(400).json({ message: 'input validation failed' })
+    }
 
     let categoryExists = await categoryServiceInstance.categoryExists(req.body)
 
     if (categoryExists) {
-      return res.status(200).json({ message: 'category already exists', data: categoryExists })
+      return res.status(400).json({ message: 'category already exists' })
+    }
+
+    for (data of JSON.parse(address)) {
+
+      if (!validate.isValid(data.address) || await categoryServiceInstance.categoryAddressExists({ address: data.address })) {
+        return res.status(400).json({ message: 'category address already exists' })
+      }
     }
 
     let category = await categoryServiceInstance.createCategory(req.body, req.file.path);
@@ -58,7 +60,7 @@ router.post('/', upload.single('categoryImage'), async (req, res, next) => {
  *  Gets all the category details 
  */
 
-router.get('/', async (req, res, next) => {
+router.get('/', verifyToken, async (req, res) => {
   try {
 
     let categories = await categoryServiceInstance.getCategories();
@@ -74,14 +76,14 @@ router.get('/', async (req, res, next) => {
 })
 
 
-
 /**
  *  Gets single category detail 
  *  @param id type: integer
  */
 
-router.get('/:id', [check('id', 'A valid id is required').exists()
-], async (req, res, next) => {
+router.get('/:categoryId', [
+  check('categoryId', 'A valid id is required').exists()
+], verifyToken, async (req, res) => {
   try {
 
     const errors = validationResult(req);
@@ -94,7 +96,7 @@ router.get('/:id', [check('id', 'A valid id is required').exists()
     if (category) {
       return res.status(200).json({ message: 'Category retrieved successfully', data: category })
     } else {
-      return res.status(400).json({ message: 'Category retrieved failed' })
+      return res.status(400).json({ message: 'Category doesnt exist' })
     }
   } catch (err) {
     console.log(err)
@@ -107,9 +109,9 @@ router.get('/:id', [check('id', 'A valid id is required').exists()
  *  @param id type: integer
  */
 
-router.get('/:id/tokens', [
-  check('id', 'A valid id is required').exists()
-], async (req, res, next) => {
+router.get('/:categoryId/tokens', [
+  check('categoryId', 'A valid id is required').exists()
+], verifyToken, async (req, res) => {
   try {
 
     const errors = validationResult(req);
@@ -118,11 +120,18 @@ router.get('/:id/tokens', [
       return res.status(400).json({ error: errors.array() });
     }
 
-    let token = await categoryServiceInstance.getTokensFromCategory(req.params);
-    if (token) {
-      return res.status(200).json({ message: 'Tokens retrieved successfully', data: token })
+    let category = await categoryServiceInstance.getCategory(req.params)
+
+    if (!category) {
+      return res.status(400).json({ message: 'Category doesnt exist' })
+    }
+
+    let tokens = await categoryServiceInstance.getTokensFromCategory(req.params);
+
+    if (tokens.length > 0) {
+      return res.status(200).json({ message: 'Tokens retrieved successfully', data: tokens })
     } else {
-      return res.status(400).json({ message: 'Tokens retrieved failed' })
+      return res.status(400).json({ message: 'No tokens belong to this category' })
     }
   } catch (err) {
     console.log(err)

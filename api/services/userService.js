@@ -12,7 +12,7 @@ class UserService {
     try {
       let user = await prisma.users.create({
         data: {
-          address: params.address
+          address: (params.address).toLowerCase()
         }
       })
       return user;
@@ -117,7 +117,7 @@ class UserService {
     }
   }
 
-  async createUsersFavorite(params, tokenId) {
+  async createUsersFavorite(params) {
     try {
       let favorites = await prisma.favorites.create({
         data: {
@@ -128,7 +128,7 @@ class UserService {
           },
           tokens: {
             connect: {
-              id: parseInt(tokenId)
+              id: parseInt(params.tokenId)
             }
           }
         }
@@ -143,7 +143,7 @@ class UserService {
     try {
       let users = await prisma.users.findOne({
         where: {
-          address: params.address
+          address: (params.address).toLowerCase()
         }
       });
       return users;

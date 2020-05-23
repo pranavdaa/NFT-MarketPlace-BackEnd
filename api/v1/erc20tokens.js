@@ -1,22 +1,10 @@
 const express = require('express')
 const router = express.Router();
-const { check, body, validationResult } = require('express-validator');
+const { check, validationResult } = require('express-validator');
 const Erc20tokenService = require('../services/erc20tokenService')
 let erc20tokenServiceInstance = new Erc20tokenService();
-const multer = require('multer');
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, './public/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, new Date().toISOString() + file.originalname);
-  }
-});
-
-const upload = multer({
-  storage: storage,
-});
+const validate = require('../utils/validate')
+const verifyToken = require('../middlewares/verifyToken')
 
 /**
  * erc20token routes
@@ -34,8 +22,8 @@ router.post('/', [
   check('name', 'A valid name is required').exists(),
   check('symbol', 'A valid sumbol is required').exists(),
   check('decimal', 'A valid decimal required').exists(),
-  check('addresses', 'A valid address is required').exists(),
-], async (req, res, next) => {
+  check('address', 'A valid address is required').exists(),
+], async (req, res) => {
 
   try {
 
@@ -45,10 +33,23 @@ router.post('/', [
       return res.status(400).json({ error: errors.array() });
     }
 
+    let { name, symbol, decimal, address } = req.body
+
+    if (!name || !address || !decimal || !symbol) {
+      return res.status(400).json({ message: 'input validation failed' })
+    }
+
     let erc20tokenExists = await erc20tokenServiceInstance.erc20tokenExists(req.body)
 
     if (erc20tokenExists) {
       return res.status(200).json({ message: 'erc20token already exists', data: erc20tokenExists })
+    }
+
+    for (data of JSON.parse(address)) {
+
+      if (!validate.isValid(data.address) || await erc20tokenServiceInstance.erc20tokenAddressExists({ address: data.address })) {
+        return res.status(400).json({ message: 'ERC20 token address already exists' })
+      }
     }
 
     let erc20token = await erc20tokenServiceInstance.adderc20token(req.body);
@@ -68,7 +69,7 @@ router.post('/', [
  *  Gets all the erc20token details 
  */
 
-router.get('/', async (req, res, next) => {
+router.get('/', verifyToken, async (req, res) => {
   try {
 
     let erc20tokens = await erc20tokenServiceInstance.geterc20tokens();
@@ -91,7 +92,7 @@ router.get('/', async (req, res, next) => {
  */
 
 router.get('/:id', [check('id', 'A valid id is required').exists()
-], async (req, res, next) => {
+], verifyToken, async (req, res) => {
   try {
 
     const errors = validationResult(req);
