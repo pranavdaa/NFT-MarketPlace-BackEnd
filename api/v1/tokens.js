@@ -65,7 +65,7 @@ router.post('/', verifyToken, upload.single('tokenImage'), async (req, res) => {
  *  Gets all the token details 
  */
 
-router.get('/', verifyToken, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
 
     let tokens = await tokenServiceInstance.getTokens();
@@ -103,6 +103,45 @@ router.get('/:tokenId', [
       return res.status(200).json({ message: 'Token retrieved successfully', data: token })
     } else {
       return res.status(400).json({ message: 'Token does not exist' })
+    }
+  } catch (err) {
+    console.log(err)
+    return res.status(500).json({ message: 'Internal Server error.Please try again' })
+  }
+})
+
+/**
+ *  Updates an existing NFT token
+ *  @params tokenId type: Integer
+ *  @params name type: name
+ *  @params description type: description
+ *  @params metadata type: string
+ *  @param tokenImage type: image-file 
+ */
+
+router.put('/:tokenId', verifyToken, upload.single('tokenImage'), async (req, res) => {
+
+  try {
+
+
+    let params = { ...req.params, ...req.body }
+
+    if (!params.tokenId) {
+      return res.status(400).json({ message: 'Input validation failed' })
+    }
+
+    let tokenExists = await tokenServiceInstance.getToken(params)
+
+    if (!tokenExists) {
+      return res.status(400).json({ message: 'Token doesnt exists' })
+    }
+
+    // Pending 
+    let token = await tokenServiceInstance.updateToken(params, req.file);
+    if (token) {
+      return res.status(200).json({ message: 'token addedd successfully', data: token })
+    } else {
+      return res.status(400).json({ message: 'token addition failed' })
     }
   } catch (err) {
     console.log(err)

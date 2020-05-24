@@ -21,6 +21,7 @@ class OrderService {
           signature: params.signature,
           erc20tokens: { connect: { id: parseInt(params.taker_token) } },
           type: params.type,
+          chain_id: params.chain_id
         }
       })
       return order;
@@ -42,6 +43,7 @@ class OrderService {
           signature: params.signature,
           erc20tokens: { connect: { id: parseInt(params.taker_token) } },
           type: params.type,
+          chain_id: params.chain_id
         }
       })
       return order;
@@ -64,6 +66,7 @@ class OrderService {
           signature: params.signature,
           erc20tokens: { connect: { id: parseInt(params.taker_token) } },
           type: params.type,
+          chain_id: params.chain_id
         }
       })
       return order;
@@ -72,11 +75,14 @@ class OrderService {
     }
   }
 
-  async getOrders() {
+  async getOrders(params) {
     try {
       let order = await prisma.orders.findMany({
         where: {
-          status: 0
+          AND: [
+            { status: 0 },
+            { categories_id: { in: JSON.parse(params.categoryArray) } },
+          ]
         },
         select: {
           id: true,
@@ -90,7 +96,8 @@ class OrderService {
           erc20tokens: true,
           views: true,
           bids: true
-        }
+        },
+        orderBy: params.filter
       })
       return order;
     } catch (err) {
@@ -102,7 +109,7 @@ class OrderService {
     try {
       let order = await prisma.orders.findOne({
         where: {
-          id: parseInt(params.id)
+          id: parseInt(params.orderId),
         },
         select: {
           id: true,
@@ -128,7 +135,7 @@ class OrderService {
     try {
       let order = await prisma.orders.findOne({
         where: {
-          id: parseInt(params.id)
+          id: parseInt(params.orderId)
         }
       })
       return order;
@@ -137,13 +144,13 @@ class OrderService {
     }
   }
 
-  async buyFixedOrder(params, body) {
+  async buyFixedOrder(params) {
     try {
 
       let order = await prisma.orders.update({
-        where: { id: parseInt(params.id) },
+        where: { id: parseInt(params.orderId) },
         data: {
-          taker_users: { connect: { id: parseInt(body.taker_address) } },
+          taker_users: { connect: { id: parseInt(params.taker_address) } },
           status: 2
         },
       })
@@ -153,14 +160,14 @@ class OrderService {
     }
   }
 
-  async makeBid(params, body) {
+  async makeBid(params) {
     const order = await prisma.orders.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(params.orderId) },
       data: {
         bids: {
           create: [{
-            price: body.bid,
-            users: { connect: { id: parseInt(body.taker_address) } },
+            price: params.bid,
+            users: { connect: { id: parseInt(params.taker_address) } },
           }],
         },
       },
@@ -172,7 +179,7 @@ class OrderService {
     try {
 
       let order = await prisma.orders.update({
-        where: { id: parseInt(params.id) },
+        where: { id: parseInt(params.orderId) },
         data: {
           status: 3
         },
@@ -185,7 +192,7 @@ class OrderService {
 
   async cancelBid(params) {
     const order = await prisma.bids.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(params.bidId) },
       data: {
         status: 3
       },
@@ -197,7 +204,7 @@ class OrderService {
     try {
       let bid = await prisma.bids.findOne({
         where: {
-          id: parseInt(params.id)
+          id: parseInt(params.bidId)
         }
       })
       return bid;
@@ -206,14 +213,16 @@ class OrderService {
     }
   }
 
-  async executeOrder(params, body) {
+  async executeOrder(params) {
+
+    console.log(params)
     try {
 
       let order = await prisma.orders.update({
-        where: { id: parseInt(params.id) },
+        where: { id: parseInt(params.orderId) },
         data: {
-          taker_users: { connect: { id: parseInt(body.taker_address) } },
-          taker_amount: body.taker_amount,
+          taker_users: { connect: { id: parseInt(params.taker_address) } },
+          taker_amount: params.taker_amount,
           status: 2
         },
       })

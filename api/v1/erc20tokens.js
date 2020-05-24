@@ -114,4 +114,49 @@ router.get('/:id', [check('id', 'A valid id is required').exists()
 })
 
 
+/**
+ *  Updates an existing ERC20 token
+ *  @params id type: Integer
+ *  @params name type: String
+ *  @params decimals type: String
+ *  @params address type: Array of Objects
+ */
+
+router.put('/:id', async (req, res) => {
+
+  try {
+
+
+    let params = { ...req.params, ...req.body }
+
+    if (!params.id) {
+      return res.status(400).json({ message: 'Input validation failed' })
+    }
+
+    let tokenExists = await erc20tokenServiceInstance.geterc20token(params)
+
+    if (!tokenExists) {
+      return res.status(400).json({ message: 'Token doesnt exists' })
+    }
+
+    if (params.address) {
+      for (data of JSON.parse(params.address)) {
+        if (!validate.isValid(data.address) || await erc20tokenServiceInstance.erc20tokenAddressExists({ address: data.address })) {
+          return res.status(400).json({ message: 'Token address already exists' })
+        }
+      }
+    }
+
+    let token = await erc20tokenServiceInstance.updateerc20token(params);
+    if (token) {
+      return res.status(200).json({ message: 'Token addedd successfully', data: token })
+    } else {
+      return res.status(400).json({ message: 'Token addition failed' })
+    }
+  } catch (err) {
+    console.log(err)
+    return res.status(500).json({ message: 'Internal Server error.Please try again' })
+  }
+})
+
 module.exports = router;

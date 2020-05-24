@@ -8,7 +8,7 @@ const prisma = new PrismaClient()
 
 class CategoryService {
 
-  async createCategory(params, path) {
+  async createCategory(params, file) {
 
     try {
 
@@ -17,7 +17,7 @@ class CategoryService {
           name: params.name,
           description: params.description,
           url: params.url,
-          img_url: path,
+          img_url: file ? file.path : "",
           categoriesaddresses: {
             create: JSON.parse(params.address)
           }
@@ -84,6 +84,28 @@ class CategoryService {
         where: { id: parseInt(params.categoryId) },
       });
       return tokens.tokens;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async updateCategory(params, file) {
+
+    try {
+
+      let current = await this.getCategory(params);
+      let category = await prisma.categories.update({
+        where: { id: parseInt(params.categoryId) },
+        data: {
+          description: params.description ? params.description : current.description,
+          url: params.url ? params.url : current.url,
+          img_url: file ? file.path : current.img_url,
+          categoriesaddresses: {
+            create: params.address ? JSON.parse(params.address) : []
+          }
+        }
+      })
+      return category;
     } catch (err) {
       throw err;
     }

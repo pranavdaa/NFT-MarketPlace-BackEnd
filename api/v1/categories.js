@@ -43,7 +43,7 @@ router.post('/', upload.single('categoryImage'), async (req, res) => {
       }
     }
 
-    let category = await categoryServiceInstance.createCategory(req.body, req.file.path);
+    let category = await categoryServiceInstance.createCategory(req.body, req.file);
     if (category) {
       return res.status(200).json({ message: 'category addedd successfully', data: category })
     } else {
@@ -132,6 +132,52 @@ router.get('/:categoryId/tokens', [
       return res.status(200).json({ message: 'Tokens retrieved successfully', data: tokens })
     } else {
       return res.status(400).json({ message: 'No tokens belong to this category' })
+    }
+  } catch (err) {
+    console.log(err)
+    return res.status(500).json({ message: 'Internal Server error.Please try again' })
+  }
+})
+
+/**
+ *  Updates an existing category of NFT token
+ *  @params categoryId type: Integer
+ *  @params description type: String
+ *  @params url type: String
+ *  @params address type: Array of Objects
+ *  @params categoryImage type: File 
+ */
+
+router.put('/:categoryId', upload.single('categoryImage'), async (req, res) => {
+
+  try {
+
+
+    let params = { ...req.params, ...req.body }
+
+    if (!params.categoryId) {
+      return res.status(400).json({ message: 'Input validation failed' })
+    }
+
+    let categoryExists = await categoryServiceInstance.getCategory(params)
+
+    if (!categoryExists) {
+      return res.status(400).json({ message: 'Category doesnt exists' })
+    }
+
+    if (params.address) {
+      for (data of JSON.parse(params.address)) {
+        if (!validate.isValid(data.address) || await categoryServiceInstance.categoryAddressExists({ address: data.address })) {
+          return res.status(400).json({ message: 'category address already exists' })
+        }
+      }
+    }
+
+    let category = await categoryServiceInstance.updateCategory(params, req.file);
+    if (category) {
+      return res.status(200).json({ message: 'category addedd successfully', data: category })
+    } else {
+      return res.status(400).json({ message: 'category addition failed' })
     }
   } catch (err) {
     console.log(err)

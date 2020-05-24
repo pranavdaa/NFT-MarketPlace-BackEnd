@@ -75,6 +75,27 @@ class Erc20tokenService {
       throw err;
     }
   }
+
+  async updateerc20token(params) {
+
+    try {
+
+      let current = await this.geterc20token(params);
+      let category = await prisma.erc20tokens.update({
+        where: { id: parseInt(params.id) },
+        data: {
+          name: params.name ? params.name : current.name,
+          decimal: params.decimal ? parseInt(params.decimal) : current.decimal,
+          erc20tokensaddresses: {
+            create: params.address ? JSON.parse(params.address) : []
+          }
+        }
+      })
+      return category;
+    } catch (err) {
+      throw err;
+    }
+  }
 }
 
 module.exports = Erc20tokenService

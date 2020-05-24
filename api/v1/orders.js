@@ -3,6 +3,13 @@ const router = express.Router();
 const { check, validationResult } = require('express-validator');
 const OrderService = require('../services/orderService')
 let orderServiceInstance = new OrderService();
+const Erc20tokenService = require('../services/erc20tokenService')
+let erc20tokenServiceInstance = new Erc20tokenService();
+const TokenService = require('../services/tokenService')
+let tokenServiceInstance = new TokenService();
+const CategoryService = require('../services/categoryService')
+let categoryServiceInstance = new CategoryService();
+const verifyToken = require('../middlewares/verifyToken')
 
 /**
  * Order routes
@@ -10,23 +17,25 @@ let orderServiceInstance = new OrderService();
 
 /**
  *  Create a new order
- *  @params maker_address type: int
- *  @params maker_token_id type: int
- *  @params maker_token type: int
- *  @params signature type: string
- *  @params order_type type: string
- *  @params min_price type: float
- *  @params expiry type: timestamp
+ *  @params maker_token type: Integer
+ *  @params maker_token_id type: Integer
+ *  @params taker_token type: Integer
+ *  @params signature type: String
+ *  @params type type: String
+ *  @params price type: String
+ *  @params min_price type: String
+ *  @params expiry type: Integer
+ *  @params chainw_id type: String
  */
 
 router.post('/', [
-  check('maker_address', 'A valid address is required').exists(),
-  check('maker_token_id', 'A valid id time is required').exists(),
   check('maker_token', 'A valid id is required').exists(),
+  check('chain_id', 'A valid id is required').exists(),
+  check('maker_token_id', 'A valid id is required').exists(),
   check('taker_token', 'A valid id is required').exists(),
-  check('signature', 'A valid signature is required').exists(),
+  check('signature', 'A valid signature is required').exists().isLength({ min: 132, max: 132 }),
   check('type', 'A valid type is required').exists().isIn(['FIXED', 'NEGOTIATION', 'AUCTION']),
-], async (req, res, next) => {
+], verifyToken, async (req, res) => {
 
   try {
 
@@ -36,36 +45,57 @@ router.post('/', [
       return res.status(400).json({ error: errors.array() });
     }
 
-    let params = req.body;
+    let params = { ...req.body, ...{ maker_address: req.userId } }
+
+    let { maker_token, maker_token_id, taker_token, type } = req.body;
+
+    let category = await categoryServiceInstance.getCategory({ categoryId: maker_token })
+
+    if (!category) {
+      return res.status(400).json({ message: 'Invalid Category' })
+    }
+
+    let token = await tokenServiceInstance.getToken({ tokenId: maker_token_id })
+
+    if (!token) {
+      return res.status(400).json({ message: 'Invalid Token' })
+    }
+
+    let erc20token = await erc20tokenServiceInstance.geterc20token({ id: taker_token })
+
+    if (!erc20token) {
+      return res.status(200).json({ message: 'Invalid Token' })
+    }
+
     let orderAdd;
 
-    switch (params.type) {
+    switch (type) {
       case 'FIXED': {
         if (!params.price) {
-          return res.status(400).json({ message: 'input validation failed' })
+          return res.status(400).json({ message: 'Input validation failed' })
         }
         orderAdd = await orderServiceInstance.placeFixedOrder(params)
         break;
       }
       case 'NEGOTIATION': {
         if (!params.min_price || !params.price) {
-          return res.status(400).json({ message: 'input validation failed' })
+          return res.status(400).json({ message: 'Input validation failed' })
         }
         orderAdd = await orderServiceInstance.placeNegotiationOrder(params)
         break;
       }
       case 'AUCTION': {
         if (!params.min_price || !params.expiry_date) {
-          return res.status(400).json({ message: 'input validation failed' })
+          return res.status(400).json({ message: 'Input validation failed' })
         }
         orderAdd = await orderServiceInstance.placeAuctionOrder(params)
         break;
       }
     }
     if (orderAdd) {
-      return res.status(200).json({ message: 'order addedd successfully', data: orderAdd.id })
+      return res.status(200).json({ message: 'Sell Order addedd successfully', data: orderAdd.id })
     } else {
-      return res.status(400).json({ message: 'order addition failed' })
+      return res.status(400).json({ message: 'Sell Order creation failed' })
     }
   } catch (err) {
     console.log(err)
@@ -76,16 +106,42 @@ router.post('/', [
 
 /**
  *  Gets all the order details 
+ *  @params categoryId
+ *  @params search
+ *  @params filter
  */
 
-router.get('/', async (req, res, next) => {
+router.get('/', verifyToken, [
+  check('categoryArray', 'A valid id is required').exists(),
+  check('filter', 'A valid id is required').exists().isIn(['views', 'recent', 'pricehigh', 'pricelow']),
+], async (req, res) => {
   try {
 
-    let orders = await orderServiceInstance.getOrders();
-    if (orders) {
-      return res.status(200).json({ message: 'orders retrieved successfully', data: orders })
+    let params = req.query;
+
+    switch (params.filter) {
+      case 'views': {
+        params.filter = { views: "desc" }
+        break;
+      }
+      case 'recent': {
+        params.filter = { created: "desc" }
+      }
+      case 'pricehigh': {
+        params.filter = { price: "desc" }
+        break;
+      }
+      case 'pricelow': {
+        params.filter = { price: "asc" }
+      }
+    }
+
+
+    let orders = await orderServiceInstance.getOrders(params);
+    if (orders.length > 0) {
+      return res.status(200).json({ message: 'Orders retrieved successfully', data: orders })
     } else {
-      return res.status(400).json({ message: 'order retrieved failed' })
+      return res.status(400).json({ message: 'Orders do not exist' })
     }
   } catch (err) {
     console.log(err)
@@ -95,16 +151,19 @@ router.get('/', async (req, res, next) => {
 
 /**
  *  Gets single order details 
+ *  @params orderId type: int
  */
 
-router.get('/:id', async (req, res, next) => {
+router.get('/:orderId', [
+  check('orderId', 'A valid id is required').exists()
+], verifyToken, async (req, res) => {
   try {
 
     let order = await orderServiceInstance.getOrder(req.params);
     if (order) {
-      return res.status(200).json({ message: 'order retrieved successfully', data: order })
+      return res.status(200).json({ message: 'Order details retrieved successfully', data: order })
     } else {
-      return res.status(400).json({ message: 'orde retrieved failed' })
+      return res.status(400).json({ message: 'Order does not exist' })
     }
   } catch (err) {
     console.log(err)
@@ -114,16 +173,13 @@ router.get('/:id', async (req, res, next) => {
 
 /**
  *  Buy order
- *  @params taker_address type: int
- *  @params id type: int
- *  @params maker_token type: int
+ *  @params orderId type: int
  *  @params bid type: string
  */
 
-router.patch('/:id/buy', [
-  check('id', 'A valid order id is required').exists(),
-  check('taker_address', 'A valid address is required').exists(),
-], async (req, res, next) => {
+router.patch('/:orderId/buy', [
+  check('orderId', 'A valid order id is required').exists(),
+], verifyToken, async (req, res) => {
 
   try {
 
@@ -133,19 +189,20 @@ router.patch('/:id/buy', [
       return res.status(400).json({ error: errors.array() });
     }
 
-    let order = await orderServiceInstance.orderExists(req.params);
+    let params = { ...req.body, ...req.params, ...{ taker_address: req.userId } }
+
+    let order = await orderServiceInstance.orderExists(params);
 
     if (!order || order.status !== 0) {
       return res.status(200).json({ message: 'Invalid order' })
     }
 
-    let params = req.params;
     let orderAdd;
 
-    switch (params.type) {
+    switch (order.type) {
       case 'FIXED': {
 
-        orderAdd = await orderServiceInstance.buyFixedOrder(params, req.body)
+        orderAdd = await orderServiceInstance.buyFixedOrder(params)
         break;
 
       }
@@ -154,18 +211,18 @@ router.patch('/:id/buy', [
         {
 
           if (!params.bid) {
-            return res.status(400).json({ message: 'input validation failed' })
+            return res.status(400).json({ message: 'Input validation failed' })
           }
-          orderAdd = await orderServiceInstance.makeBid(params, req.body)
+          orderAdd = await orderServiceInstance.makeBid(params)
           break;
 
         }
 
     }
     if (orderAdd) {
-      return res.status(200).json({ message: 'order addedd successfully', data: orderAdd.id })
+      return res.status(200).json({ message: 'Buy order placed successfully', data: orderAdd.id })
     } else {
-      return res.status(400).json({ message: 'order addition failed' })
+      return res.status(400).json({ message: 'Buy order failed' })
     }
   } catch (err) {
     console.log(err)
@@ -177,7 +234,9 @@ router.patch('/:id/buy', [
  *  cancel order 
  */
 
-router.patch('/cancelbid/:id', async (req, res, next) => {
+router.patch('/:orderId/cancel', [
+  check('orderId', 'A valid id is required').exists()
+], verifyToken, async (req, res) => {
   try {
 
 
@@ -187,11 +246,11 @@ router.patch('/cancelbid/:id', async (req, res, next) => {
       return res.status(200).json({ message: 'Invalid order' })
     }
 
-    let cancel = await orderServiceInstance.cancelBid(req.params);
+    let cancel = await orderServiceInstance.cancelOrder(req.params);
     if (cancel) {
-      return res.status(200).json({ message: 'order cancelled successfully', data: cancel })
+      return res.status(200).json({ message: 'Order cancelled successfully', data: cancel })
     } else {
-      return res.status(400).json({ message: 'orde cancel failed' })
+      return res.status(400).json({ message: 'Order cancellation failed' })
     }
   } catch (err) {
     console.log(err)
@@ -203,7 +262,9 @@ router.patch('/cancelbid/:id', async (req, res, next) => {
  *  cancel bid 
  */
 
-router.patch('/bid/:id/cancel', async (req, res, next) => {
+router.patch('/bid/:bidId/cancel', [
+  check('bidId', 'A valid id is required').exists()
+], verifyToken, async (req, res) => {
   try {
 
     let bid = await orderServiceInstance.bidExists(req.params);
@@ -226,17 +287,15 @@ router.patch('/bid/:id/cancel', async (req, res, next) => {
 
 /**
  *  Buy order
- *  @params taker_address type: int
- *  @params id type: int
+ *  @params orderId type: int
  *  @params maker_token type: int
  *  @params bid type: string
  */
 
-router.patch('/:id/execute', [
-  check('id', 'A valid order id is required').exists(),
-  check('taker_address', 'A valid address is required').exists(),
-  check('take_amount', 'A valid amount is required').exists()
-], async (req, res, next) => {
+router.patch('/:orderId/execute', [
+  check('orderId', 'A valid order id is required').exists(),
+  check('taker_amount', 'A valid amount is required').exists()
+], verifyToken, async (req, res) => {
 
   try {
 
@@ -246,23 +305,20 @@ router.patch('/:id/execute', [
       return res.status(400).json({ error: errors.array() });
     }
 
+    let params = { ...req.body, ...req.params, ...{ taker_address: req.userId } }
+
     let order = await orderServiceInstance.orderExists(req.params);
 
     if (!order || order.status !== 0 || (order.type !== 'NEGOTIATION' && order.type !== 'AUCTION')) {
       return res.status(200).json({ message: 'Invalid order' })
     }
 
-    let params = req.params;
-
-    if (!params.bid) {
-      return res.status(400).json({ message: 'input validation failed' })
-    }
-    let orderExecute = await orderServiceInstance.executeOrder(params, req.body)
+    let orderExecute = await orderServiceInstance.executeOrder(params)
 
     if (orderExecute) {
-      return res.status(200).json({ message: 'order addedd successfully', data: orderExecute.id })
+      return res.status(200).json({ message: 'Order addedd successfully', data: orderExecute.id })
     } else {
-      return res.status(400).json({ message: 'order addition failed' })
+      return res.status(400).json({ message: 'Order addition failed' })
     }
   } catch (err) {
     console.log(err)
