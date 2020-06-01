@@ -20,17 +20,20 @@ export function getOffset(options) {
 export function getSortBy(options, defaultArg) {
   // required query param sort with +/-field
   let sort = options.sort || defaultArg || '+id'
+
   if (sort === '') {
     return {}
   }
+
   let orderBy = {}
   if (sort.startsWith('-')) {
     orderBy[sort.substring(1)] = SORT_DIRECTION.DESC
-  } else if (sort.startsWith('+')) {
+  } else if (sort.startsWith(' ') || sort.startsWith('+')) {
     orderBy[sort.substring(1)] = SORT_DIRECTION.ASC
   } else {
     orderBy[sort] = SORT_DIRECTION.DESC
   }
+
   return orderBy
 }
 
