@@ -22,7 +22,7 @@ class UserService {
     }
   }
 
-  async getUsers({ limit, offset }) {
+  async getUsers({ limit, offset, orderBy }) {
     try {
       let where = {
         active: true
@@ -31,6 +31,7 @@ class UserService {
       let count = await prisma.users.count({ where })
       let users = await prisma.users.findMany({
         where,
+        orderBy,
         take: limit, skip: offset
       });
 

@@ -17,9 +17,9 @@ export function getOffset(options) {
   return offset
 }
 
-export function getSortBy(options) {
+export function getSortBy(options, defaultArg) {
   // required query param sort with +/-field
-  let sort = options.sort || ''
+  let sort = options.sort || defaultArg || '+id'
   if (sort === '') {
     return {}
   }

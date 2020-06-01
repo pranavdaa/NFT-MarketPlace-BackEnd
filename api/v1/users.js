@@ -78,7 +78,9 @@ router.get('/all', async (req, res) => {
     let limit = requestUtil.getLimit(req.query)
     let offset = requestUtil.getOffset(req.query)
 
-    let data = await userServiceInstance.getUsers({ limit, offset });
+    let orderBy = requestUtil.getSortBy(req.query, '+id')
+
+    let data = await userServiceInstance.getUsers({ limit, offset, orderBy });
 
     if (data.users.length > 0) {
       return res.status(200).json({ message: 'Users retrieved successfully', data: data })
