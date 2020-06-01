@@ -1,5 +1,6 @@
 const { PrismaClient } = require("@prisma/client")
 const prisma = new PrismaClient()
+import { hasNextPage } from '../utils/helper.js'
 
 /**
  * Includes all the User services that controls
@@ -21,14 +22,19 @@ class UserService {
     }
   }
 
-  async getUsers() {
+  async getUsers({ limit, offset }) {
     try {
+      let where = {
+        active: true
+      }
+
+      let count = await prisma.users.count({ where })
       let users = await prisma.users.findMany({
-        where: {
-          active: true
-        }
+        where,
+        take: limit, skip: offset
       });
-      return users;
+
+      return { users, limit, offset, has_next_page: hasNextPage({ limit, offset, count }) };
     } catch (err) {
       throw err;
     }

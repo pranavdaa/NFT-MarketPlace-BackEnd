@@ -9,6 +9,8 @@ let userServiceInstance = new UserService();
 const TokenService = require('../services/tokenService')
 let tokenServiceInstance = new TokenService();
 const upload = require('../utils/upload')
+import * as requestUtil from '../utils/request-utils'
+
 
 /**
  * User routes
@@ -73,10 +75,13 @@ router.post('/', [
 
 router.get('/all', async (req, res) => {
   try {
+    let limit = requestUtil.getLimit(req.query)
+    let offset = requestUtil.getOffset(req.query)
 
-    let users = await userServiceInstance.getUsers();
-    if (users.length > 0) {
-      return res.status(200).json({ message: 'Users retrieved successfully', data: users })
+    let data = await userServiceInstance.getUsers({ limit, offset });
+
+    if (data.users.length > 0) {
+      return res.status(200).json({ message: 'Users retrieved successfully', data: data })
     } else {
       return res.status(404).json({ message: 'No user found' })
     }
