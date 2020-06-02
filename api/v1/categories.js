@@ -36,7 +36,7 @@ router.post('/', upload.single('categoryImage'), async (req, res) => {
       return res.status(400).json({ message: 'category already exists' })
     }
 
-    for (data of JSON.parse(address)) {
+    for (let data of JSON.parse(address)) {
 
       if (!validate.isValid(data.address) || await categoryServiceInstance.categoryAddressExists({ address: data.address })) {
         return res.status(400).json({ message: 'category address already exists' })

@@ -1,5 +1,5 @@
-export const PAGINATION_MAX_LIMIT = 2
-export const PAGINATION_DEFAULT_LIMIT = 1
+export const PAGINATION_MAX_LIMIT = 4
+export const PAGINATION_DEFAULT_LIMIT = 4
 export const PAGINATION_DEFAULT_OFFSET = 0
 
 export const RESPONSE_STATUS = {

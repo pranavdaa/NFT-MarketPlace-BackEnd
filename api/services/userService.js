@@ -27,7 +27,6 @@ class UserService {
       let where = {
         active: true
       }
-      console.log(orderBy)
 
       let count = await prisma.users.count({ where })
       let users = await prisma.users.findMany({
