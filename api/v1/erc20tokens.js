@@ -47,7 +47,7 @@ router.post('/', [
 
     for (data of JSON.parse(address)) {
 
-      if (!validate.isValid(data.address) || await erc20tokenServiceInstance.erc20tokenAddressExists({ address: data.address })) {
+      if (!validate.isValidEthereumAddress(data.address) || await erc20tokenServiceInstance.erc20tokenAddressExists({ address: data.address })) {
         return res.status(400).json({ message: 'ERC20 token address already exists' })
       }
     }
@@ -141,7 +141,7 @@ router.put('/:id', async (req, res) => {
 
     if (params.address) {
       for (data of JSON.parse(params.address)) {
-        if (!validate.isValid(data.address) || await erc20tokenServiceInstance.erc20tokenAddressExists({ address: data.address })) {
+        if (!validate.isValidEthereumAddress(data.address) || await erc20tokenServiceInstance.erc20tokenAddressExists({ address: data.address })) {
           return res.status(400).json({ message: 'Token address already exists' })
         }
       }

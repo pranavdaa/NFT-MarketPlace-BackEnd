@@ -10,6 +10,7 @@ const TokenService = require('../services/tokenService')
 let tokenServiceInstance = new TokenService();
 const upload = require('../utils/upload')
 import * as requestUtil from '../utils/request-utils'
+import config from '../../config/config'
 
 
 /**
@@ -37,12 +38,12 @@ router.post('/', [
       let userExists = await userServiceInstance.userExists(req.body)
       if (userExists) {
         if (auth.isValidSignature({ owner: userExists.address, signature: req.body.signature })) {
-          var token = jwt.sign({ userId: userExists.id }, process.env.jwt_secret, {
+          var token = jwt.sign({ userId: userExists.id }, config.secret, {
             expiresIn: "24h"
           });
           return res.status(200).json({ message: 'User authorized successfully', data: userExists, auth_token: token })
         } else {
-          return res.status(400).json({ message: 'User authorization failed' })
+          return res.status(401).json({ message: 'User authorization failed' })
         }
       } else {
 
@@ -50,12 +51,12 @@ router.post('/', [
         if (user) {
 
           if (auth.isValidSignature({ owner: user.address, signature: req.body.signature })) {
-            var token = jwt.sign({ userId: user.id }, process.env.jwt_secret, {
+            var token = jwt.sign({ userId: user.id }, config.secret, {
               expiresIn: "24h"
             });
             return res.status(200).json({ message: 'User added and authorized successfully', data: user, auth_token: token })
           } else {
-            return res.status(400).json({ message: 'User authorization failed' })
+            return res.status(401).json({ message: 'User authorization failed' })
           }
         } else {
           return res.status(400).json({ message: 'User creation failed' })
@@ -99,8 +100,7 @@ router.get('/all', async (req, res) => {
  *  Gets single user detail 
  */
 
-router.get('/', [
-], verifyToken, async (req, res) => {
+router.get('/', verifyToken, async (req, res) => {
   try {
 
     let userId = req.userId;
@@ -122,8 +122,7 @@ router.get('/', [
  *  Gets users tokens
  */
 
-router.get('/tokens', [
-], verifyToken, async (req, res) => {
+router.get('/tokens', verifyToken, async (req, res) => {
   try {
 
     let userId = req.userId;
@@ -144,8 +143,7 @@ router.get('/tokens', [
  *  Gets users token sell orders(maker order)
  */
 
-router.get('/makerorders', [
-], verifyToken, async (req, res) => {
+router.get('/makerorders', verifyToken, async (req, res) => {
   try {
 
     let userId = req.userId;
@@ -167,8 +165,7 @@ router.get('/makerorders', [
  *  Gets users token buy orders(taker order)
  */
 
-router.get('/takerorders', [
-], verifyToken, async (req, res) => {
+router.get('/takerorders', verifyToken, async (req, res) => {
   try {
 
     let userId = req.userId;
@@ -190,8 +187,7 @@ router.get('/takerorders', [
  *  Gets users bids on orders
  */
 
-router.get('/bids', [
-], verifyToken, async (req, res) => {
+router.get('/bids', verifyToken, async (req, res) => {
   try {
 
     let userId = req.userId;
@@ -212,8 +208,7 @@ router.get('/bids', [
 /**
  *  Gets users favorites tokens
  */
-router.get('/favorites', [
-], verifyToken, async (req, res) => {
+router.get('/favorites', verifyToken, async (req, res) => {
   try {
 
     let userId = req.userId;

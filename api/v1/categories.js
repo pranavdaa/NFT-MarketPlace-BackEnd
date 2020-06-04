@@ -38,7 +38,7 @@ router.post('/', upload.single('categoryImage'), async (req, res) => {
 
     for (let data of JSON.parse(address)) {
 
-      if (!validate.isValid(data.address) || await categoryServiceInstance.categoryAddressExists({ address: data.address })) {
+      if (!validate.isValidEthereumAddress(data.address) || await categoryServiceInstance.categoryAddressExists({ address: data.address })) {
         return res.status(400).json({ message: 'category address already exists' })
       }
     }
@@ -167,7 +167,7 @@ router.put('/:categoryId', upload.single('categoryImage'), async (req, res) => {
 
     if (params.address) {
       for (data of JSON.parse(params.address)) {
-        if (!validate.isValid(data.address) || await categoryServiceInstance.categoryAddressExists({ address: data.address })) {
+        if (!validate.isValidEthereumAddress(data.address) || await categoryServiceInstance.categoryAddressExists({ address: data.address })) {
           return res.status(400).json({ message: 'category address already exists' })
         }
       }

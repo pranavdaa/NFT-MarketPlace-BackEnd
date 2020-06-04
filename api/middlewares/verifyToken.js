@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
 const UserService = require('../services/userService')
 let userServiceInstance = new UserService();
+import config from '../../config/config'
+
 
 async function verifyToken(req, res, next) {
     var token = req.headers['x-access-token'] || req.headers['authorization'];
@@ -9,7 +11,7 @@ async function verifyToken(req, res, next) {
         return res.status(401).json({ message: 'Unauthorized access' });
     }
 
-    jwt.verify(token, process.env.jwt_secret, async (err, decoded) => {
+    jwt.verify(token, config.secret, async (err, decoded) => {
         if (err) {
             return res.status(401).json({ message: 'Unauthorized access' });
         }
