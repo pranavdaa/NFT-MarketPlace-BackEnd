@@ -24,7 +24,8 @@ class ERC20TokenService {
       })
       return erc20Token;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -36,7 +37,8 @@ class ERC20TokenService {
       });
       return erc20Tokens;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -48,7 +50,8 @@ class ERC20TokenService {
       });
       return erc20Tokens;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -60,7 +63,8 @@ class ERC20TokenService {
       });
       return erc20Tokens;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -72,7 +76,8 @@ class ERC20TokenService {
       });
       return erc20Tokens;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -93,7 +98,8 @@ class ERC20TokenService {
       })
       return category;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 }

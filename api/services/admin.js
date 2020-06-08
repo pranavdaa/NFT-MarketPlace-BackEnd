@@ -18,7 +18,8 @@ class AdminService {
             })
             return admin;
         } catch (err) {
-            throw err;
+            console.log(err)
+            throw new Error("Internal Server Error");
         }
     }
 
@@ -31,7 +32,8 @@ class AdminService {
             });
             return admin;
         } catch (err) {
-            throw err;
+            console.log(err)
+            throw new Error("Internal Server Error");
         }
     }
 }

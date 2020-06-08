@@ -18,7 +18,8 @@ class UserService {
       })
       return user;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -37,7 +38,8 @@ class UserService {
 
       return { users, limit, offset, has_next_page: hasNextPage({ limit, offset, count }) };
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -50,7 +52,8 @@ class UserService {
       });
       return user;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -64,7 +67,8 @@ class UserService {
       });
       return tokens;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -78,7 +82,8 @@ class UserService {
       });
       return orders;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -92,7 +97,8 @@ class UserService {
       });
       return orders;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -106,7 +112,8 @@ class UserService {
       });
       return bids;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -120,7 +127,8 @@ class UserService {
       });
       return favorites;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -142,7 +150,8 @@ class UserService {
       })
       return favorites;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -155,7 +164,8 @@ class UserService {
       });
       return users;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -171,7 +181,8 @@ class UserService {
       });
       return users;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -187,7 +198,8 @@ class UserService {
       });
       return users;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 }

@@ -26,7 +26,8 @@ class OrderService {
       })
       return order;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -48,7 +49,8 @@ class OrderService {
       })
       return order;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -71,7 +73,8 @@ class OrderService {
       })
       return order;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -101,7 +104,8 @@ class OrderService {
       })
       return order;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -127,7 +131,8 @@ class OrderService {
       })
       return order;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -140,7 +145,8 @@ class OrderService {
       })
       return order;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -156,7 +162,8 @@ class OrderService {
       })
       return order;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -186,7 +193,8 @@ class OrderService {
       })
       return order;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -209,7 +217,8 @@ class OrderService {
       })
       return bid;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -228,7 +237,8 @@ class OrderService {
       })
       return order;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 

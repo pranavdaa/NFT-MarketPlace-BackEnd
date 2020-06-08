@@ -24,7 +24,8 @@ class TokenService {
       })
       return token;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -34,7 +35,8 @@ class TokenService {
       let tokens = await prisma.tokens.findMany();
       return tokens;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -46,7 +48,8 @@ class TokenService {
       });
       return tokens;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -58,7 +61,8 @@ class TokenService {
       });
       return token;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -70,29 +74,10 @@ class TokenService {
       });
       return tokens;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
-
-  // async updateToken(params, file) {
-  //   console.log(params, file)
-
-  //   try {
-
-  //     let current = await this.getToken(params);
-
-  //     console.log('current', current)
-  //     let token = await prisma.tokens.update({
-  //       where: { AND: [{ id: parseInt(params.tokenId) }] },
-  //       data: {
-
-  //       }
-  //     })
-  //     return token;
-  //   } catch (err) {
-  //     throw err;
-  //   }
-  // }
 }
 
 module.exports = TokenService

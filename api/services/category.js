@@ -25,7 +25,8 @@ class CategoryService {
       })
       return category;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -36,7 +37,8 @@ class CategoryService {
       });
       return categories;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -48,7 +50,8 @@ class CategoryService {
       });
       return categories;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -60,7 +63,8 @@ class CategoryService {
       });
       return categories;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -72,7 +76,8 @@ class CategoryService {
       });
       return categories;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -85,7 +90,8 @@ class CategoryService {
       });
       return tokens.tokens;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 
@@ -107,7 +113,8 @@ class CategoryService {
       })
       return category;
     } catch (err) {
-      throw err;
+      console.log(err)
+      throw new Error("Internal Server Error");
     }
   }
 }
