@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
-const UserService = require('../services/userService')
-let userServiceInstance = new UserService();
+const adminService = require('../services/admin')
+let adminServiceInstance = new adminService();
 import config from '../../config/config'
 
 
@@ -15,11 +15,10 @@ async function verifyToken(req, res, next) {
         if (err) {
             return res.status(401).json({ message: 'Unauthorized access' });
         }
-        let user = await userServiceInstance.getUser(decoded);
-        if (!user) {
+        let admin = await adminServiceInstance.getAdmin(decoded);
+        if (!admin) {
             return res.status(401).json({ message: 'Unauthorized access' });
         }
-        req.userId = decoded.userId;
         next();
     });
 }

@@ -6,13 +6,13 @@ const prisma = new PrismaClient()
  * the erc20token Data object from the database
  */
 
-class Erc20tokenService {
+class ERC20TokenService {
 
-  async adderc20token(params) {
+  async addERC20Token(params) {
 
     try {
 
-      let erc20token = await prisma.erc20tokens.create({
+      let erc20Token = await prisma.erc20tokens.create({
         data: {
           name: params.name,
           decimal: parseInt(params.decimal),
@@ -22,61 +22,61 @@ class Erc20tokenService {
           }
         }
       })
-      return erc20token;
+      return erc20Token;
     } catch (err) {
       throw err;
     }
   }
 
-  async geterc20tokens() {
+  async getERC20Tokens() {
     try {
 
-      let erc20tokens = await prisma.erc20tokens.findMany({
+      let erc20Tokens = await prisma.erc20tokens.findMany({
         include: { erc20tokensaddresses: true }
       });
-      return erc20tokens;
+      return erc20Tokens;
     } catch (err) {
       throw err;
     }
   }
 
-  async erc20tokenExists(params) {
+  async erc20TokenExists(params) {
     try {
 
-      let erc20tokens = await prisma.erc20tokens.findOne({
+      let erc20Tokens = await prisma.erc20tokens.findOne({
         where: { symbol: params.symbol }
       });
-      return erc20tokens;
+      return erc20Tokens;
     } catch (err) {
       throw err;
     }
   }
 
-  async erc20tokenAddressExists(params) {
+  async erc20TokenAddressExists(params) {
     try {
 
-      let erc20tokens = await prisma.erc20tokensaddresses.findOne({
+      let erc20Tokens = await prisma.erc20tokensaddresses.findOne({
         where: { address: params.address }
       });
-      return erc20tokens;
+      return erc20Tokens;
     } catch (err) {
       throw err;
     }
   }
 
-  async geterc20token(params) {
+  async getERC20Token(params) {
     try {
 
-      let erc20tokens = await prisma.erc20tokens.findOne({
+      let erc20Tokens = await prisma.erc20tokens.findOne({
         where: { id: parseInt(params.id) }
       });
-      return erc20tokens;
+      return erc20Tokens;
     } catch (err) {
       throw err;
     }
   }
 
-  async updateerc20token(params) {
+  async updateERC20Token(params) {
 
     try {
 
@@ -98,5 +98,5 @@ class Erc20tokenService {
   }
 }
 
-module.exports = Erc20tokenService
+module.exports = ERC20TokenService
 

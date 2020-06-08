@@ -3,12 +3,11 @@ const router = express.Router({ mergeParams: true })
 const { check, validationResult } = require('express-validator');
 const jwt = require("jsonwebtoken");
 const auth = require('../utils/auth')
-const verifyToken = require('../middlewares/verifyToken')
-const UserService = require('../services/userService')
-let userServiceInstance = new UserService();
-const TokenService = require('../services/tokenService')
-let tokenServiceInstance = new TokenService();
-const upload = require('../utils/upload')
+const verifyToken = require('../middlewares/verify-token')
+const userService = require('../services/user')
+let userServiceInstance = new userService();
+const tokenService = require('../services/token')
+let tokenServiceInstance = new tokenService();
 import * as requestUtil from '../utils/request-utils'
 import config from '../../config/config'
 

@@ -1,11 +1,11 @@
 const express = require('express')
 const router = express.Router();
 const { check, validationResult } = require('express-validator');
-const CategoryService = require('../services/categoryService')
-let categoryServiceInstance = new CategoryService();
+const categoryService = require('../services/category')
+let categoryServiceInstance = new categoryService();
 const upload = require('../utils/upload')
 const validate = require('../utils/validate')
-const verifyToken = require('../middlewares/verifyToken')
+const verifyAdmin = require('../middlewares/verify-admin')
 
 /**
  * Category routes
@@ -20,7 +20,7 @@ const verifyToken = require('../middlewares/verifyToken')
  *  @param categoryImage type: file 
  */
 
-router.post('/', upload.single('categoryImage'), async (req, res) => {
+router.post('/', verifyAdmin, upload.single('categoryImage'), async (req, res) => {
 
   try {
 
@@ -60,7 +60,7 @@ router.post('/', upload.single('categoryImage'), async (req, res) => {
  *  Gets all the category details 
  */
 
-router.get('/', verifyToken, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
 
     let categories = await categoryServiceInstance.getCategories();
@@ -83,7 +83,7 @@ router.get('/', verifyToken, async (req, res) => {
 
 router.get('/:categoryId', [
   check('categoryId', 'A valid id is required').exists()
-], verifyToken, async (req, res) => {
+], async (req, res) => {
   try {
 
     const errors = validationResult(req);
@@ -111,7 +111,7 @@ router.get('/:categoryId', [
 
 router.get('/:categoryId/tokens', [
   check('categoryId', 'A valid id is required').exists()
-], verifyToken, async (req, res) => {
+], async (req, res) => {
   try {
 
     const errors = validationResult(req);
@@ -148,7 +148,7 @@ router.get('/:categoryId/tokens', [
  *  @params categoryImage type: File 
  */
 
-router.put('/:categoryId', upload.single('categoryImage'), async (req, res) => {
+router.put('/:categoryId', verifyAdmin, upload.single('categoryImage'), async (req, res) => {
 
   try {
 

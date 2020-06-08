@@ -1,12 +1,12 @@
 const express = require('express')
 const router = express.Router();
 const { check, validationResult } = require('express-validator');
-const TokenService = require('../services/tokenService')
-let tokenServiceInstance = new TokenService();
-const CategoryService = require('../services/categoryService')
-let categoryServiceInstance = new CategoryService();
+const tokenService = require('../services/token')
+let tokenServiceInstance = new tokenService();
+const categoryService = require('../services/category')
+let categoryServiceInstance = new categoryService();
 const upload = require('../utils/upload')
-const verifyToken = require('../middlewares/verifyToken')
+const verifyToken = require('../middlewares/verify-token')
 
 /**
  * Token routes
@@ -89,7 +89,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:tokenId', [
   check('tokenId', 'A valid id is required').exists()
-], verifyToken, async (req, res) => {
+], async (req, res) => {
   try {
 
     const errors = validationResult(req);

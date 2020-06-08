@@ -1,15 +1,15 @@
 const express = require('express')
 const router = express.Router();
 const { check, validationResult } = require('express-validator');
-const OrderService = require('../services/orderService')
-let orderServiceInstance = new OrderService();
-const Erc20tokenService = require('../services/erc20tokenService')
-let erc20tokenServiceInstance = new Erc20tokenService();
-const TokenService = require('../services/tokenService')
-let tokenServiceInstance = new TokenService();
-const CategoryService = require('../services/categoryService')
-let categoryServiceInstance = new CategoryService();
-const verifyToken = require('../middlewares/verifyToken')
+const orderService = require('../services/order')
+let orderServiceInstance = new orderService();
+const erc20tokenService = require('../services/erc20-token')
+let erc20tokenServiceInstance = new erc20tokenService();
+const tokenService = require('../services/token')
+let tokenServiceInstance = new tokenService();
+const categoryService = require('../services/category')
+let categoryServiceInstance = new categoryService();
+const verifyToken = require('../middlewares/verify-token')
 
 /**
  * Order routes
