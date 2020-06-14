@@ -111,7 +111,7 @@ router.post('/', [
  *  @params filter
  */
 
-router.get('/', verifyToken, [
+router.get('/', [
   check('categoryArray', 'A valid id is required').exists(),
   check('filter', 'A valid id is required').exists().isIn(['views', 'recent', 'pricehigh', 'pricelow']),
 ], async (req, res) => {
@@ -156,7 +156,7 @@ router.get('/', verifyToken, [
 
 router.get('/:orderId', [
   check('orderId', 'A valid id is required').exists()
-], verifyToken, async (req, res) => {
+], async (req, res) => {
   try {
 
     let order = await orderServiceInstance.getOrder(req.params);
