@@ -8,8 +8,8 @@ const userService = require('../services/user')
 let userServiceInstance = new userService();
 const tokenService = require('../services/token')
 let tokenServiceInstance = new tokenService();
-import * as requestUtil from '../utils/request-utils'
-import config from '../../config/config'
+let requestUtil = require('../utils/request-utils')
+let config = require('../../config/config')
 
 
 /**
@@ -73,7 +73,7 @@ router.post('/', [
  *  Gets all the user details 
  */
 
-router.get('/all', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     let limit = requestUtil.getLimit(req.query)
     let offset = requestUtil.getOffset(req.query)
@@ -82,7 +82,7 @@ router.get('/all', async (req, res) => {
 
     let data = await userServiceInstance.getUsers({ limit, offset, orderBy });
 
-    if (data.users.length > 0) {
+    if (data.users) {
       return res.status(200).json({ message: 'Users retrieved successfully', data: data })
     } else {
       return res.status(404).json({ message: 'No user found' })
@@ -99,10 +99,10 @@ router.get('/all', async (req, res) => {
  *  Gets single user detail 
  */
 
-router.get('/', verifyToken, async (req, res) => {
+router.get('/:userId', async (req, res) => {
   try {
 
-    let userId = req.userId;
+    let userId = req.params.userId;
 
     let users = await userServiceInstance.getUser({ userId });
     if (users) {
@@ -116,39 +116,17 @@ router.get('/', verifyToken, async (req, res) => {
   }
 })
 
-
-/**
- *  Gets users tokens
- */
-
-router.get('/tokens', verifyToken, async (req, res) => {
-  try {
-
-    let userId = req.userId;
-
-    let tokens = await userServiceInstance.getUsersTokens({ userId });
-    if (tokens.length > 0) {
-      return res.status(200).json({ message: 'User\'s tokens retrieved successfully', data: tokens })
-    } else {
-      return res.status(404).json({ message: 'User\'s tokens not found' })
-    }
-  } catch (err) {
-    console.log(err)
-    return res.status(500).json({ message: 'Internal Server error. Please try again!' })
-  }
-})
-
 /**
  *  Gets users token sell orders(maker order)
  */
 
-router.get('/makerorders', verifyToken, async (req, res) => {
+router.get('/:userId/makerorders', verifyToken, async (req, res) => {
   try {
 
-    let userId = req.userId;
+    let userId = req.params.userId;
 
     let orders = await userServiceInstance.getUsersMakerOrders({ userId });
-    if (orders.length > 0) {
+    if (orders) {
       return res.status(200).json({ message: 'User\'s orders retrieved successfully', data: orders })
     } else {
       return res.status(404).json({ message: 'User\'s orders not found' })
@@ -164,13 +142,13 @@ router.get('/makerorders', verifyToken, async (req, res) => {
  *  Gets users token buy orders(taker order)
  */
 
-router.get('/takerorders', verifyToken, async (req, res) => {
+router.get('/:userId/takerorders', async (req, res) => {
   try {
 
-    let userId = req.userId;
+    let userId = req.params.userId;
 
     let orders = await userServiceInstance.getUsersTakerOrders({ userId });
-    if (orders.length > 0) {
+    if (orders) {
       return res.status(200).json({ message: 'User\'s orders retrieved successfully', data: orders })
     } else {
       return res.status(404).json({ message: 'User\'s orders not found' })
@@ -186,13 +164,13 @@ router.get('/takerorders', verifyToken, async (req, res) => {
  *  Gets users bids on orders
  */
 
-router.get('/bids', verifyToken, async (req, res) => {
+router.get('/:userId/bids', async (req, res) => {
   try {
 
-    let userId = req.userId;
+    let userId = req.params.userId;
 
     let bids = await userServiceInstance.getUsersBids({ userId });
-    if (bids.length > 0) {
+    if (bids) {
       return res.status(200).json({ message: 'User\'s bids retrieved successfully', data: bids })
     } else {
       return res.status(404).json({ message: 'User\'s bids not found' })
@@ -205,18 +183,18 @@ router.get('/bids', verifyToken, async (req, res) => {
 })
 
 /**
- *  Gets users favorites tokens
+ *  Gets users favourites tokens
  */
-router.get('/favorites', verifyToken, async (req, res) => {
+router.get('/:userId/favourites', async (req, res) => {
   try {
 
-    let userId = req.userId;
+    let userId = req.params.userId;
 
-    let favorites = await userServiceInstance.getUsersFavorite({ userId });
-    if (favorites.length > 0) {
-      return res.status(200).json({ message: 'User\'s favorites retrieved successfully', data: favorites })
+    let favourites = await userServiceInstance.getUsersFavourite({ userId });
+    if (favourites) {
+      return res.status(200).json({ message: 'User\'s favourites retrieved successfully', data: favourites })
     } else {
-      return res.status(404).json({ message: 'Favorite tokens not found' })
+      return res.status(404).json({ message: 'Favourite tokens not found' })
     }
 
   } catch (err) {
@@ -226,11 +204,11 @@ router.get('/favorites', verifyToken, async (req, res) => {
 })
 
 /**
- *  Adds tokens to users favorites list
+ *  Adds tokens to users favourites list
  *  @params tokenId type: Integer 
  */
 
-router.post('/favorites', [
+router.post('/favourites', [
   check('tokenId', 'A valid token id is required').exists()
 ], verifyToken, async (req, res) => {
 
@@ -250,11 +228,11 @@ router.post('/favorites', [
       return res.status(400).json({ message: 'Token not found' })
     }
 
-    let favorites = await userServiceInstance.createUsersFavorite({ userId, tokenId });
-    if (favorites.length > 0) {
-      return res.status(200).json({ message: 'User\'s favorites added successfully', data: favorites })
+    let favourites = await userServiceInstance.createUsersFavourite({ userId, tokenId });
+    if (favourites.length > 0) {
+      return res.status(200).json({ message: 'User\'s favourites added successfully', data: favourites })
     } else {
-      return res.status(404).json({ message: 'User\'s favorites addition failed' })
+      return res.status(404).json({ message: 'User\'s favourites addition failed' })
     }
 
   } catch (err) {

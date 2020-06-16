@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const adminService = require('../services/admin')
 let adminServiceInstance = new adminService();
-import config from '../../config/config'
+let config = require('../../config/config')
 
 
 async function verifyToken(req, res, next) {

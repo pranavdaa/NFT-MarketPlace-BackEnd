@@ -1,4 +1,4 @@
-import config from '../../config/config'
+let config = require('../../config/config')
 const adminService = require('../services/admin')
 const bcrypt = require("bcryptjs");
 let adminServiceInstance = new adminService();

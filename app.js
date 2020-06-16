@@ -2,6 +2,7 @@ const express = require('express');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const config = require('./config/config')
 const routeV1 = require('./api/v1/')
 
 /**
@@ -13,7 +14,11 @@ var app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use('/public', express.static('public'));
-app.use(morgan('dev'))
+
+if (config.NODE_ENV !== 'test') {
+    app.use(morgan('dev'))
+}
+
 app.use(cors())
 
 app.use('/api/v1', routeV1)

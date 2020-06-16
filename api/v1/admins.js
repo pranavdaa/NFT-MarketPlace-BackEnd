@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const adminService = require('../services/admin')
 let adminServiceInstance = new adminService();
-import config from '../../config/config'
+let config = require('../../config/config')
 
 
 /**
@@ -19,8 +19,8 @@ import config from '../../config/config'
  */
 
 router.post('/login', [
-    check('username', 'A valid username is required').exists(),
-    check('password', 'A valid password is required').exists()
+    // check('username', 'A valid username is required').exists(),
+    // check('password', 'A valid password is required').exists()
 ],
     async (req, res) => {
         try {

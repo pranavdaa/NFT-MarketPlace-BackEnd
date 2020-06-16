@@ -1,6 +1,6 @@
 const { PrismaClient } = require("@prisma/client")
 const prisma = new PrismaClient()
-import { hasNextPage } from '../utils/helper.js'
+let { hasNextPage } = require('../utils/helper.js')
 
 /**
  * Includes all the User services that controls
@@ -117,24 +117,24 @@ class UserService {
     }
   }
 
-  async getUsersFavorite(params) {
+  async getUsersFavourite(params) {
     try {
-      let favorites = await prisma.users.findOne({
+      let favourites = await prisma.users.findOne({
         where: {
           id: parseInt(params.userId)
         },
-        select: { favorites: true }
+        select: { favourites: true }
       });
-      return favorites;
+      return favourites;
     } catch (err) {
       console.log(err)
       throw new Error("Internal Server Error");
     }
   }
 
-  async createUsersFavorite(params) {
+  async createUsersFavourite(params) {
     try {
-      let favorites = await prisma.favorites.create({
+      let favourites = await prisma.favourites.create({
         data: {
           users: {
             connect: {
@@ -148,7 +148,7 @@ class UserService {
           }
         }
       })
-      return favorites;
+      return favourites;
     } catch (err) {
       console.log(err)
       throw new Error("Internal Server Error");

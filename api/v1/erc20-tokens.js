@@ -39,7 +39,7 @@ router.post('/', [
       return res.status(400).json({ message: 'input validation failed' })
     }
 
-    let erc20TokenExists = await erc20TokenServiceInstance.erc20RTokenExists(req.body)
+    let erc20TokenExists = await erc20TokenServiceInstance.erc20TokenExists(req.body)
 
     if (erc20TokenExists) {
       return res.status(200).json({ message: 'erc20token already exists', data: erc20TokenExists })
