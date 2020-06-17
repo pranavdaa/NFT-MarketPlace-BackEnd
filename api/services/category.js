@@ -1,5 +1,6 @@
 const { PrismaClient } = require("@prisma/client")
 const prisma = new PrismaClient()
+let { hasNextPage } = require('../utils/helper.js')
 
 /**
  * Includes all the Category services that controls
@@ -30,12 +31,21 @@ class CategoryService {
     }
   }
 
-  async getCategories() {
+  async getCategories({ limit, offset, orderBy }) {
     try {
+
+      let where = {
+        active: true
+      }
+
+      let count = await prisma.categories.count({ where })
       let categories = await prisma.categories.findMany({
+        where,
+        orderBy,
+        take: limit, skip: offset,
         include: { categoriesaddresses: true }
       });
-      return categories;
+      return { categories, limit, offset, has_next_page: hasNextPage({ limit, offset, count }) };
     } catch (err) {
       console.log(err)
       throw new Error("Internal Server Error");
@@ -75,20 +85,6 @@ class CategoryService {
         where: { id: parseInt(params.categoryId) }
       });
       return categories;
-    } catch (err) {
-      console.log(err)
-      throw new Error("Internal Server Error");
-    }
-  }
-
-  async getTokensFromCategory(params) {
-    try {
-
-      let tokens = await prisma.categories.findOne({
-        select: { tokens: true },
-        where: { id: parseInt(params.categoryId) },
-      });
-      return tokens.tokens;
     } catch (err) {
       console.log(err)
       throw new Error("Internal Server Error");

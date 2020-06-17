@@ -7,7 +7,7 @@
     "test": "mocha",
     "migrate-save": "npx prisma migrate save --experimental",
     "migrate-up": "npx prisma migrate up --experimental && npx prisma generate",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js --quiet"
   },
   "repository": {
     "type": "git",

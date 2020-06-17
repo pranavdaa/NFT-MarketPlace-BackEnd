@@ -1,0 +1,93 @@
+{
+  "version": "0.3.14-fixed",
+  "steps": [
+    {
+      "tag": "DeleteModel",
+      "model": "tokens"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "categories",
+      "field": "tokens"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "orders",
+      "field": "tokens"
+    },
+    {
+      "tag": "UpdateField",
+      "model": "orders",
+      "field": "tokens_id",
+      "type": "String"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "users",
+      "field": "tokens"
+    },
+    {
+      "tag": "CreateField",
+      "model": "favourites",
+      "field": "order_id",
+      "type": "Int",
+      "arity": "Required"
+    },
+    {
+      "tag": "CreateField",
+      "model": "favourites",
+      "field": "orders",
+      "type": "orders",
+      "arity": "Required"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "favourites",
+          "field": "orders"
+        },
+        "directive": "relation"
+      }
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "favourites",
+          "field": "orders"
+        },
+        "directive": "relation"
+      },
+      "argument": "fields",
+      "value": "[order_id]"
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "favourites",
+          "field": "orders"
+        },
+        "directive": "relation"
+      },
+      "argument": "references",
+      "value": "[id]"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "favourites",
+      "field": "tokens_id"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "favourites",
+      "field": "tokens"
+    }
+  ]
+}

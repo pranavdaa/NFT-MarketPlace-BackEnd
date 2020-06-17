@@ -6,8 +6,8 @@ const auth = require('../utils/auth')
 const verifyToken = require('../middlewares/verify-token')
 const userService = require('../services/user')
 let userServiceInstance = new userService();
-const tokenService = require('../services/token')
-let tokenServiceInstance = new tokenService();
+const orderService = require('../services/order')
+let orderServiceInstance = new orderService();
 let requestUtil = require('../utils/request-utils')
 let config = require('../../config/config')
 
@@ -77,7 +77,6 @@ router.get('/', async (req, res) => {
   try {
     let limit = requestUtil.getLimit(req.query)
     let offset = requestUtil.getOffset(req.query)
-
     let orderBy = requestUtil.getSortBy(req.query, '+id')
 
     let data = await userServiceInstance.getUsers({ limit, offset, orderBy });
@@ -117,15 +116,19 @@ router.get('/:userId', async (req, res) => {
 })
 
 /**
- *  Gets users token sell orders(maker order)
+ *  Gets users sell orders(maker order)
  */
 
-router.get('/:userId/makerorders', verifyToken, async (req, res) => {
+router.get('/:userId/makerorders', async (req, res) => {
   try {
 
     let userId = req.params.userId;
 
-    let orders = await userServiceInstance.getUsersMakerOrders({ userId });
+    let limit = requestUtil.getLimit(req.query)
+    let offset = requestUtil.getOffset(req.query)
+    let orderBy = requestUtil.getSortBy(req.query, '+id')
+
+    let orders = await userServiceInstance.getUsersMakerOrders({ userId, limit, offset, orderBy });
     if (orders) {
       return res.status(200).json({ message: 'User\'s orders retrieved successfully', data: orders })
     } else {
@@ -139,7 +142,7 @@ router.get('/:userId/makerorders', verifyToken, async (req, res) => {
 })
 
 /**
- *  Gets users token buy orders(taker order)
+ *  Gets users buy orders(taker order)
  */
 
 router.get('/:userId/takerorders', async (req, res) => {
@@ -147,7 +150,11 @@ router.get('/:userId/takerorders', async (req, res) => {
 
     let userId = req.params.userId;
 
-    let orders = await userServiceInstance.getUsersTakerOrders({ userId });
+    let limit = requestUtil.getLimit(req.query)
+    let offset = requestUtil.getOffset(req.query)
+    let orderBy = requestUtil.getSortBy(req.query, '+id')
+
+    let orders = await userServiceInstance.getUsersTakerOrders({ userId, limit, offset, orderBy });
     if (orders) {
       return res.status(200).json({ message: 'User\'s orders retrieved successfully', data: orders })
     } else {
@@ -169,7 +176,11 @@ router.get('/:userId/bids', async (req, res) => {
 
     let userId = req.params.userId;
 
-    let bids = await userServiceInstance.getUsersBids({ userId });
+    let limit = requestUtil.getLimit(req.query)
+    let offset = requestUtil.getOffset(req.query)
+    let orderBy = requestUtil.getSortBy(req.query, '+id')
+
+    let bids = await userServiceInstance.getUsersBids({ userId, limit, offset, orderBy });
     if (bids) {
       return res.status(200).json({ message: 'User\'s bids retrieved successfully', data: bids })
     } else {
@@ -183,18 +194,35 @@ router.get('/:userId/bids', async (req, res) => {
 })
 
 /**
- *  Gets users favourites tokens
+ *  Adds order to users favourites list
+ *  @params orderId type: Integer 
  */
-router.get('/:userId/favourites', async (req, res) => {
+
+router.post('/favourites', [
+  check('orderId', 'A valid order id is required').exists()
+], verifyToken, async (req, res) => {
+
   try {
 
-    let userId = req.params.userId;
+    let userId = req.userId;
 
-    let favourites = await userServiceInstance.getUsersFavourite({ userId });
+    let { orderId } = req.body;
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: errors.array() });
+    }
+
+    let order = await orderServiceInstance.getOrder({ orderId });
+    if (!order) {
+      return res.status(400).json({ message: 'Order not found' })
+    }
+
+    let favourites = await userServiceInstance.createUsersFavourite({ userId, orderId });
     if (favourites) {
-      return res.status(200).json({ message: 'User\'s favourites retrieved successfully', data: favourites })
+      return res.status(200).json({ message: 'User\'s favourites added successfully', data: favourites })
     } else {
-      return res.status(404).json({ message: 'Favourite tokens not found' })
+      return res.status(404).json({ message: 'User\'s favourites addition failed' })
     }
 
   } catch (err) {
@@ -204,35 +232,22 @@ router.get('/:userId/favourites', async (req, res) => {
 })
 
 /**
- *  Adds tokens to users favourites list
- *  @params tokenId type: Integer 
+ *  Gets users favourites orders
  */
-
-router.post('/favourites', [
-  check('tokenId', 'A valid token id is required').exists()
-], verifyToken, async (req, res) => {
-
+router.get('/:userId/favourites', async (req, res) => {
   try {
 
-    let userId = req.userId;
+    let userId = req.params.userId;
 
-    let { tokenId } = req.body;
+    let limit = requestUtil.getLimit(req.query)
+    let offset = requestUtil.getOffset(req.query)
+    let orderBy = requestUtil.getSortBy(req.query, '+id')
 
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ error: errors.array() });
-    }
-
-    let token = await tokenServiceInstance.getToken({ tokenId });
-    if (!token) {
-      return res.status(400).json({ message: 'Token not found' })
-    }
-
-    let favourites = await userServiceInstance.createUsersFavourite({ userId, tokenId });
-    if (favourites.length > 0) {
-      return res.status(200).json({ message: 'User\'s favourites added successfully', data: favourites })
+    let favourites = await userServiceInstance.getUsersFavourite({ userId, limit, offset, orderBy });
+    if (favourites) {
+      return res.status(200).json({ message: 'User\'s favourites retrieved successfully', data: favourites })
     } else {
-      return res.status(404).json({ message: 'User\'s favourites addition failed' })
+      return res.status(404).json({ message: 'Favourite orders not found' })
     }
 
   } catch (err) {

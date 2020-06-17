@@ -6,6 +6,7 @@ let categoryServiceInstance = new categoryService();
 const upload = require('../utils/upload')
 const validate = require('../utils/validate')
 const verifyAdmin = require('../middlewares/verify-admin')
+let requestUtil = require('../utils/request-utils')
 
 /**
  * Category routes
@@ -63,7 +64,11 @@ router.post('/', verifyAdmin, upload.single('categoryImage'), async (req, res) =
 router.get('/', async (req, res) => {
   try {
 
-    let categories = await categoryServiceInstance.getCategories();
+    let limit = requestUtil.getLimit(req.query)
+    let offset = requestUtil.getOffset(req.query)
+    let orderBy = requestUtil.getSortBy(req.query, '+id')
+
+    let categories = await categoryServiceInstance.getCategories({ limit, offset, orderBy });
     if (categories) {
       return res.status(200).json({ message: 'categories retrieved successfully', data: categories })
     } else {
@@ -97,41 +102,6 @@ router.get('/:categoryId', [
       return res.status(200).json({ message: 'Category retrieved successfully', data: category })
     } else {
       return res.status(400).json({ message: 'Category doesnt exist' })
-    }
-  } catch (err) {
-    console.log(err)
-    return res.status(500).json({ message: 'Internal Server error.Please try again' })
-  }
-})
-
-/**
- *  Gets tokens that belong to a category 
- *  @param id type: integer
- */
-
-router.get('/:categoryId/tokens', [
-  check('categoryId', 'A valid id is required').exists()
-], async (req, res) => {
-  try {
-
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ error: errors.array() });
-    }
-
-    let category = await categoryServiceInstance.getCategory(req.params)
-
-    if (!category) {
-      return res.status(400).json({ message: 'Category doesnt exist' })
-    }
-
-    let tokens = await categoryServiceInstance.getTokensFromCategory(req.params);
-
-    if (tokens.length > 0) {
-      return res.status(200).json({ message: 'Tokens retrieved successfully', data: tokens })
-    } else {
-      return res.status(400).json({ message: 'No tokens belong to this category' })
     }
   } catch (err) {
     console.log(err)

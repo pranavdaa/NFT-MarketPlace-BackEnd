@@ -1,5 +1,6 @@
 const { PrismaClient } = require("@prisma/client")
 const prisma = new PrismaClient()
+let { hasNextPage } = require('../utils/helper.js')
 
 /**
  * Includes all the Order services that controls
@@ -9,12 +10,13 @@ const prisma = new PrismaClient()
 class OrderService {
 
   async placeFixedOrder(params) {
+
     try {
       let order = await prisma.orders.create({
         data: {
           maker_users: { connect: { id: parseInt(params.maker_address) } },
           categories: { connect: { id: parseInt(params.maker_token) } },
-          tokens: { connect: { id: parseInt(params.maker_token_id) } },
+          tokens_id: params.maker_token_id,
           price: params.price,
           min_price: params.price,
           taker_amount: params.price,
@@ -38,7 +40,7 @@ class OrderService {
         data: {
           maker_users: { connect: { id: parseInt(params.maker_address) } },
           categories: { connect: { id: parseInt(params.maker_token) } },
-          tokens: { connect: { id: parseInt(params.maker_token_id) } },
+          tokens_id: params.maker_token_id,
           min_price: params.min_price,
           price: params.price,
           signature: params.signature,
@@ -62,7 +64,7 @@ class OrderService {
           expiry_date: new Date(parseInt(params.expiry_date)),
           maker_users: { connect: { id: parseInt(params.maker_address) } },
           categories: { connect: { id: parseInt(params.maker_token) } },
-          tokens: { connect: { id: parseInt(params.maker_token_id) } },
+          tokens_id: params.maker_token_id,
           min_price: params.min_price,
           price: params.min_price,
           signature: params.signature,
@@ -78,15 +80,20 @@ class OrderService {
     }
   }
 
-  async getOrders(params) {
+  async getOrders({ categoryArray, limit, offset, orderBy }) {
     try {
+
+      let where = {
+        AND: [
+          { active: true },
+          { status: 0 },
+          { categories_id: { in: JSON.parse(categoryArray) } },
+        ]
+      };
+
+      let count = await prisma.orders.count({ where })
       let order = await prisma.orders.findMany({
-        where: {
-          AND: [
-            { status: 0 },
-            { categories_id: { in: JSON.parse(params.categoryArray) } },
-          ]
-        },
+        where,
         select: {
           id: true,
           created: true,
@@ -95,14 +102,15 @@ class OrderService {
           status: true,
           type: true,
           categories: true,
-          tokens: true,
+          tokens_id: true,
           erc20tokens: true,
           views: true,
           bids: true
         },
-        orderBy: params.filter
+        orderBy,
+        take: limit, skip: offset,
       })
-      return order;
+      return { order, limit, offset, has_next_page: hasNextPage({ limit, offset, count }) };
     } catch (err) {
       console.log(err)
       throw new Error("Internal Server Error");
@@ -123,7 +131,7 @@ class OrderService {
           status: true,
           type: true,
           categories: true,
-          tokens: true,
+          tokens_id: true,
           erc20tokens: true,
           views: true,
           bids: true

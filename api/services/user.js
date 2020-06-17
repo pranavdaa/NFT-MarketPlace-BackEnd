@@ -57,75 +57,103 @@ class UserService {
     }
   }
 
-  async getUsersTokens(params) {
+  async getUsersMakerOrders({ userId, limit, offset, orderBy }) {
     try {
-      let tokens = await prisma.users.findOne({
-        where: {
-          id: parseInt(params.userId)
-        },
-        select: { tokens: true }
-      });
-      return tokens;
-    } catch (err) {
-      console.log(err)
-      throw new Error("Internal Server Error");
-    }
-  }
 
-  async getUsersMakerOrders(params) {
-    try {
+      let count = await prisma.orders.count({ where: { AND: [{ maker_address: parseInt(userId) }, { active: true }] } })
       let orders = await prisma.users.findMany({
         where: {
-          id: parseInt(params.userId)
+          id: parseInt(userId)
         },
-        select: { maker_orders: true }
+        select: {
+          maker_orders: {
+            where: {
+              active: true
+            },
+            orderBy,
+            take: limit, skip: offset
+          }
+        },
+
       });
-      return orders;
+
+      return { orders, limit, offset, has_next_page: hasNextPage({ limit, offset, count }) };
     } catch (err) {
       console.log(err)
       throw new Error("Internal Server Error");
     }
   }
 
-  async getUsersTakerOrders(params) {
+  async getUsersTakerOrders({ userId, limit, offset, orderBy }) {
     try {
-      let orders = await prisma.users.findOne({
+
+      let count = await prisma.orders.count({ where: { AND: [{ taker_address: parseInt(userId) }, { active: true }] } })
+      let orders = await prisma.users.findMany({
         where: {
-          id: parseInt(params.userId)
+          id: parseInt(userId)
         },
-        select: { taker_orders: true }
+        select: {
+          taker_orders: {
+            where: {
+              active: true
+            },
+            orderBy,
+            take: limit, skip: offset
+          }
+        },
+
       });
-      return orders;
+
+      return { orders, limit, offset, has_next_page: hasNextPage({ limit, offset, count }) };
     } catch (err) {
       console.log(err)
       throw new Error("Internal Server Error");
     }
   }
 
-  async getUsersBids(params) {
+  async getUsersBids({ userId, limit, offset, orderBy }) {
     try {
+      let count = await prisma.bids.count({ where: { AND: [{ users_id: parseInt(userId) }, { active: true }] } })
       let bids = await prisma.users.findMany({
         where: {
-          id: parseInt(params.userId),
+          id: parseInt(userId)
         },
-        select: { bids: true }
+        select: {
+          bids: {
+            where: {
+              active: true
+            },
+            orderBy,
+            take: limit, skip: offset
+          }
+        },
+
       });
-      return bids;
+
+      return { bids, limit, offset, has_next_page: hasNextPage({ limit, offset, count }) };
     } catch (err) {
       console.log(err)
       throw new Error("Internal Server Error");
     }
   }
 
-  async getUsersFavourite(params) {
+  async getUsersFavourite({ userId, limit, offset, orderBy }) {
     try {
-      let favourites = await prisma.users.findOne({
+      let count = await prisma.favourites.count({ where: { AND: [{ users_id: parseInt(userId) }] } })
+      let favourites = await prisma.users.findMany({
         where: {
-          id: parseInt(params.userId)
+          id: parseInt(userId)
         },
-        select: { favourites: true }
+        select: {
+          favourites: {
+            orderBy,
+            take: limit, skip: offset
+          }
+        },
+
       });
-      return favourites;
+
+      return { favourites, limit, offset, has_next_page: hasNextPage({ limit, offset, count }) };
     } catch (err) {
       console.log(err)
       throw new Error("Internal Server Error");
@@ -141,9 +169,9 @@ class UserService {
               id: parseInt(params.userId)
             }
           },
-          tokens: {
+          orders: {
             connect: {
-              id: parseInt(params.tokenId)
+              id: parseInt(params.orderId)
             }
           }
         }

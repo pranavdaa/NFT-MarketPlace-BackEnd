@@ -1,5 +1,6 @@
 const { PrismaClient } = require("@prisma/client")
 const prisma = new PrismaClient()
+let { hasNextPage } = require('../utils/helper.js')
 
 /**
  * Includes all the erc20token services that controls
@@ -29,13 +30,21 @@ class ERC20TokenService {
     }
   }
 
-  async getERC20Tokens() {
+  async getERC20Tokens({ limit, offset, orderBy }) {
     try {
 
+      let where = {
+        active: true
+      }
+
+      let count = await prisma.erc20tokens.count({ where })
       let erc20Tokens = await prisma.erc20tokens.findMany({
+        where,
+        orderBy,
+        take: limit, skip: offset,
         include: { erc20tokensaddresses: true }
       });
-      return erc20Tokens;
+      return { erc20Tokens, limit, offset, has_next_page: hasNextPage({ limit, offset, count }) };
     } catch (err) {
       console.log(err)
       throw new Error("Internal Server Error");

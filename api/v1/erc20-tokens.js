@@ -5,6 +5,7 @@ const erc20TokenService = require('../services/erc20-token')
 let erc20TokenServiceInstance = new erc20TokenService();
 const validate = require('../utils/validate')
 const verifyAdmin = require('../middlewares/verify-admin')
+let requestUtil = require('../utils/request-utils')
 
 /**
  * erc20token routes
@@ -72,7 +73,11 @@ router.post('/', [
 router.get('/', async (req, res) => {
   try {
 
-    let erc20Tokens = await erc20TokenServiceInstance.getERC20Tokens();
+    let limit = requestUtil.getLimit(req.query)
+    let offset = requestUtil.getOffset(req.query)
+    let orderBy = requestUtil.getSortBy(req.query, '+id')
+
+    let erc20Tokens = await erc20TokenServiceInstance.getERC20Tokens({ limit, offset, orderBy });
     if (erc20Tokens) {
       return res.status(200).json({ message: 'erc20tokens retrieved successfully', data: erc20Tokens })
     } else {

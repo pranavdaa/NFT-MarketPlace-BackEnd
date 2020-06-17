@@ -3,13 +3,12 @@ const router = express.Router();
 const { check, validationResult } = require('express-validator');
 const orderService = require('../services/order')
 let orderServiceInstance = new orderService();
-const erc20tokenService = require('../services/erc20-token')
-let erc20tokenServiceInstance = new erc20tokenService();
-const tokenService = require('../services/token')
-let tokenServiceInstance = new tokenService();
+const erc20TokenService = require('../services/erc20-token')
+let erc20TokenServiceInstance = new erc20TokenService();
 const categoryService = require('../services/category')
 let categoryServiceInstance = new categoryService();
 const verifyToken = require('../middlewares/verify-token')
+let requestUtil = require('../utils/request-utils')
 
 /**
  * Order routes
@@ -18,7 +17,7 @@ const verifyToken = require('../middlewares/verify-token')
 /**
  *  Create a new order
  *  @params maker_token type: Integer
- *  @params maker_token_id type: Integer
+ *  @params maker_token_id type: String
  *  @params taker_token type: Integer
  *  @params signature type: String
  *  @params type type: String
@@ -55,13 +54,7 @@ router.post('/', [
       return res.status(400).json({ message: 'Invalid Category' })
     }
 
-    let token = await tokenServiceInstance.getToken({ tokenId: maker_token_id })
-
-    if (!token) {
-      return res.status(400).json({ message: 'Invalid Token' })
-    }
-
-    let erc20token = await erc20tokenServiceInstance.geterc20token({ id: taker_token })
+    let erc20token = await erc20TokenServiceInstance.getERC20Token({ id: taker_token })
 
     if (!erc20token) {
       return res.status(200).json({ message: 'Invalid Token' })
@@ -111,34 +104,19 @@ router.post('/', [
  *  @params filter
  */
 
-router.get('/', verifyToken, [
+router.get('/', [
   check('categoryArray', 'A valid id is required').exists(),
-  check('filter', 'A valid id is required').exists().isIn(['views', 'recent', 'pricehigh', 'pricelow']),
 ], async (req, res) => {
   try {
 
-    let params = req.query;
+    let limit = requestUtil.getLimit(req.query)
+    let offset = requestUtil.getOffset(req.query)
+    let orderBy = requestUtil.getSortBy(req.query, '+id')
 
-    switch (params.filter) {
-      case 'views': {
-        params.filter = { views: "desc" }
-        break;
-      }
-      case 'recent': {
-        params.filter = { created: "desc" }
-      }
-      case 'pricehigh': {
-        params.filter = { price: "desc" }
-        break;
-      }
-      case 'pricelow': {
-        params.filter = { price: "asc" }
-      }
-    }
+    let { categoryArray } = req.query;
 
-
-    let orders = await orderServiceInstance.getOrders(params);
-    if (orders.length > 0) {
+    let orders = await orderServiceInstance.getOrders({ categoryArray, limit, offset, orderBy });
+    if (orders) {
       return res.status(200).json({ message: 'Orders retrieved successfully', data: orders })
     } else {
       return res.status(400).json({ message: 'Orders do not exist' })
@@ -156,7 +134,7 @@ router.get('/', verifyToken, [
 
 router.get('/:orderId', [
   check('orderId', 'A valid id is required').exists()
-], verifyToken, async (req, res) => {
+], async (req, res) => {
   try {
 
     let order = await orderServiceInstance.getOrder(req.params);
@@ -286,7 +264,7 @@ router.patch('/bid/:bidId/cancel', [
 })
 
 /**
- *  Buy order
+ *  Execute order
  *  @params orderId type: int
  *  @params maker_token type: int
  *  @params bid type: string
