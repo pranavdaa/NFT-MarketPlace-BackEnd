@@ -86,7 +86,7 @@ router.post('/', [
       }
     }
     if (orderAdd) {
-      return res.status(200).json({ message: 'Sell Order addedd successfully', data: orderAdd.id })
+      return res.status(200).json({ message: 'Sell Order addedd successfully', data: orderAdd })
     } else {
       return res.status(400).json({ message: 'Sell Order creation failed' })
     }

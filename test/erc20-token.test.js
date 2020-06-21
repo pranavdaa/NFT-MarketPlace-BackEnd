@@ -41,9 +41,10 @@ describe('ERC20 Token', async () => {
             chai.request(server)
                 .get('/api/v1/erc20tokens')
                 .end((err, res) => {
+
                     res.should.have.status(200);
-                    res.body.data.should.be.a('array');
-                    res.body.data.length.should.be.eql(0);
+                    res.body.data.erc20Tokens.should.be.a('array');
+                    res.body.data.erc20Tokens.length.should.be.eql(0);
                     done();
                 });
         });

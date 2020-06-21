@@ -19,8 +19,8 @@ let config = require('../../config/config')
  */
 
 router.post('/login', [
-    // check('username', 'A valid username is required').exists(),
-    // check('password', 'A valid password is required').exists()
+    check('username', 'A valid username is required').exists(),
+    check('password', 'A valid password is required').exists()
 ],
     async (req, res) => {
         try {

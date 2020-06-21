@@ -43,8 +43,8 @@ describe('Category', async () => {
                 .get('/api/v1/categories')
                 .end((err, res) => {
                     res.should.have.status(200);
-                    res.body.data.should.be.a('array');
-                    res.body.data.length.should.be.eql(0);
+                    res.body.data.categories.should.be.a('array');
+                    res.body.data.categories.length.should.be.eql(0);
                     done();
                 });
         });
