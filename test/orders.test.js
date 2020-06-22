@@ -4,8 +4,9 @@ let chai = require('chai');
 let chaiHttp = require('chai-http');
 let server = require('../server');
 let should = chai.should();
+let config = require('../config/config')
 
-const { PrismaClient } = require("@prisma/client")
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient()
 
 let auth_token;
@@ -15,12 +16,14 @@ let erc20Token_id;
 
 chai.use(chaiHttp);
 
+let user_params = {
+    address: config.address,
+    signature: config.signature,
+}
+
 let initUser = () => {
     return new Promise((resolve, reject) => {
-        let user = {
-            address: "0xF962EEfD71d9cf4581E9004fa1EdEaA8f7d0aA12",
-            signature: "0x33a436f974657480ea4b5e96e22d63231f93c863bcb558bef6b1d5657f2b9a9806532336b9a489c31d7ff1c5d2667b1a86490ad34ce7b127ea1690d0da3433b71b",
-        }
+        let user = user_params
         chai.request(server)
             .post('/api/v1/users/')
             .send(user)
@@ -38,8 +41,8 @@ let initAdmin = async () => {
 
     return new Promise((resolve, reject) => {
         let admin = {
-            username: "admin",
-            password: "Admin1234",
+            username: config.admin_username,
+            password: config.admin_password,
         }
         chai.request(server)
             .post('/api/v1/admins/login')
@@ -158,6 +161,7 @@ describe('Order', async () => {
                         chai.request(server)
                             .get('/api/v1/orders/' + order_id)
                             .then((res) => {
+
                                 res.should.have.status(200);
                                 res.body.should.be.a('object');
                                 resolve();
@@ -182,6 +186,53 @@ describe('Order', async () => {
                     done();
                 });
         });
+    });
+
+    describe('/PATCH orders', () => {
+        it('it should create new buy order', () => {
+
+            return new Promise(async (resolve, reject) => {
+                await initUser();
+                await initAdmin();
+                await initCategory();
+                await initERC20Token();
+
+                let order = {
+                    maker_token_id: "0x4fc2FC9AC135978604273B3B8A730B1b48b86d14",
+                    type: "NEGOTIATION",
+                    signature: "0xa7b12275580a5352d2a09c28799c2a4cf8b1703a0a2e33fa134e115f06a25fdb7bf4eeeb1d972e40aed39e7f692aa8dddee8e49483ada4913ccfb6537f1cc56a1b",
+                    taker_token: erc20Token_id,
+                    price: "50",
+                    min_price: "15",
+                    expiry_date: "1590251406000",
+                    chain_id: "1",
+                    maker_token: category_id
+                }
+
+                chai.request(server)
+                    .post('/api/v1/orders/')
+                    .set('Authorization', auth_token)
+                    .send(order)
+                    .then((res) => {
+
+                        resolve()
+
+                        let order_id = res.body.data.id
+                        chai.request(server)
+                            .patch('/api/v1/orders/' + order_id + '/buy')
+                            .set('Authorization', auth_token)
+                            .send({ bid: "18" })
+                            .then((res) => {
+
+                                res.should.have.status(200);
+                                res.body.should.be.a('object');
+                                resolve();
+                            })
+                    }).catch((err => {
+                        reject(err)
+                    }))
+            });
+        })
     });
 
 });

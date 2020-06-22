@@ -25,5 +25,7 @@ module.exports = {
     port: process.env.PORT,
     admin_username: process.env.admin_username,
     admin_password: process.env.admin_password,
-    NODE_ENV: process.env.NODE_ENV
+    NODE_ENV: process.env.NODE_ENV,
+    address: process.env.address,
+    signature: process.env.signature
 }

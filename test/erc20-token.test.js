@@ -4,6 +4,7 @@ let chai = require('chai');
 let chaiHttp = require('chai-http');
 let server = require('../server');
 let should = chai.should();
+let config = require('../config/config')
 
 const { PrismaClient } = require("@prisma/client")
 const prisma = new PrismaClient()
@@ -12,19 +13,34 @@ let auth_token;
 
 chai.use(chaiHttp);
 
+let params = {
+    name: "xyz",
+    symbol: "XY",
+    decimal: "18",
+    address: [{ "chain_id": "1", "address": "0x0e3a2a1f2146d86a604adc220b4967a898d7fe07" }, { "chain_id": "2", "address": "0x4ef40d1bf0983899892946830abf99eca2dbc5ce" }]
+}
+
 describe('ERC20 Token', async () => {
 
     beforeEach((done) => { //Before each test we empty the database
-        prisma.erc20tokensaddresses.deleteMany().then(() => {
-            prisma.erc20tokens.deleteMany().then(() => {
-                done();
+        prisma.bids.deleteMany().then(() => {
+            prisma.orders.deleteMany().then(() => {
+                prisma.categoriesaddresses.deleteMany().then(() => {
+                    prisma.categories.deleteMany().then(() => {
+                        prisma.erc20tokensaddresses.deleteMany().then(() => {
+                            prisma.erc20tokens.deleteMany().then(() => {
+                                done();
+                            })
+                        })
+                    })
+                })
             })
         })
     });
 
     let admin = {
-        username: "admin",
-        password: "Admin1234",
+        username: config.admin_username,
+        password: config.admin_password,
     }
     chai.request(server)
         .post('/api/v1/admins/login')
@@ -53,10 +69,10 @@ describe('ERC20 Token', async () => {
     describe('/POST create erc20token', () => {
         it('it should create a erc20token', (done) => {
             let category = {
-                name: "xyz",
-                symbol: "XY",
-                decimal: "10",
-                address: JSON.stringify([{ "chain_id": "1", "address": "0x0e3a2a1f2146d86a604adc220b4967a898d7fe07" }, { "chain_id": "2", "address": "0x4ef40d1bf0983899892946830abf99eca2dbc5ce" }])
+                name: params.name,
+                symbol: params.symbol,
+                decimal: params.decimal,
+                address: JSON.stringify(params.address)
             }
             chai.request(server)
                 .post('/api/v1/erc20tokens/')
@@ -76,10 +92,10 @@ describe('ERC20 Token', async () => {
         it('it should GET single erc20token', (done) => {
 
             let category = {
-                name: "xyz",
-                symbol: "XY",
-                decimal: "10",
-                address: JSON.stringify([{ "chain_id": "1", "address": "0x0e3a2a1f2146d86a604adc220b4967a898d7fe07" }, { "chain_id": "2", "address": "0x4ef40d1bf0983899892946830abf99eca2dbc5ce" }])
+                name: params.name,
+                symbol: params.symbol,
+                decimal: params.decimal,
+                address: JSON.stringify(params.address)
             }
             chai.request(server)
                 .post('/api/v1/erc20tokens/')

@@ -5,6 +5,7 @@ let config = require('../../config/config')
 
 
 async function verifyToken(req, res, next) {
+
     var token = req.headers['x-access-token'] || req.headers['authorization'];
 
     if (!token) {
@@ -19,6 +20,7 @@ async function verifyToken(req, res, next) {
 
             let user = await userServiceInstance.getUser(decoded);
             if (!user) {
+
                 return res.status(401).json({ message: 'Unauthorized access' });
             }
             req.userId = decoded.userId;

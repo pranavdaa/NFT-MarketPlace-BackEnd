@@ -4,30 +4,44 @@ let chai = require('chai');
 let chaiHttp = require('chai-http');
 let server = require('../server');
 let should = chai.should();
+let config = require('../config/config')
 
-const { PrismaClient } = require("@prisma/client")
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient()
 
 let auth_token;
 
 chai.use(chaiHttp);
 
+
+let params = {
+    address: config.address,
+    signature: config.signature,
+}
+
 describe('User', async () => {
 
     beforeEach((done) => { //Before each test we empty the database
-        prisma.categoriesaddresses.deleteMany().then(() => {
-            prisma.users.deleteMany().then(() => {
-                done();
+        prisma.bids.deleteMany().then(() => {
+            prisma.orders.deleteMany().then(() => {
+                prisma.categoriesaddresses.deleteMany().then(() => {
+                    prisma.categories.deleteMany().then(() => {
+                        prisma.erc20tokensaddresses.deleteMany().then(() => {
+                            prisma.erc20tokens.deleteMany().then(() => {
+                                prisma.users.deleteMany().then(() => {
+                                    done();
+                                })
+                            })
+                        })
+                    })
+                })
             })
         })
     });
 
     describe('/POST users', () => {
         it('it should create new user', (done) => {
-            let user = {
-                address: "0xF962EEfD71d9cf4581E9004fa1EdEaA8f7d0aA12",
-                signature: "0x33a436f974657480ea4b5e96e22d63231f93c863bcb558bef6b1d5657f2b9a9806532336b9a489c31d7ff1c5d2667b1a86490ad34ce7b127ea1690d0da3433b71b",
-            }
+            let user = params;
             chai.request(server)
                 .post('/api/v1/users/')
                 .send(user)
@@ -58,10 +72,7 @@ describe('User', async () => {
     describe('/GET single user', () => {
         it('it should GET single user', (done) => {
 
-            let user = {
-                address: "0xF962EEfD71d9cf4581E9004fa1EdEaA8f7d0aA12",
-                signature: "0x33a436f974657480ea4b5e96e22d63231f93c863bcb558bef6b1d5657f2b9a9806532336b9a489c31d7ff1c5d2667b1a86490ad34ce7b127ea1690d0da3433b71b",
-            }
+            let user = params
             chai.request(server)
                 .post('/api/v1/users/')
                 .send(user)
@@ -82,10 +93,7 @@ describe('User', async () => {
     describe('/GET sell orders', () => {
         it('it should GET sell orders', (done) => {
 
-            let user = {
-                address: "0xF962EEfD71d9cf4581E9004fa1EdEaA8f7d0aA12",
-                signature: "0x33a436f974657480ea4b5e96e22d63231f93c863bcb558bef6b1d5657f2b9a9806532336b9a489c31d7ff1c5d2667b1a86490ad34ce7b127ea1690d0da3433b71b",
-            }
+            let user = params
             chai.request(server)
                 .post('/api/v1/users/')
                 .send(user)
@@ -106,10 +114,7 @@ describe('User', async () => {
     describe('/GET buy orders', () => {
         it('it should GET buy orders', (done) => {
 
-            let user = {
-                address: "0xF962EEfD71d9cf4581E9004fa1EdEaA8f7d0aA12",
-                signature: "0x33a436f974657480ea4b5e96e22d63231f93c863bcb558bef6b1d5657f2b9a9806532336b9a489c31d7ff1c5d2667b1a86490ad34ce7b127ea1690d0da3433b71b",
-            }
+            let user = params
             chai.request(server)
                 .post('/api/v1/users/')
                 .send(user)
@@ -130,10 +135,7 @@ describe('User', async () => {
     describe('/GET bids', () => {
         it('it should GET users bids', (done) => {
 
-            let user = {
-                address: "0xF962EEfD71d9cf4581E9004fa1EdEaA8f7d0aA12",
-                signature: "0x33a436f974657480ea4b5e96e22d63231f93c863bcb558bef6b1d5657f2b9a9806532336b9a489c31d7ff1c5d2667b1a86490ad34ce7b127ea1690d0da3433b71b",
-            }
+            let user = params
             chai.request(server)
                 .post('/api/v1/users/')
                 .send(user)
@@ -154,10 +156,7 @@ describe('User', async () => {
     describe('/GET favourites', () => {
         it('it should GET users favourite', (done) => {
 
-            let user = {
-                address: "0xF962EEfD71d9cf4581E9004fa1EdEaA8f7d0aA12",
-                signature: "0x33a436f974657480ea4b5e96e22d63231f93c863bcb558bef6b1d5657f2b9a9806532336b9a489c31d7ff1c5d2667b1a86490ad34ce7b127ea1690d0da3433b71b",
-            }
+            let user = params
             chai.request(server)
                 .post('/api/v1/users/')
                 .send(user)
