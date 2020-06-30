@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = "***"
 }
 
 model bids {
@@ -12,7 +12,7 @@ model bids {
   created   DateTime @default(now())
   id        Int      @default(autoincrement()) @id
   orders_id Int
-  price     String
+  price     Float
   status    Int?     @default(0)
   updated   DateTime @default(now())
   users_id  Int
@@ -26,7 +26,7 @@ model categories {
   description         String?
   id                  Int                   @default(autoincrement()) @id
   img_url             String?
-  name                String                @unique
+  name                String?
   updated             DateTime              @default(now())
   url                 String?
   categoriesaddresses categoriesaddresses[]
@@ -36,7 +36,7 @@ model categories {
 
 model categoriesaddresses {
   active        Boolean?   @default(true)
-  address       String     @unique
+  address       String
   categories_id Int
   chain_id      String
   created       DateTime   @default(now())
@@ -49,27 +49,24 @@ model erc20tokens {
   active               Boolean?               @default(true)
   created              DateTime               @default(now())
   decimal              Int
+  icon                 String?
   id                   Int                    @default(autoincrement()) @id
-  name                 String
-  symbol               String                 @unique
+  name                 String?
+  symbol               String?
   updated              DateTime               @default(now())
   erc20tokensaddresses erc20tokensaddresses[]
   orders               orders[]
-  users                users?                 @relation(fields: [usersId], references: [id])
-  usersId              Int?
 }
 
 model erc20tokensaddresses {
   active      Boolean?    @default(true)
-  address     String      @unique
+  address     String
   chain_id    String
   created     DateTime    @default(now())
   id          Int         @default(autoincrement()) @id
   token_id    Int
   updated     DateTime    @default(now())
   erc20tokens erc20tokens @relation(fields: [token_id], references: [id])
-  users       users?      @relation(fields: [usersId], references: [id])
-  usersId     Int?
 }
 
 model favorites {
@@ -84,19 +81,18 @@ model favorites {
 
 model orders {
   active         Boolean?    @default(true)
-  chain_id       String
   categories_id  Int
   created        DateTime    @default(now())
   erc20tokens_id Int
   expiry_date    DateTime?
   id             Int         @default(autoincrement()) @id
   maker_address  Int
-  min_price      String
-  price          String
+  min_price      Float
+  price          Float
   signature      String?
   status         Int?        @default(0)
   taker_address  Int?
-  taker_amount   String?
+  taker_amount   Float?
   tokens_id      Int
   txhash         String?
   type           String
@@ -119,7 +115,6 @@ model tokens {
   img_url       String?
   metadata      Json?
   token_id      String
-  name          String
   updated       DateTime    @default(now())
   users_id      Int
   categories    categories  @relation(fields: [categories_id], references: [id])
@@ -131,25 +126,14 @@ model tokens {
 }
 
 model users {
-  active       Boolean?               @default(true)
-  address      String                 @unique
-  created      DateTime               @default(now())
-  id           Int                    @default(autoincrement()) @id
-  updated      DateTime               @default(now())
+  active       Boolean?    @default(true)
+  address      String      @unique
+  created      DateTime    @default(now())
+  id           Int         @default(autoincrement()) @id
+  updated      DateTime    @default(now())
   bids         bids[]
   favorites    favorites[]
-  maker_orders orders[]               @relation("maker_orders")
-  taker_orders orders[]               @relation("taker_orders")
+  maker_orders orders[]    @relation("maker_orders")
+  taker_orders orders[]    @relation("taker_orders")
   tokens       tokens[]
-  approved     erc20tokensaddresses[]
-  erc20tokens  erc20tokens[]
-}
-
-model admin {
-  active   Boolean? @default(true)
-  username String   @unique
-  password String
-  created  DateTime @default(now())
-  id       Int      @default(autoincrement()) @id
-  updated  DateTime @default(now())
 }

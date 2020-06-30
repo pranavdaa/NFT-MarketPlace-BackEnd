@@ -9,6 +9,7 @@ This repository contains api to retrieve marketplace data for matic network mark
 ```sh
 $ git clone https://github.com/maticnetwork/marketplace-api
 $ cd marketplace-api
+$ nvm use
 $ npm install
 
 # setup and start PostgreSQL

@@ -137,7 +137,7 @@
     {
       "tag": "CreateField",
       "model": "bids",
-      "field": "orders",
+      "field": "orders_id",
       "type": "Int",
       "arity": "Required"
     },
@@ -215,14 +215,14 @@
     {
       "tag": "CreateField",
       "model": "bids",
-      "field": "users",
+      "field": "users_id",
       "type": "Int",
       "arity": "Required"
     },
     {
       "tag": "CreateField",
       "model": "bids",
-      "field": "orders_bids",
+      "field": "orders",
       "type": "orders",
       "arity": "Required"
     },
@@ -232,7 +232,7 @@
         "path": {
           "tag": "Field",
           "model": "bids",
-          "field": "orders_bids"
+          "field": "orders"
         },
         "directive": "relation"
       }
@@ -244,12 +244,12 @@
         "path": {
           "tag": "Field",
           "model": "bids",
-          "field": "orders_bids"
+          "field": "orders"
         },
         "directive": "relation"
       },
       "argument": "fields",
-      "value": "[orders]"
+      "value": "[orders_id]"
     },
     {
       "tag": "CreateArgument",
@@ -258,7 +258,7 @@
         "path": {
           "tag": "Field",
           "model": "bids",
-          "field": "orders_bids"
+          "field": "orders"
         },
         "directive": "relation"
       },
@@ -268,7 +268,7 @@
     {
       "tag": "CreateField",
       "model": "bids",
-      "field": "users_bids",
+      "field": "users",
       "type": "users",
       "arity": "Required"
     },
@@ -278,7 +278,7 @@
         "path": {
           "tag": "Field",
           "model": "bids",
-          "field": "users_bids"
+          "field": "users"
         },
         "directive": "relation"
       }
@@ -290,12 +290,12 @@
         "path": {
           "tag": "Field",
           "model": "bids",
-          "field": "users_bids"
+          "field": "users"
         },
         "directive": "relation"
       },
       "argument": "fields",
-      "value": "[users]"
+      "value": "[users_id]"
     },
     {
       "tag": "CreateArgument",
@@ -304,7 +304,7 @@
         "path": {
           "tag": "Field",
           "model": "bids",
-          "field": "users_bids"
+          "field": "users"
         },
         "directive": "relation"
       },
@@ -346,24 +346,6 @@
       },
       "argument": "",
       "value": "true"
-    },
-    {
-      "tag": "CreateField",
-      "model": "categories",
-      "field": "address",
-      "type": "String",
-      "arity": "Required"
-    },
-    {
-      "tag": "CreateDirective",
-      "location": {
-        "path": {
-          "tag": "Field",
-          "model": "categories",
-          "field": "address"
-        },
-        "directive": "unique"
-      }
     },
     {
       "tag": "CreateField",
@@ -503,8 +485,15 @@
     {
       "tag": "CreateField",
       "model": "categories",
-      "field": "categoryaddresses",
-      "type": "categoryaddresses",
+      "field": "categoriesaddresses",
+      "type": "categoriesaddresses",
+      "arity": "List"
+    },
+    {
+      "tag": "CreateField",
+      "model": "categories",
+      "field": "orders",
+      "type": "orders",
       "arity": "List"
     },
     {
@@ -516,11 +505,11 @@
     },
     {
       "tag": "CreateModel",
-      "model": "categoryaddresses"
+      "model": "categoriesaddresses"
     },
     {
       "tag": "CreateField",
-      "model": "categoryaddresses",
+      "model": "categoriesaddresses",
       "field": "active",
       "type": "Boolean",
       "arity": "Optional"
@@ -530,7 +519,7 @@
       "location": {
         "path": {
           "tag": "Field",
-          "model": "categoryaddresses",
+          "model": "categoriesaddresses",
           "field": "active"
         },
         "directive": "default"
@@ -542,7 +531,7 @@
         "tag": "Directive",
         "path": {
           "tag": "Field",
-          "model": "categoryaddresses",
+          "model": "categoriesaddresses",
           "field": "active"
         },
         "directive": "default"
@@ -552,28 +541,28 @@
     },
     {
       "tag": "CreateField",
-      "model": "categoryaddresses",
+      "model": "categoriesaddresses",
       "field": "address",
       "type": "String",
       "arity": "Required"
     },
     {
       "tag": "CreateField",
-      "model": "categoryaddresses",
-      "field": "category",
+      "model": "categoriesaddresses",
+      "field": "categories_id",
       "type": "Int",
       "arity": "Required"
     },
     {
       "tag": "CreateField",
-      "model": "categoryaddresses",
+      "model": "categoriesaddresses",
       "field": "chain_id",
       "type": "String",
       "arity": "Required"
     },
     {
       "tag": "CreateField",
-      "model": "categoryaddresses",
+      "model": "categoriesaddresses",
       "field": "created",
       "type": "DateTime",
       "arity": "Required"
@@ -583,7 +572,7 @@
       "location": {
         "path": {
           "tag": "Field",
-          "model": "categoryaddresses",
+          "model": "categoriesaddresses",
           "field": "created"
         },
         "directive": "default"
@@ -595,7 +584,7 @@
         "tag": "Directive",
         "path": {
           "tag": "Field",
-          "model": "categoryaddresses",
+          "model": "categoriesaddresses",
           "field": "created"
         },
         "directive": "default"
@@ -605,7 +594,7 @@
     },
     {
       "tag": "CreateField",
-      "model": "categoryaddresses",
+      "model": "categoriesaddresses",
       "field": "id",
       "type": "Int",
       "arity": "Required"
@@ -615,7 +604,7 @@
       "location": {
         "path": {
           "tag": "Field",
-          "model": "categoryaddresses",
+          "model": "categoriesaddresses",
           "field": "id"
         },
         "directive": "default"
@@ -627,7 +616,7 @@
         "tag": "Directive",
         "path": {
           "tag": "Field",
-          "model": "categoryaddresses",
+          "model": "categoriesaddresses",
           "field": "id"
         },
         "directive": "default"
@@ -640,7 +629,7 @@
       "location": {
         "path": {
           "tag": "Field",
-          "model": "categoryaddresses",
+          "model": "categoriesaddresses",
           "field": "id"
         },
         "directive": "id"
@@ -648,7 +637,7 @@
     },
     {
       "tag": "CreateField",
-      "model": "categoryaddresses",
+      "model": "categoriesaddresses",
       "field": "updated",
       "type": "DateTime",
       "arity": "Required"
@@ -658,7 +647,7 @@
       "location": {
         "path": {
           "tag": "Field",
-          "model": "categoryaddresses",
+          "model": "categoriesaddresses",
           "field": "updated"
         },
         "directive": "default"
@@ -670,7 +659,7 @@
         "tag": "Directive",
         "path": {
           "tag": "Field",
-          "model": "categoryaddresses",
+          "model": "categoriesaddresses",
           "field": "updated"
         },
         "directive": "default"
@@ -680,7 +669,7 @@
     },
     {
       "tag": "CreateField",
-      "model": "categoryaddresses",
+      "model": "categoriesaddresses",
       "field": "categories",
       "type": "categories",
       "arity": "Required"
@@ -690,7 +679,7 @@
       "location": {
         "path": {
           "tag": "Field",
-          "model": "categoryaddresses",
+          "model": "categoriesaddresses",
           "field": "categories"
         },
         "directive": "relation"
@@ -702,13 +691,13 @@
         "tag": "Directive",
         "path": {
           "tag": "Field",
-          "model": "categoryaddresses",
+          "model": "categoriesaddresses",
           "field": "categories"
         },
         "directive": "relation"
       },
       "argument": "fields",
-      "value": "[category]"
+      "value": "[categories_id]"
     },
     {
       "tag": "CreateArgument",
@@ -716,218 +705,8 @@
         "tag": "Directive",
         "path": {
           "tag": "Field",
-          "model": "categoryaddresses",
+          "model": "categoriesaddresses",
           "field": "categories"
-        },
-        "directive": "relation"
-      },
-      "argument": "references",
-      "value": "[id]"
-    },
-    {
-      "tag": "CreateModel",
-      "model": "erc20tokenaddresses"
-    },
-    {
-      "tag": "CreateField",
-      "model": "erc20tokenaddresses",
-      "field": "active",
-      "type": "Boolean",
-      "arity": "Optional"
-    },
-    {
-      "tag": "CreateDirective",
-      "location": {
-        "path": {
-          "tag": "Field",
-          "model": "erc20tokenaddresses",
-          "field": "active"
-        },
-        "directive": "default"
-      }
-    },
-    {
-      "tag": "CreateArgument",
-      "location": {
-        "tag": "Directive",
-        "path": {
-          "tag": "Field",
-          "model": "erc20tokenaddresses",
-          "field": "active"
-        },
-        "directive": "default"
-      },
-      "argument": "",
-      "value": "true"
-    },
-    {
-      "tag": "CreateField",
-      "model": "erc20tokenaddresses",
-      "field": "address",
-      "type": "String",
-      "arity": "Required"
-    },
-    {
-      "tag": "CreateField",
-      "model": "erc20tokenaddresses",
-      "field": "chain_id",
-      "type": "String",
-      "arity": "Required"
-    },
-    {
-      "tag": "CreateField",
-      "model": "erc20tokenaddresses",
-      "field": "created",
-      "type": "DateTime",
-      "arity": "Required"
-    },
-    {
-      "tag": "CreateDirective",
-      "location": {
-        "path": {
-          "tag": "Field",
-          "model": "erc20tokenaddresses",
-          "field": "created"
-        },
-        "directive": "default"
-      }
-    },
-    {
-      "tag": "CreateArgument",
-      "location": {
-        "tag": "Directive",
-        "path": {
-          "tag": "Field",
-          "model": "erc20tokenaddresses",
-          "field": "created"
-        },
-        "directive": "default"
-      },
-      "argument": "",
-      "value": "now()"
-    },
-    {
-      "tag": "CreateField",
-      "model": "erc20tokenaddresses",
-      "field": "id",
-      "type": "Int",
-      "arity": "Required"
-    },
-    {
-      "tag": "CreateDirective",
-      "location": {
-        "path": {
-          "tag": "Field",
-          "model": "erc20tokenaddresses",
-          "field": "id"
-        },
-        "directive": "default"
-      }
-    },
-    {
-      "tag": "CreateArgument",
-      "location": {
-        "tag": "Directive",
-        "path": {
-          "tag": "Field",
-          "model": "erc20tokenaddresses",
-          "field": "id"
-        },
-        "directive": "default"
-      },
-      "argument": "",
-      "value": "autoincrement()"
-    },
-    {
-      "tag": "CreateDirective",
-      "location": {
-        "path": {
-          "tag": "Field",
-          "model": "erc20tokenaddresses",
-          "field": "id"
-        },
-        "directive": "id"
-      }
-    },
-    {
-      "tag": "CreateField",
-      "model": "erc20tokenaddresses",
-      "field": "token",
-      "type": "Int",
-      "arity": "Required"
-    },
-    {
-      "tag": "CreateField",
-      "model": "erc20tokenaddresses",
-      "field": "updated",
-      "type": "DateTime",
-      "arity": "Required"
-    },
-    {
-      "tag": "CreateDirective",
-      "location": {
-        "path": {
-          "tag": "Field",
-          "model": "erc20tokenaddresses",
-          "field": "updated"
-        },
-        "directive": "default"
-      }
-    },
-    {
-      "tag": "CreateArgument",
-      "location": {
-        "tag": "Directive",
-        "path": {
-          "tag": "Field",
-          "model": "erc20tokenaddresses",
-          "field": "updated"
-        },
-        "directive": "default"
-      },
-      "argument": "",
-      "value": "now()"
-    },
-    {
-      "tag": "CreateField",
-      "model": "erc20tokenaddresses",
-      "field": "erc20tokens",
-      "type": "erc20tokens",
-      "arity": "Required"
-    },
-    {
-      "tag": "CreateDirective",
-      "location": {
-        "path": {
-          "tag": "Field",
-          "model": "erc20tokenaddresses",
-          "field": "erc20tokens"
-        },
-        "directive": "relation"
-      }
-    },
-    {
-      "tag": "CreateArgument",
-      "location": {
-        "tag": "Directive",
-        "path": {
-          "tag": "Field",
-          "model": "erc20tokenaddresses",
-          "field": "erc20tokens"
-        },
-        "directive": "relation"
-      },
-      "argument": "fields",
-      "value": "[token]"
-    },
-    {
-      "tag": "CreateArgument",
-      "location": {
-        "tag": "Directive",
-        "path": {
-          "tag": "Field",
-          "model": "erc20tokenaddresses",
-          "field": "erc20tokens"
         },
         "directive": "relation"
       },
@@ -969,13 +748,6 @@
       },
       "argument": "",
       "value": "true"
-    },
-    {
-      "tag": "CreateField",
-      "model": "erc20tokens",
-      "field": "address",
-      "type": "String",
-      "arity": "Required"
     },
     {
       "tag": "CreateField",
@@ -1115,8 +887,8 @@
     {
       "tag": "CreateField",
       "model": "erc20tokens",
-      "field": "erc20tokenaddresses",
-      "type": "erc20tokenaddresses",
+      "field": "erc20tokensaddresses",
+      "type": "erc20tokensaddresses",
       "arity": "List"
     },
     {
@@ -1125,6 +897,216 @@
       "field": "orders",
       "type": "orders",
       "arity": "List"
+    },
+    {
+      "tag": "CreateModel",
+      "model": "erc20tokensaddresses"
+    },
+    {
+      "tag": "CreateField",
+      "model": "erc20tokensaddresses",
+      "field": "active",
+      "type": "Boolean",
+      "arity": "Optional"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "erc20tokensaddresses",
+          "field": "active"
+        },
+        "directive": "default"
+      }
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "erc20tokensaddresses",
+          "field": "active"
+        },
+        "directive": "default"
+      },
+      "argument": "",
+      "value": "true"
+    },
+    {
+      "tag": "CreateField",
+      "model": "erc20tokensaddresses",
+      "field": "address",
+      "type": "String",
+      "arity": "Required"
+    },
+    {
+      "tag": "CreateField",
+      "model": "erc20tokensaddresses",
+      "field": "chain_id",
+      "type": "String",
+      "arity": "Required"
+    },
+    {
+      "tag": "CreateField",
+      "model": "erc20tokensaddresses",
+      "field": "created",
+      "type": "DateTime",
+      "arity": "Required"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "erc20tokensaddresses",
+          "field": "created"
+        },
+        "directive": "default"
+      }
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "erc20tokensaddresses",
+          "field": "created"
+        },
+        "directive": "default"
+      },
+      "argument": "",
+      "value": "now()"
+    },
+    {
+      "tag": "CreateField",
+      "model": "erc20tokensaddresses",
+      "field": "id",
+      "type": "Int",
+      "arity": "Required"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "erc20tokensaddresses",
+          "field": "id"
+        },
+        "directive": "default"
+      }
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "erc20tokensaddresses",
+          "field": "id"
+        },
+        "directive": "default"
+      },
+      "argument": "",
+      "value": "autoincrement()"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "erc20tokensaddresses",
+          "field": "id"
+        },
+        "directive": "id"
+      }
+    },
+    {
+      "tag": "CreateField",
+      "model": "erc20tokensaddresses",
+      "field": "token_id",
+      "type": "Int",
+      "arity": "Required"
+    },
+    {
+      "tag": "CreateField",
+      "model": "erc20tokensaddresses",
+      "field": "updated",
+      "type": "DateTime",
+      "arity": "Required"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "erc20tokensaddresses",
+          "field": "updated"
+        },
+        "directive": "default"
+      }
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "erc20tokensaddresses",
+          "field": "updated"
+        },
+        "directive": "default"
+      },
+      "argument": "",
+      "value": "now()"
+    },
+    {
+      "tag": "CreateField",
+      "model": "erc20tokensaddresses",
+      "field": "erc20tokens",
+      "type": "erc20tokens",
+      "arity": "Required"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "erc20tokensaddresses",
+          "field": "erc20tokens"
+        },
+        "directive": "relation"
+      }
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "erc20tokensaddresses",
+          "field": "erc20tokens"
+        },
+        "directive": "relation"
+      },
+      "argument": "fields",
+      "value": "[token_id]"
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "erc20tokensaddresses",
+          "field": "erc20tokens"
+        },
+        "directive": "relation"
+      },
+      "argument": "references",
+      "value": "[id]"
     },
     {
       "tag": "CreateModel",
@@ -1208,7 +1190,7 @@
     {
       "tag": "CreateField",
       "model": "favorites",
-      "field": "token",
+      "field": "tokens_id",
       "type": "Int",
       "arity": "Required"
     },
@@ -1247,7 +1229,7 @@
     {
       "tag": "CreateField",
       "model": "favorites",
-      "field": "users",
+      "field": "users_id",
       "type": "Int",
       "arity": "Required"
     },
@@ -1281,7 +1263,7 @@
         "directive": "relation"
       },
       "argument": "fields",
-      "value": "[token]"
+      "value": "[tokens_id]"
     },
     {
       "tag": "CreateArgument",
@@ -1300,7 +1282,7 @@
     {
       "tag": "CreateField",
       "model": "favorites",
-      "field": "users_favorites",
+      "field": "users",
       "type": "users",
       "arity": "Required"
     },
@@ -1310,7 +1292,7 @@
         "path": {
           "tag": "Field",
           "model": "favorites",
-          "field": "users_favorites"
+          "field": "users"
         },
         "directive": "relation"
       }
@@ -1322,12 +1304,12 @@
         "path": {
           "tag": "Field",
           "model": "favorites",
-          "field": "users_favorites"
+          "field": "users"
         },
         "directive": "relation"
       },
       "argument": "fields",
-      "value": "[users]"
+      "value": "[users_id]"
     },
     {
       "tag": "CreateArgument",
@@ -1336,7 +1318,7 @@
         "path": {
           "tag": "Field",
           "model": "favorites",
-          "field": "users_favorites"
+          "field": "users"
         },
         "directive": "relation"
       },
@@ -1382,6 +1364,13 @@
     {
       "tag": "CreateField",
       "model": "orders",
+      "field": "categories_id",
+      "type": "Int",
+      "arity": "Required"
+    },
+    {
+      "tag": "CreateField",
+      "model": "orders",
       "field": "created",
       "type": "DateTime",
       "arity": "Required"
@@ -1410,6 +1399,13 @@
       },
       "argument": "",
       "value": "now()"
+    },
+    {
+      "tag": "CreateField",
+      "model": "orders",
+      "field": "erc20tokens_id",
+      "type": "Int",
+      "arity": "Required"
     },
     {
       "tag": "CreateField",
@@ -1471,21 +1467,14 @@
     {
       "tag": "CreateField",
       "model": "orders",
-      "field": "maker_amount",
+      "field": "min_price",
       "type": "Float",
       "arity": "Required"
     },
     {
       "tag": "CreateField",
       "model": "orders",
-      "field": "maker_token",
-      "type": "Int",
-      "arity": "Required"
-    },
-    {
-      "tag": "CreateField",
-      "model": "orders",
-      "field": "min_price",
+      "field": "price",
       "type": "Float",
       "arity": "Required"
     },
@@ -1545,7 +1534,7 @@
     {
       "tag": "CreateField",
       "model": "orders",
-      "field": "taker_token",
+      "field": "tokens_id",
       "type": "Int",
       "arity": "Required"
     },
@@ -1630,8 +1619,8 @@
     {
       "tag": "CreateField",
       "model": "orders",
-      "field": "maker_addressTousers",
-      "type": "users",
+      "field": "categories",
+      "type": "categories",
       "arity": "Required"
     },
     {
@@ -1640,7 +1629,7 @@
         "path": {
           "tag": "Field",
           "model": "orders",
-          "field": "maker_addressTousers"
+          "field": "categories"
         },
         "directive": "relation"
       }
@@ -1652,26 +1641,12 @@
         "path": {
           "tag": "Field",
           "model": "orders",
-          "field": "maker_addressTousers"
-        },
-        "directive": "relation"
-      },
-      "argument": "",
-      "value": "\"orders_maker_addressTousers\""
-    },
-    {
-      "tag": "CreateArgument",
-      "location": {
-        "tag": "Directive",
-        "path": {
-          "tag": "Field",
-          "model": "orders",
-          "field": "maker_addressTousers"
+          "field": "categories"
         },
         "directive": "relation"
       },
       "argument": "fields",
-      "value": "[maker_address]"
+      "value": "[categories_id]"
     },
     {
       "tag": "CreateArgument",
@@ -1680,113 +1655,7 @@
         "path": {
           "tag": "Field",
           "model": "orders",
-          "field": "maker_addressTousers"
-        },
-        "directive": "relation"
-      },
-      "argument": "references",
-      "value": "[id]"
-    },
-    {
-      "tag": "CreateField",
-      "model": "orders",
-      "field": "tokens",
-      "type": "tokens",
-      "arity": "Required"
-    },
-    {
-      "tag": "CreateDirective",
-      "location": {
-        "path": {
-          "tag": "Field",
-          "model": "orders",
-          "field": "tokens"
-        },
-        "directive": "relation"
-      }
-    },
-    {
-      "tag": "CreateArgument",
-      "location": {
-        "tag": "Directive",
-        "path": {
-          "tag": "Field",
-          "model": "orders",
-          "field": "tokens"
-        },
-        "directive": "relation"
-      },
-      "argument": "fields",
-      "value": "[maker_token]"
-    },
-    {
-      "tag": "CreateArgument",
-      "location": {
-        "tag": "Directive",
-        "path": {
-          "tag": "Field",
-          "model": "orders",
-          "field": "tokens"
-        },
-        "directive": "relation"
-      },
-      "argument": "references",
-      "value": "[id]"
-    },
-    {
-      "tag": "CreateField",
-      "model": "orders",
-      "field": "taker_addressTousers",
-      "type": "users",
-      "arity": "Optional"
-    },
-    {
-      "tag": "CreateDirective",
-      "location": {
-        "path": {
-          "tag": "Field",
-          "model": "orders",
-          "field": "taker_addressTousers"
-        },
-        "directive": "relation"
-      }
-    },
-    {
-      "tag": "CreateArgument",
-      "location": {
-        "tag": "Directive",
-        "path": {
-          "tag": "Field",
-          "model": "orders",
-          "field": "taker_addressTousers"
-        },
-        "directive": "relation"
-      },
-      "argument": "",
-      "value": "\"orders_taker_addressTousers\""
-    },
-    {
-      "tag": "CreateArgument",
-      "location": {
-        "tag": "Directive",
-        "path": {
-          "tag": "Field",
-          "model": "orders",
-          "field": "taker_addressTousers"
-        },
-        "directive": "relation"
-      },
-      "argument": "fields",
-      "value": "[taker_address]"
-    },
-    {
-      "tag": "CreateArgument",
-      "location": {
-        "tag": "Directive",
-        "path": {
-          "tag": "Field",
-          "model": "orders",
-          "field": "taker_addressTousers"
+          "field": "categories"
         },
         "directive": "relation"
       },
@@ -1823,7 +1692,7 @@
         "directive": "relation"
       },
       "argument": "fields",
-      "value": "[taker_token]"
+      "value": "[erc20tokens_id]"
     },
     {
       "tag": "CreateArgument",
@@ -1833,6 +1702,172 @@
           "tag": "Field",
           "model": "orders",
           "field": "erc20tokens"
+        },
+        "directive": "relation"
+      },
+      "argument": "references",
+      "value": "[id]"
+    },
+    {
+      "tag": "CreateField",
+      "model": "orders",
+      "field": "maker_users",
+      "type": "users",
+      "arity": "Required"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "maker_users"
+        },
+        "directive": "relation"
+      }
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "maker_users"
+        },
+        "directive": "relation"
+      },
+      "argument": "",
+      "value": "\"maker_orders\""
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "maker_users"
+        },
+        "directive": "relation"
+      },
+      "argument": "fields",
+      "value": "[maker_address]"
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "maker_users"
+        },
+        "directive": "relation"
+      },
+      "argument": "references",
+      "value": "[id]"
+    },
+    {
+      "tag": "CreateField",
+      "model": "orders",
+      "field": "taker_users",
+      "type": "users",
+      "arity": "Optional"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "taker_users"
+        },
+        "directive": "relation"
+      }
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "taker_users"
+        },
+        "directive": "relation"
+      },
+      "argument": "",
+      "value": "\"taker_orders\""
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "taker_users"
+        },
+        "directive": "relation"
+      },
+      "argument": "fields",
+      "value": "[taker_address]"
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "taker_users"
+        },
+        "directive": "relation"
+      },
+      "argument": "references",
+      "value": "[id]"
+    },
+    {
+      "tag": "CreateField",
+      "model": "orders",
+      "field": "tokens",
+      "type": "tokens",
+      "arity": "Required"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "tokens"
+        },
+        "directive": "relation"
+      }
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "tokens"
+        },
+        "directive": "relation"
+      },
+      "argument": "fields",
+      "value": "[tokens_id]"
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "tokens"
         },
         "directive": "relation"
       },
@@ -1885,14 +1920,7 @@
     {
       "tag": "CreateField",
       "model": "tokens",
-      "field": "address",
-      "type": "String",
-      "arity": "Required"
-    },
-    {
-      "tag": "CreateField",
-      "model": "tokens",
-      "field": "category",
+      "field": "categories_id",
       "type": "Int",
       "arity": "Required"
     },
@@ -1975,7 +2003,7 @@
           "model": "tokens",
           "field": "id"
         },
-        "directive": "id"
+        "directive": "unique"
       }
     },
     {
@@ -1995,15 +2023,8 @@
     {
       "tag": "CreateField",
       "model": "tokens",
-      "field": "name",
+      "field": "token_id",
       "type": "String",
-      "arity": "Optional"
-    },
-    {
-      "tag": "CreateField",
-      "model": "tokens",
-      "field": "owner",
-      "type": "Int",
       "arity": "Required"
     },
     {
@@ -2041,6 +2062,13 @@
     {
       "tag": "CreateField",
       "model": "tokens",
+      "field": "users_id",
+      "type": "Int",
+      "arity": "Required"
+    },
+    {
+      "tag": "CreateField",
+      "model": "tokens",
       "field": "categories",
       "type": "categories",
       "arity": "Required"
@@ -2068,7 +2096,7 @@
         "directive": "relation"
       },
       "argument": "fields",
-      "value": "[category]"
+      "value": "[categories_id]"
     },
     {
       "tag": "CreateArgument",
@@ -2114,7 +2142,7 @@
         "directive": "relation"
       },
       "argument": "fields",
-      "value": "[owner]"
+      "value": "[users_id]"
     },
     {
       "tag": "CreateArgument",
@@ -2143,6 +2171,29 @@
       "field": "orders",
       "type": "orders",
       "arity": "List"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Model",
+          "model": "tokens"
+        },
+        "directive": "id"
+      }
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Model",
+          "model": "tokens"
+        },
+        "directive": "id"
+      },
+      "argument": "",
+      "value": "[token_id, categories_id]"
     },
     {
       "tag": "CreateModel",
@@ -2322,7 +2373,7 @@
     {
       "tag": "CreateField",
       "model": "users",
-      "field": "orders_orders_maker_addressTousers",
+      "field": "maker_orders",
       "type": "orders",
       "arity": "List"
     },
@@ -2332,7 +2383,7 @@
         "path": {
           "tag": "Field",
           "model": "users",
-          "field": "orders_orders_maker_addressTousers"
+          "field": "maker_orders"
         },
         "directive": "relation"
       }
@@ -2344,17 +2395,17 @@
         "path": {
           "tag": "Field",
           "model": "users",
-          "field": "orders_orders_maker_addressTousers"
+          "field": "maker_orders"
         },
         "directive": "relation"
       },
       "argument": "",
-      "value": "\"orders_maker_addressTousers\""
+      "value": "\"maker_orders\""
     },
     {
       "tag": "CreateField",
       "model": "users",
-      "field": "orders_orders_taker_addressTousers",
+      "field": "taker_orders",
       "type": "orders",
       "arity": "List"
     },
@@ -2364,7 +2415,7 @@
         "path": {
           "tag": "Field",
           "model": "users",
-          "field": "orders_orders_taker_addressTousers"
+          "field": "taker_orders"
         },
         "directive": "relation"
       }
@@ -2376,12 +2427,12 @@
         "path": {
           "tag": "Field",
           "model": "users",
-          "field": "orders_orders_taker_addressTousers"
+          "field": "taker_orders"
         },
         "directive": "relation"
       },
       "argument": "",
-      "value": "\"orders_taker_addressTousers\""
+      "value": "\"taker_orders\""
     },
     {
       "tag": "CreateField",

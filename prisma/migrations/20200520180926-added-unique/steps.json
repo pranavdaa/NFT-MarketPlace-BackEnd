@@ -2,11 +2,6 @@
   "version": "0.3.14-fixed",
   "steps": [
     {
-      "tag": "DeleteField",
-      "model": "categories",
-      "field": "address"
-    },
-    {
       "tag": "UpdateField",
       "model": "categories",
       "field": "name",
@@ -26,7 +21,7 @@
     {
       "tag": "DeleteField",
       "model": "erc20tokens",
-      "field": "address"
+      "field": "icon"
     },
     {
       "tag": "UpdateField",
@@ -35,12 +30,18 @@
       "arity": "Required"
     },
     {
+      "tag": "UpdateField",
+      "model": "erc20tokens",
+      "field": "symbol",
+      "arity": "Required"
+    },
+    {
       "tag": "CreateDirective",
       "location": {
         "path": {
           "tag": "Field",
           "model": "erc20tokens",
-          "field": "name"
+          "field": "symbol"
         },
         "directive": "unique"
       }

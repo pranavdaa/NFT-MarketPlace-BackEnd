@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = "***"
 }
 
 model bids {
@@ -55,8 +55,6 @@ model erc20tokens {
   updated              DateTime               @default(now())
   erc20tokensaddresses erc20tokensaddresses[]
   orders               orders[]
-  users                users?                 @relation(fields: [usersId], references: [id])
-  usersId              Int?
 }
 
 model erc20tokensaddresses {
@@ -68,8 +66,6 @@ model erc20tokensaddresses {
   token_id    Int
   updated     DateTime    @default(now())
   erc20tokens erc20tokens @relation(fields: [token_id], references: [id])
-  users       users?      @relation(fields: [usersId], references: [id])
-  usersId     Int?
 }
 
 model favorites {
@@ -84,7 +80,6 @@ model favorites {
 
 model orders {
   active         Boolean?    @default(true)
-  chain_id       String
   categories_id  Int
   created        DateTime    @default(now())
   erc20tokens_id Int
@@ -131,25 +126,14 @@ model tokens {
 }
 
 model users {
-  active       Boolean?               @default(true)
-  address      String                 @unique
-  created      DateTime               @default(now())
-  id           Int                    @default(autoincrement()) @id
-  updated      DateTime               @default(now())
+  active       Boolean?    @default(true)
+  address      String      @unique
+  created      DateTime    @default(now())
+  id           Int         @default(autoincrement()) @id
+  updated      DateTime    @default(now())
   bids         bids[]
   favorites    favorites[]
-  maker_orders orders[]               @relation("maker_orders")
-  taker_orders orders[]               @relation("taker_orders")
+  maker_orders orders[]    @relation("maker_orders")
+  taker_orders orders[]    @relation("taker_orders")
   tokens       tokens[]
-  approved     erc20tokensaddresses[]
-  erc20tokens  erc20tokens[]
-}
-
-model admin {
-  active   Boolean? @default(true)
-  username String   @unique
-  password String
-  created  DateTime @default(now())
-  id       Int      @default(autoincrement()) @id
-  updated  DateTime @default(now())
 }

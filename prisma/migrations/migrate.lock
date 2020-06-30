@@ -1,8 +1,10 @@
-# IF THERE'S A GIT CONFLICT IN THIS FILE, DON'T SOLVE IT MANUALLY!
-# INSTEAD EXECUTE `prisma migrate fix`
 # Prisma Migrate lockfile v1
-# Read more about conflict resolution here: TODO
 
-20200519172555-initial
-20200519183206-rm-address-category-token
-20200520125551-rename-tokenid
+20200520172524-initial
+20200520180926-added-unique
+20200520185646-added-name-to-tokens
+20200520194434-price-float-to-string
+20200521124415-bids-price-type-chg
+20200523175446-address-unique
+20200524150157-added-cha-ind-to-orders
+20200608092241-admin-auth

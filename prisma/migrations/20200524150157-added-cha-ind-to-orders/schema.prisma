@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = "***"
 }
 
 model bids {
@@ -143,13 +143,4 @@ model users {
   tokens       tokens[]
   approved     erc20tokensaddresses[]
   erc20tokens  erc20tokens[]
-}
-
-model admin {
-  active   Boolean? @default(true)
-  username String   @unique
-  password String
-  created  DateTime @default(now())
-  id       Int      @default(autoincrement()) @id
-  updated  DateTime @default(now())
 }
