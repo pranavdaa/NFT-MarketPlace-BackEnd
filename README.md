@@ -24,13 +24,13 @@ You need to configure your environment variables now. Copy `.env.example` and re
 
 ```sh
 # apply migrations
-$ npm migrate-up
+$ npm run migrate-up
 
 # start the development server with hot reload
 $ npm run dev
 
 # create migration for database schema changes
-$ npm migrate-save
+$ npm run migrate-save
 ```
 
 #### database
