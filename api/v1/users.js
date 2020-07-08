@@ -98,7 +98,9 @@ router.get('/', async (req, res) => {
  *  Gets single user detail 
  */
 
-router.get('/:userId', async (req, res) => {
+router.get('/:userId', [
+  check('userId', 'A valid id is required').exists()
+], async (req, res) => {
   try {
 
     let userId = req.params.userId;
@@ -119,7 +121,7 @@ router.get('/:userId', async (req, res) => {
  *  Gets users sell orders(maker order)
  */
 
-router.get('/:userId/makerorders', async (req, res) => {
+router.get('/:userId/makerorders', [check('userId', 'A valid id is required').exists()], async (req, res) => {
   try {
 
     let userId = req.params.userId;
@@ -127,6 +129,7 @@ router.get('/:userId/makerorders', async (req, res) => {
     let limit = requestUtil.getLimit(req.query)
     let offset = requestUtil.getOffset(req.query)
     let orderBy = requestUtil.getSortBy(req.query, '+id')
+
 
     let orders = await userServiceInstance.getUsersMakerOrders({ userId, limit, offset, orderBy });
     if (orders) {
@@ -145,7 +148,9 @@ router.get('/:userId/makerorders', async (req, res) => {
  *  Gets users buy orders(taker order)
  */
 
-router.get('/:userId/takerorders', async (req, res) => {
+router.get('/:userId/takerorders', [
+  check('userId', 'A valid id is required').exists()
+], async (req, res) => {
   try {
 
     let userId = req.params.userId;
@@ -171,7 +176,9 @@ router.get('/:userId/takerorders', async (req, res) => {
  *  Gets users bids on orders
  */
 
-router.get('/:userId/bids', async (req, res) => {
+router.get('/:userId/bids', [
+  check('userId', 'A valid id is required').exists()
+], async (req, res) => {
   try {
 
     let userId = req.params.userId;
@@ -204,7 +211,7 @@ router.post('/favourites', [
 
   try {
 
-    let userId = req.userId;
+    let userId = req.params.userId;
 
     let { orderId } = req.body;
 
