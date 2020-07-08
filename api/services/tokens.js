@@ -9,6 +9,7 @@ const client = new Client({
 
 class TokenService {
   async getTokens(params) {
+    console.log(params);
     try {
       client.connect();
       const query = {
@@ -17,8 +18,9 @@ class TokenService {
         values: [params.owner],
       };
       let tokens = await client.query(query);
+
       client.end();
-      return tokens;
+      return tokens.rows;
     } catch (err) {
       console.log(err);
       throw new Error("Internal Server Error");
@@ -35,7 +37,7 @@ class TokenService {
       };
       let tokens = await client.query(query);
       client.end();
-      return tokens;
+      return tokens.rows;
     } catch (err) {
       console.log(err);
       throw new Error("Internal Server Error");

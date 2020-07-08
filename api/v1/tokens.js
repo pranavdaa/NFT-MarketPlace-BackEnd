@@ -13,7 +13,7 @@ const tokenServiceInstance = new TokenService();
  */
 
 router.get(
-  "/:owner",
+  "/",
   [check("owner", "input a valid address").exists().isEthereumAddress()],
   async (req, res) => {
     try {
@@ -22,7 +22,10 @@ router.get(
       if (!errors.isEmpty()) {
         return res.status(400).json({ error: errors.array() });
       }
+
+      let { owner } = req.query;
       let tokens = await tokenServiceInstance.getTokens({ owner });
+
       if (tokens.length > 0) {
         return res.status(200).json({
           message: "Token balance retieved successfully",
@@ -60,6 +63,9 @@ router.get(
       if (!errors.isEmpty()) {
         return res.status(400).json({ error: errors.array() });
       }
+
+      let tokenId = req.params.tokenId;
+      let contract = req.query.contract;
 
       let token = await tokenServiceInstance.getTokenDetail({
         token_id: tokenId,
