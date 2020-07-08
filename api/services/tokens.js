@@ -6,12 +6,11 @@ const connectionString = config.hermoine;
 const client = new Client({
   connectionString: connectionString,
 });
+client.connect();
 
 class TokenService {
   async getTokens(params) {
-    console.log(params);
     try {
-      client.connect();
       const query = {
         name: "fetch-tokens",
         text: "SELECT * FROM records WHERE owner = $1",
@@ -19,7 +18,6 @@ class TokenService {
       };
       let tokens = await client.query(query);
 
-      client.end();
       return tokens.rows;
     } catch (err) {
       console.log(err);
@@ -29,14 +27,12 @@ class TokenService {
 
   async getTokenDetail(params) {
     try {
-      client.connect();
       const query = {
         name: "fetch-tokens",
         text: "SELECT * FROM records WHERE token_id = $1 AND contract = $2",
         values: [params.token_id, params.contract],
       };
       let tokens = await client.query(query);
-      client.end();
       return tokens.rows;
     } catch (err) {
       console.log(err);
