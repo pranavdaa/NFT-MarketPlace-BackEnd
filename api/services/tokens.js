@@ -28,7 +28,7 @@ class TokenService {
   async getTokenDetail(params) {
     try {
       const query = {
-        name: "fetch-tokens",
+        name: "fetch-token-detail",
         text: "SELECT * FROM records WHERE token_id = $1 AND contract = $2",
         values: [params.token_id, params.contract],
       };
