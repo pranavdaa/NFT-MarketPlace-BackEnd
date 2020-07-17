@@ -1,6 +1,6 @@
-const { PrismaClient } = require("@prisma/client")
-const prisma = new PrismaClient()
-let { hasNextPage } = require('../utils/helper.js')
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
+let { hasNextPage } = require("../utils/helper.js");
 
 /**
  * Includes all the User services that controls
@@ -8,17 +8,16 @@ let { hasNextPage } = require('../utils/helper.js')
  */
 
 class UserService {
-
   async createUser(params) {
     try {
       let user = await prisma.users.create({
         data: {
-          address: (params.address).toLowerCase()
-        }
-      })
+          address: params.address.toLowerCase(),
+        },
+      });
       return user;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
@@ -26,19 +25,25 @@ class UserService {
   async getUsers({ limit, offset, orderBy }) {
     try {
       let where = {
-        active: true
-      }
+        active: true,
+      };
 
-      let count = await prisma.users.count({ where })
+      let count = await prisma.users.count({ where });
       let users = await prisma.users.findMany({
         where,
         orderBy,
-        take: limit, skip: offset
+        take: limit,
+        skip: offset,
       });
 
-      return { users, limit, offset, has_next_page: hasNextPage({ limit, offset, count }) };
+      return {
+        users,
+        limit,
+        offset,
+        has_next_page: hasNextPage({ limit, offset, count }),
+      };
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
@@ -47,115 +52,141 @@ class UserService {
     try {
       let user = await prisma.users.findOne({
         where: {
-          id: parseInt(params.userId)
-        }
+          id: parseInt(params.userId),
+        },
       });
       return user;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
 
   async getUsersMakerOrders({ userId, limit, offset, orderBy }) {
     try {
-
-      let count = await prisma.orders.count({ where: { AND: [{ maker_address: parseInt(userId) }, { active: true }] } })
+      let count = await prisma.orders.count({
+        where: { AND: [{ maker_address: parseInt(userId) }, { active: true }] },
+      });
       let orders = await prisma.users.findMany({
         where: {
-          id: parseInt(userId)
+          id: parseInt(userId),
         },
         select: {
           maker_orders: {
             where: {
-              active: true
+              active: true,
             },
             orderBy,
-            take: limit, skip: offset
-          }
+            take: limit,
+            skip: offset,
+          },
         },
-
       });
 
-      return { orders, limit, offset, has_next_page: hasNextPage({ limit, offset, count }) };
+      return {
+        orders,
+        limit,
+        offset,
+        has_next_page: hasNextPage({ limit, offset, count }),
+      };
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
 
   async getUsersTakerOrders({ userId, limit, offset, orderBy }) {
     try {
-
-      let count = await prisma.orders.count({ where: { AND: [{ taker_address: parseInt(userId) }, { active: true }] } })
+      let count = await prisma.orders.count({
+        where: { AND: [{ taker_address: parseInt(userId) }, { active: true }] },
+      });
       let orders = await prisma.users.findMany({
         where: {
-          id: parseInt(userId)
+          id: parseInt(userId),
         },
         select: {
           taker_orders: {
             where: {
-              active: true
+              active: true,
             },
             orderBy,
-            take: limit, skip: offset
-          }
+            take: limit,
+            skip: offset,
+          },
         },
-
       });
 
-      return { orders, limit, offset, has_next_page: hasNextPage({ limit, offset, count }) };
+      return {
+        orders,
+        limit,
+        offset,
+        has_next_page: hasNextPage({ limit, offset, count }),
+      };
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
 
   async getUsersBids({ userId, limit, offset, orderBy }) {
     try {
-      let count = await prisma.bids.count({ where: { AND: [{ users_id: parseInt(userId) }, { active: true }] } })
+      let count = await prisma.bids.count({
+        where: { AND: [{ users_id: parseInt(userId) }, { active: true }] },
+      });
       let bids = await prisma.users.findMany({
         where: {
-          id: parseInt(userId)
+          id: parseInt(userId),
         },
         select: {
           bids: {
             where: {
-              active: true
+              active: true,
             },
             orderBy,
-            take: limit, skip: offset
-          }
+            take: limit,
+            skip: offset,
+          },
         },
-
       });
 
-      return { bids, limit, offset, has_next_page: hasNextPage({ limit, offset, count }) };
+      return {
+        bids,
+        limit,
+        offset,
+        has_next_page: hasNextPage({ limit, offset, count }),
+      };
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
 
   async getUsersFavourite({ userId, limit, offset, orderBy }) {
     try {
-      let count = await prisma.favourites.count({ where: { AND: [{ users_id: parseInt(userId) }] } })
+      let count = await prisma.favourites.count({
+        where: { AND: [{ users_id: parseInt(userId) }] },
+      });
       let favourites = await prisma.users.findMany({
         where: {
-          id: parseInt(userId)
+          id: parseInt(userId),
         },
         select: {
           favourites: {
             orderBy,
-            take: limit, skip: offset
-          }
+            take: limit,
+            skip: offset,
+          },
         },
-
       });
 
-      return { favourites, limit, offset, has_next_page: hasNextPage({ limit, offset, count }) };
+      return {
+        favourites,
+        limit,
+        offset,
+        has_next_page: hasNextPage({ limit, offset, count }),
+      };
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
@@ -166,19 +197,19 @@ class UserService {
         data: {
           users: {
             connect: {
-              id: parseInt(params.userId)
-            }
+              id: parseInt(params.userId),
+            },
           },
           orders: {
             connect: {
-              id: parseInt(params.orderId)
-            }
-          }
-        }
-      })
+              id: parseInt(params.orderId),
+            },
+          },
+        },
+      });
       return favourites;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
@@ -187,12 +218,12 @@ class UserService {
     try {
       let users = await prisma.users.findOne({
         where: {
-          address: (params.address).toLowerCase()
-        }
+          address: params.address.toLowerCase(),
+        },
       });
       return users;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
@@ -201,15 +232,15 @@ class UserService {
     try {
       let users = await prisma.users.update({
         where: {
-          id: parseInt(params.userId)
+          id: parseInt(params.userId),
         },
         data: {
-          active: true
-        }
+          active: true,
+        },
       });
       return users;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
@@ -218,19 +249,18 @@ class UserService {
     try {
       let users = await prisma.users.update({
         where: {
-          id: parseInt(params.userId)
+          id: parseInt(params.userId),
         },
         data: {
-          active: false
-        }
+          active: false,
+        },
       });
       return users;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
 }
 
-module.exports = UserService
-
+module.exports = UserService;

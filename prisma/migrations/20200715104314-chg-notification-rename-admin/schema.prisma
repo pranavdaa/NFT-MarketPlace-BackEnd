@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = "***"
 }
 
 model bids {
@@ -112,18 +112,20 @@ model orders {
 }
 
 model users {
-  active        Boolean?               @default(true)
-  address       String                 @unique
-  created       DateTime               @default(now())
-  id            Int                    @default(autoincrement()) @id
-  updated       DateTime               @default(now())
-  bids          bids[]
-  favourites    favourites[]
-  maker_orders  orders[]               @relation("maker_orders")
-  taker_orders  orders[]               @relation("taker_orders")
-  approved      erc20tokensaddresses[]
-  erc20tokens   erc20tokens[]
-  notifications notifications[]
+  active              Boolean?               @default(true)
+  address             String                 @unique
+  created             DateTime               @default(now())
+  id                  Int                    @default(autoincrement()) @id
+  updated             DateTime               @default(now())
+  bids                bids[]
+  favourites          favourites[]
+  maker_orders        orders[]               @relation("maker_orders")
+  taker_orders        orders[]               @relation("taker_orders")
+  maker_notifications notifications[]        @relation("buyer_notifications")
+  taker_notifications notifications[]        @relation("seller_notifications")
+  approved            erc20tokensaddresses[]
+  erc20tokens         erc20tokens[]
+  notifications       notifications[]
 }
 
 model admins {
@@ -136,16 +138,20 @@ model admins {
 }
 
 model notifications {
-  read     Boolean  @default(true)
-  active   Boolean  @default(true)
-  created  DateTime @default(now())
-  id       Int      @default(autoincrement()) @id
-  message  String
-  updated  DateTime @default(now())
-  order_id Int
-  orders   orders   @relation(fields: [order_id], references: [id])
-  bid_id   Int?
-  bids     bids?    @relation(fields: [bid_id], references: [id])
-  users    users    @relation(fields: [usersId], references: [id])
-  usersId  Int
+  read      Boolean  @default(true)
+  active    Boolean  @default(true)
+  created   DateTime @default(now())
+  id        Int      @default(autoincrement()) @id
+  message   String
+  buyer_id  Int
+  buyers    users    @relation("buyer_notifications", fields: [buyer_id], references: [id])
+  seller_id Int
+  sellers   users    @relation("seller_notifications", fields: [seller_id], references: [id])
+  updated   DateTime @default(now())
+  order_id  Int
+  orders    orders   @relation(fields: [order_id], references: [id])
+  bid_id    Int?
+  bids      bids?    @relation(fields: [bid_id], references: [id])
+  users     users?   @relation(fields: [usersId], references: [id])
+  usersId   Int?
 }

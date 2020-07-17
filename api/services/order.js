@@ -1,6 +1,6 @@
-const { PrismaClient } = require("@prisma/client")
-const prisma = new PrismaClient()
-let { hasNextPage } = require('../utils/helper.js')
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
+let { hasNextPage } = require("../utils/helper.js");
 
 /**
  * Includes all the Order services that controls
@@ -8,9 +8,7 @@ let { hasNextPage } = require('../utils/helper.js')
  */
 
 class OrderService {
-
   async placeFixedOrder(params) {
-
     try {
       let order = await prisma.orders.create({
         data: {
@@ -23,18 +21,17 @@ class OrderService {
           signature: params.signature,
           erc20tokens: { connect: { id: parseInt(params.taker_token) } },
           type: params.type,
-          chain_id: params.chain_id
-        }
-      })
+          chain_id: params.chain_id,
+        },
+      });
       return order;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
 
   async placeNegotiationOrder(params) {
-
     try {
       let order = await prisma.orders.create({
         data: {
@@ -46,18 +43,17 @@ class OrderService {
           signature: params.signature,
           erc20tokens: { connect: { id: parseInt(params.taker_token) } },
           type: params.type,
-          chain_id: params.chain_id
-        }
-      })
+          chain_id: params.chain_id,
+        },
+      });
       return order;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
 
   async placeAuctionOrder(params) {
-
     try {
       let order = await prisma.orders.create({
         data: {
@@ -70,28 +66,27 @@ class OrderService {
           signature: params.signature,
           erc20tokens: { connect: { id: parseInt(params.taker_token) } },
           type: params.type,
-          chain_id: params.chain_id
-        }
-      })
+          chain_id: params.chain_id,
+        },
+      });
       return order;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
 
   async getOrders({ categoryArray, limit, offset, orderBy }) {
     try {
-
       let where = {
         AND: [
           { active: true },
           { status: 0 },
           { categories_id: { in: JSON.parse(categoryArray) } },
-        ]
+        ],
       };
 
-      let count = await prisma.orders.count({ where })
+      let count = await prisma.orders.count({ where });
       let order = await prisma.orders.findMany({
         where,
         select: {
@@ -105,14 +100,20 @@ class OrderService {
           tokens_id: true,
           erc20tokens: true,
           views: true,
-          bids: true
+          bids: true,
         },
         orderBy,
-        take: limit, skip: offset,
-      })
-      return { order, limit, offset, has_next_page: hasNextPage({ limit, offset, count }) };
+        take: limit,
+        skip: offset,
+      });
+      return {
+        order,
+        limit,
+        offset,
+        has_next_page: hasNextPage({ limit, offset, count }),
+      };
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
@@ -134,12 +135,12 @@ class OrderService {
           tokens_id: true,
           erc20tokens: true,
           views: true,
-          bids: true
-        }
-      })
+          bids: true,
+        },
+      });
       return order;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
@@ -148,29 +149,28 @@ class OrderService {
     try {
       let order = await prisma.orders.findOne({
         where: {
-          id: parseInt(params.orderId)
-        }
-      })
+          id: parseInt(params.orderId),
+        },
+      });
       return order;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
 
   async buyFixedOrder(params) {
     try {
-
       let order = await prisma.orders.update({
         where: { id: parseInt(params.orderId) },
         data: {
           taker_users: { connect: { id: parseInt(params.taker_address) } },
-          status: 2
+          status: 2,
         },
-      })
+      });
       return order;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
@@ -180,28 +180,29 @@ class OrderService {
       where: { id: parseInt(params.orderId) },
       data: {
         bids: {
-          create: [{
-            price: params.bid,
-            users: { connect: { id: parseInt(params.taker_address) } },
-          }],
+          create: [
+            {
+              price: params.bid,
+              users: { connect: { id: parseInt(params.taker_address) } },
+            },
+          ],
         },
       },
-    })
+    });
     return order;
   }
 
   async cancelOrder(params) {
     try {
-
       let order = await prisma.orders.update({
         where: { id: parseInt(params.orderId) },
         data: {
-          status: 3
+          status: 3,
         },
-      })
+      });
       return order;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
@@ -210,9 +211,9 @@ class OrderService {
     const order = await prisma.bids.update({
       where: { id: parseInt(params.bidId) },
       data: {
-        status: 3
+        status: 3,
       },
-    })
+    });
     return order;
   }
 
@@ -220,37 +221,32 @@ class OrderService {
     try {
       let bid = await prisma.bids.findOne({
         where: {
-          id: parseInt(params.bidId)
-        }
-      })
+          id: parseInt(params.bidId),
+        },
+      });
       return bid;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
 
   async executeOrder(params) {
-
-    console.log(params)
     try {
-
       let order = await prisma.orders.update({
         where: { id: parseInt(params.orderId) },
         data: {
           taker_users: { connect: { id: parseInt(params.taker_address) } },
           taker_amount: params.taker_amount,
-          status: 2
+          status: 2,
         },
-      })
+      });
       return order;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
-
 }
 
-module.exports = OrderService
-
+module.exports = OrderService;

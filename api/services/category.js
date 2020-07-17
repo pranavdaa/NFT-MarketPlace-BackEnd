@@ -1,6 +1,6 @@
-const { PrismaClient } = require("@prisma/client")
-const prisma = new PrismaClient()
-let { hasNextPage } = require('../utils/helper.js')
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
+let { hasNextPage } = require("../utils/helper.js");
 
 /**
  * Includes all the Category services that controls
@@ -8,11 +8,8 @@ let { hasNextPage } = require('../utils/helper.js')
  */
 
 class CategoryService {
-
   async createCategory(params, file) {
-
     try {
-
       let category = await prisma.categories.create({
         data: {
           name: params.name,
@@ -20,100 +17,101 @@ class CategoryService {
           url: params.url,
           img_url: file ? file.path : "",
           categoriesaddresses: {
-            create: JSON.parse(params.address)
-          }
-        }
-      })
+            create: JSON.parse(params.address),
+          },
+        },
+      });
       return category;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
 
   async getCategories({ limit, offset, orderBy }) {
     try {
-
       let where = {
-        active: true
-      }
+        active: true,
+      };
 
-      let count = await prisma.categories.count({ where })
+      let count = await prisma.categories.count({ where });
       let categories = await prisma.categories.findMany({
         where,
         orderBy,
-        take: limit, skip: offset,
-        include: { categoriesaddresses: true }
+        take: limit,
+        skip: offset,
+        include: { categoriesaddresses: true },
       });
-      return { categories, limit, offset, has_next_page: hasNextPage({ limit, offset, count }) };
+      return {
+        categories,
+        limit,
+        offset,
+        has_next_page: hasNextPage({ limit, offset, count }),
+      };
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
 
   async categoryExists(params) {
     try {
-
       let categories = await prisma.categories.findOne({
-        where: { name: params.name }
+        where: { name: params.name },
       });
       return categories;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
 
   async categoryAddressExists(params) {
     try {
-
       let categories = await prisma.categoriesaddresses.findOne({
-        where: { address: params.address }
+        where: { address: params.address },
       });
       return categories;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
 
   async getCategory(params) {
     try {
-
       let categories = await prisma.categories.findOne({
-        where: { id: parseInt(params.categoryId) }
+        where: { id: parseInt(params.categoryId) },
       });
       return categories;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
 
   async updateCategory(params, file) {
-
     try {
-
       let current = await this.getCategory(params);
       let category = await prisma.categories.update({
         where: { id: parseInt(params.categoryId) },
         data: {
-          description: params.description ? params.description : current.description,
+          description: params.description
+            ? params.description
+            : current.description,
           url: params.url ? params.url : current.url,
           img_url: file ? file.path : current.img_url,
           categoriesaddresses: {
-            create: params.address ? JSON.parse(params.address) : []
-          }
-        }
-      })
+            create: params.address ? JSON.parse(params.address) : [],
+          },
+        },
+      });
       return category;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       throw new Error("Internal Server Error");
     }
   }
 }
 
-module.exports = CategoryService
-
+module.exports = CategoryService;

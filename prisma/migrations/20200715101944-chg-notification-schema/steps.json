@@ -1,0 +1,31 @@
+{
+  "version": "0.3.14-fixed",
+  "steps": [
+    {
+      "tag": "CreateField",
+      "model": "orders",
+      "field": "favourites",
+      "type": "favourites",
+      "arity": "List"
+    },
+    {
+      "tag": "CreateField",
+      "model": "notificatons",
+      "field": "message",
+      "type": "String",
+      "arity": "Required"
+    },
+    {
+      "tag": "UpdateField",
+      "model": "notificatons",
+      "field": "bid_id",
+      "arity": "Optional"
+    },
+    {
+      "tag": "UpdateField",
+      "model": "notificatons",
+      "field": "bids",
+      "arity": "Optional"
+    }
+  ]
+}
