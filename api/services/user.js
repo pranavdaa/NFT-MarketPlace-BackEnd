@@ -205,6 +205,7 @@ class UserService {
               id: parseInt(params.orderId),
             },
           },
+          updated: new Date(),
         },
       });
       return favourites;

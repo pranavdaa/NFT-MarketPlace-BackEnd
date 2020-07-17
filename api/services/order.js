@@ -101,13 +101,22 @@ class OrderService {
           created: true,
           min_price: true,
           price: true,
+          expiry_date: true,
           status: true,
           type: true,
-          categories: true,
+          categories: {
+            include: {
+              categoriesaddresses: {
+                where: { chain_id: "80001" },
+                select: { address: true },
+              },
+            },
+          },
           tokens_id: true,
-          erc20tokens: true,
+          erc20tokens: { select: { id: true } },
           views: true,
           bids: true,
+          updated: true,
         },
         orderBy,
         take: limit,
@@ -136,13 +145,22 @@ class OrderService {
           created: true,
           min_price: true,
           price: true,
+          expiry_date: true,
           status: true,
           type: true,
-          categories: true,
+          categories: {
+            include: {
+              categoriesaddresses: {
+                where: { chain_id: "80001" },
+                select: { address: true },
+              },
+            },
+          },
           tokens_id: true,
-          erc20tokens: true,
+          erc20tokens: { select: { id: true } },
           views: true,
           bids: true,
+          updated: true,
         },
       });
       return order;

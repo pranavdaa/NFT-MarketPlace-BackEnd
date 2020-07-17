@@ -30,7 +30,7 @@ class TokenService {
       const query = {
         name: "fetch-token-detail",
         text: "SELECT * FROM records WHERE token_id = $1 AND contract = $2",
-        values: [params.token_id, params.contract],
+        values: [params.tokenId, params.contract],
       };
       let tokens = await client.query(query);
       return tokens.rows;

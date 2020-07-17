@@ -10,6 +10,7 @@ let categoryServiceInstance = new categoryService();
 const verifyToken = require("../middlewares/verify-token");
 let requestUtil = require("../utils/request-utils");
 let helper = require("../utils/helper");
+let redisCache = require("../utils/redis-cache");
 
 /**
  * Order routes
@@ -144,10 +145,26 @@ router.get(
         offset,
         orderBy,
       });
+
+      let ordersList = [];
+
       if (orders) {
-        return res
-          .status(200)
-          .json({ message: "Orders retrieved successfully", data: orders });
+        for (order of orders.order) {
+          let metadata = await redisCache.getTokenData(
+            order.tokens_id,
+            order.categories.categoriesaddresses[0].address
+          );
+          ordersList.push({ ...order, ...metadata });
+        }
+        return res.status(200).json({
+          message: "Orders retrieved successfully",
+          data: {
+            order: ordersList,
+            limit: orders.limit,
+            offset: orders.offset,
+            has_next_page: orders.has_next_page,
+          },
+        });
       } else {
         return res.status(400).json({ message: "Orders do not exist" });
       }
@@ -172,9 +189,15 @@ router.get(
     try {
       let order = await orderServiceInstance.getOrder(req.params);
       if (order) {
+        let metadata = await redisCache.getTokenData(
+          order.tokens_id,
+          order.categories.categoriesaddresses[0].address
+        );
+
+        let orderData = { ...order, ...metadata };
         return res.status(200).json({
           message: "Order details retrieved successfully",
-          data: order,
+          data: orderData,
         });
       } else {
         return res.status(400).json({ message: "Order does not exist" });
