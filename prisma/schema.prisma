@@ -55,8 +55,6 @@ model erc20tokens {
   updated              DateTime               @default(now())
   erc20tokensaddresses erc20tokensaddresses[]
   orders               orders[]
-  users                users?                 @relation(fields: [usersId], references: [id])
-  usersId              Int?
 }
 
 model erc20tokensaddresses {
@@ -68,8 +66,6 @@ model erc20tokensaddresses {
   token_id    Int
   updated     DateTime    @default(now())
   erc20tokens erc20tokens @relation(fields: [token_id], references: [id])
-  users       users?      @relation(fields: [usersId], references: [id])
-  usersId     Int?
 }
 
 model favourites {
@@ -112,17 +108,15 @@ model orders {
 }
 
 model users {
-  active        Boolean?               @default(true)
-  address       String                 @unique
-  created       DateTime               @default(now())
-  id            Int                    @default(autoincrement()) @id
-  updated       DateTime               @default(now())
+  active        Boolean?        @default(true)
+  address       String          @unique
+  created       DateTime        @default(now())
+  id            Int             @default(autoincrement()) @id
+  updated       DateTime        @default(now())
   bids          bids[]
   favourites    favourites[]
-  maker_orders  orders[]               @relation("maker_orders")
-  taker_orders  orders[]               @relation("taker_orders")
-  approved      erc20tokensaddresses[]
-  erc20tokens   erc20tokens[]
+  maker_orders  orders[]        @relation("maker_orders")
+  taker_orders  orders[]        @relation("taker_orders")
   notifications notifications[]
 }
 

@@ -78,13 +78,20 @@ class OrderService {
 
   async getOrders({ categoryArray, limit, offset, orderBy }) {
     try {
-      let where = {
-        AND: [
-          { active: true },
-          { status: 0 },
-          { categories_id: { in: JSON.parse(categoryArray) } },
-        ],
-      };
+      let where;
+      if (JSON.parse(categoryArray).length !== 0) {
+        where = {
+          AND: [
+            { active: true },
+            { status: 0 },
+            { categories_id: { in: JSON.parse(categoryArray) } },
+          ],
+        };
+      } else {
+        where = {
+          AND: [{ active: true }, { status: 0 }],
+        };
+      }
 
       let count = await prisma.orders.count({ where });
       let order = await prisma.orders.findMany({
