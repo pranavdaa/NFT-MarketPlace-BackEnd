@@ -229,34 +229,28 @@ class UserService {
     }
   }
 
-  async activateUser(params) {
+  async getUserNotification({ userId, limit, offset, orderBy }) {
     try {
-      let users = await prisma.users.update({
+      let count = await prisma.notifications.count({
         where: {
-          id: parseInt(params.userId),
-        },
-        data: {
-          active: true,
+          usersId: parseInt(userId),
         },
       });
-      return users;
-    } catch (err) {
-      console.log(err);
-      throw new Error("Internal Server Error");
-    }
-  }
+      let notifications = await prisma.notifications.findMany({
+        where: {
+          usersId: parseInt(userId),
+        },
+        orderBy,
+        take: limit,
+        skip: offset,
+      });
 
-  async deactivateUser(params) {
-    try {
-      let users = await prisma.users.update({
-        where: {
-          id: parseInt(params.userId),
-        },
-        data: {
-          active: false,
-        },
-      });
-      return users;
+      return {
+        notifications,
+        limit,
+        offset,
+        has_next_page: hasNextPage({ limit, offset, count }),
+      };
     } catch (err) {
       console.log(err);
       throw new Error("Internal Server Error");

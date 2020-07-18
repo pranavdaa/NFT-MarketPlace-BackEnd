@@ -272,6 +272,33 @@ class OrderService {
       throw new Error("Internal Server Error");
     }
   }
+
+  async getBids({ orderId, limit, offset, orderBy }) {
+    try {
+      let where = {
+        AND: [{ active: true }, { status: 0 }],
+      };
+
+      let count = await prisma.bids.count({ where });
+      let order = await prisma.bids.findMany({
+        where: {
+          orders_id: parseInt(orderId),
+        },
+        orderBy,
+        take: limit,
+        skip: offset,
+      });
+      return {
+        order,
+        limit,
+        offset,
+        has_next_page: hasNextPage({ limit, offset, count }),
+      };
+    } catch (err) {
+      console.log(err);
+      throw new Error("Internal Server Error");
+    }
+  }
 }
 
 module.exports = OrderService;

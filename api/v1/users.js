@@ -360,4 +360,38 @@ router.get("/:userId/favourites", async (req, res) => {
   }
 });
 
+/**
+ *  Gets user notifications
+ */
+
+router.get("/notification/:userId", async (req, res) => {
+  try {
+    let userId = req.params.userId;
+
+    let limit = requestUtil.getLimit(req.query);
+    let offset = requestUtil.getOffset(req.query);
+    let orderBy = requestUtil.getSortBy(req.query, "+id");
+    let notifications = await userServiceInstance.getUserNotification({
+      userId,
+      limit,
+      offset,
+      orderBy,
+    });
+
+    if (notifications.notifications.length > 0) {
+      return res.status(200).json({
+        message: "notifications retrieved successfully",
+        data: notifications,
+      });
+    } else {
+      return res.status(404).json({ message: "notifications not found" });
+    }
+  } catch (err) {
+    console.log(err);
+    return res
+      .status(500)
+      .json({ message: "Internal Server error. Please try again!" });
+  }
+});
+
 module.exports = router;

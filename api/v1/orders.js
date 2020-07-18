@@ -310,7 +310,7 @@ router.patch(
               userId: req.userId,
               message:
                 "You placed a bid of " +
-                bid +
+                params.bid +
                 " on " +
                 category.name +
                 " token",
@@ -320,7 +320,7 @@ router.patch(
               userId: orderAdd.maker_address,
               message:
                 "A bid of " +
-                bid +
+                params.bid +
                 " has been placed on your " +
                 category.name +
                 " token",
@@ -515,6 +515,44 @@ router.patch(
         });
       } else {
         return res.status(400).json({ message: "Order execution failed" });
+      }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(500)
+        .json({ message: "Internal Server error.Please try again" });
+    }
+  }
+);
+
+/**
+ *  Gets single order details
+ *  @params orderId type: int
+ */
+
+router.get(
+  "/bids/:orderId",
+  [check("orderId", "A valid id is required").exists()],
+  async (req, res) => {
+    try {
+      let orderId = req.params.orderId;
+      let limit = requestUtil.getLimit(req.query);
+      let offset = requestUtil.getOffset(req.query);
+      let orderBy = requestUtil.getSortBy(req.query, "+id");
+
+      let bids = await orderServiceInstance.getBids({
+        orderId,
+        limit,
+        offset,
+        orderBy,
+      });
+      if (bids.order.length > 0) {
+        return res.status(200).json({
+          message: "Order details retrieved successfully",
+          data: bids,
+        });
+      } else {
+        return res.status(400).json({ message: "Bids/Offers empty" });
       }
     } catch (err) {
       console.log(err);

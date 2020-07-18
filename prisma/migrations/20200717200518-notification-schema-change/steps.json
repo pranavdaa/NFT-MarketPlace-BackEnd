@@ -1,0 +1,64 @@
+{
+  "version": "0.3.14-fixed",
+  "steps": [
+    {
+      "tag": "DeleteField",
+      "model": "bids",
+      "field": "notifications"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "erc20tokens",
+      "field": "users"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "erc20tokens",
+      "field": "usersId"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "erc20tokensaddresses",
+      "field": "users"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "erc20tokensaddresses",
+      "field": "usersId"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "users",
+      "field": "approved"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "users",
+      "field": "erc20tokens"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "notifications",
+      "field": "bid_id"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "notifications",
+      "field": "bids"
+    },
+    {
+      "tag": "UpdateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "notifications",
+          "field": "read"
+        },
+        "directive": "default"
+      },
+      "argument": "",
+      "newValue": "false"
+    }
+  ]
+}
