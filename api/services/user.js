@@ -215,6 +215,49 @@ class UserService {
     }
   }
 
+  async deleteUsersFavourite(params) {
+    try {
+      let favourite = await prisma.favourites.delete({
+        where: { id: parseInt(params.favouriteId) },
+      });
+      return favourite;
+    } catch (err) {
+      console.log(err);
+      throw new Error("Internal Server Error");
+    }
+  }
+
+  async getFavourite(params) {
+    try {
+      let favourite = await prisma.favourites.findOne({
+        where: {
+          id: parseInt(params.favouriteId),
+        },
+      });
+      return favourite;
+    } catch (err) {
+      console.log(err);
+      throw new Error("Internal Server Error");
+    }
+  }
+
+  async favouriteExists(params) {
+    try {
+      let favourite = await prisma.favourites.findMany({
+        where: {
+          AND: [
+            { users_id: parseInt(params.userId) },
+            { order_id: parseInt(params.orderId) },
+          ],
+        },
+      });
+      return favourite;
+    } catch (err) {
+      console.log(err);
+      throw new Error("Internal Server Error");
+    }
+  }
+
   async userExists(params) {
     try {
       let users = await prisma.users.findOne({

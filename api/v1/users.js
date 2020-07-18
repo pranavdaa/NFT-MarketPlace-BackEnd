@@ -290,7 +290,7 @@ router.post(
   verifyToken,
   async (req, res) => {
     try {
-      let userId = req.params.userId;
+      let userId = req.userId;
 
       let { orderId } = req.body;
 
@@ -300,8 +300,19 @@ router.post(
       }
 
       let order = await orderServiceInstance.getOrder({ orderId });
-      if (!order) {
-        return res.status(400).json({ message: "Order not found" });
+      if (!order || order.status !== 0) {
+        return res.status(400).json({ message: "Invalid Order Id" });
+      }
+
+      let favouriteExists = await userServiceInstance.favouriteExists({
+        userId,
+        orderId,
+      });
+
+      if (favouriteExists.length !== 0) {
+        return res
+          .status(400)
+          .json({ message: "User's favourites already exists" });
       }
 
       let favourites = await userServiceInstance.createUsersFavourite({
@@ -351,6 +362,40 @@ router.get("/:userId/favourites", async (req, res) => {
       });
     } else {
       return res.status(404).json({ message: "Favourite orders not found" });
+    }
+  } catch (err) {
+    console.log(err);
+    return res
+      .status(500)
+      .json({ message: "Internal Server error. Please try again!" });
+  }
+});
+
+/**
+ *  Delete users favourite
+ */
+router.delete("/favourites/:favouriteId", verifyToken, async (req, res) => {
+  try {
+    let userId = req.userId;
+    let favouriteId = req.params.favouriteId;
+
+    let favourite = await userServiceInstance.getFavourite({ favouriteId });
+
+    if (!favourite || favourite.users_id !== userId) {
+      return res.status(404).json({ message: "Favourite doesnot exist" });
+    }
+
+    let deleted = await userServiceInstance.deleteUsersFavourite({
+      userId,
+      favouriteId,
+    });
+    if (deleted) {
+      return res.status(200).json({
+        message: "User's favourites deleted successfully",
+        data: deleted,
+      });
+    } else {
+      return res.status(400).json({ message: "Favourite deletion failed" });
     }
   } catch (err) {
     console.log(err);
