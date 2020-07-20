@@ -294,6 +294,7 @@ class OrderService {
         orderBy,
         take: limit,
         skip: offset,
+        include: { users: true },
       });
       return {
         order,
