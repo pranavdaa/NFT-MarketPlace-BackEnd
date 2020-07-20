@@ -236,12 +236,19 @@ router.patch(
       };
 
       let order = await orderServiceInstance.orderExists(params);
+
+      if (order.maker_address === req.userId) {
+        return res
+          .status(400)
+          .json({ message: "Seller and Buyer can't be the same" });
+      }
+
       let category = await categoryServiceInstance.getCategory({
         categoryId: order.categories_id,
       });
 
       if (!order || order.status !== 0) {
-        return res.status(200).json({ message: "Invalid order" });
+        return res.status(400).json({ message: "Invalid order" });
       }
 
       let orderAdd;

@@ -97,6 +97,7 @@ class OrderService {
       let order = await prisma.orders.findMany({
         where,
         select: {
+          maker_address: true,
           id: true,
           created: true,
           min_price: true,
@@ -142,10 +143,12 @@ class OrderService {
         },
         select: {
           id: true,
+          maker_address: true,
           created: true,
           min_price: true,
           price: true,
           expiry_date: true,
+          signature: true,
           status: true,
           type: true,
           categories: {
@@ -191,6 +194,7 @@ class OrderService {
         data: {
           taker_users: { connect: { id: parseInt(params.taker_address) } },
           status: 2,
+          updated: new Date(),
         },
       });
       return order;
@@ -212,6 +216,7 @@ class OrderService {
             },
           ],
         },
+        updated: new Date(),
       },
     });
     return order;
@@ -224,6 +229,7 @@ class OrderService {
         data: {
           status: 3,
         },
+        updated: new Date(),
       });
       return order;
     } catch (err) {
@@ -264,6 +270,7 @@ class OrderService {
           taker_users: { connect: { id: parseInt(params.taker_address) } },
           taker_amount: params.taker_amount,
           status: 2,
+          updated: new Date(),
         },
       });
       return order;
