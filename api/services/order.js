@@ -15,9 +15,10 @@ class OrderService {
           maker_users: { connect: { id: parseInt(params.maker_address) } },
           categories: { connect: { id: parseInt(params.maker_token) } },
           tokens_id: params.maker_token_id,
-          price: params.price,
-          min_price: params.price,
-          taker_amount: params.price,
+          price: parseFloat(params.price),
+          min_price: parseFloat(params.price),
+          taker_amount: parseFloat(params.price),
+          maker_amount: 1,
           signature: params.signature,
           erc20tokens: { connect: { id: parseInt(params.taker_token) } },
           type: params.type,
@@ -35,13 +36,13 @@ class OrderService {
     try {
       let order = await prisma.orders.create({
         data: {
-          maker_users: { connect: { id: parseInt(params.maker_address) } },
-          categories: { connect: { id: parseInt(params.maker_token) } },
-          tokens_id: params.maker_token_id,
-          min_price: params.min_price,
-          price: params.price,
-          signature: params.signature,
-          erc20tokens: { connect: { id: parseInt(params.taker_token) } },
+          taker_users: { connect: { id: parseInt(params.taker_address) } },
+          categories: { connect: { id: parseInt(params.taker_token) } },
+          tokens_id: params.taker_token_id,
+          min_price: parseFloat(params.min_price),
+          price: parseFloat(params.price),
+          taker_amount: 1,
+          erc20tokens: { connect: { id: parseInt(params.maker_token) } },
           type: params.type,
           chain_id: params.chain_id,
         },
@@ -58,13 +59,13 @@ class OrderService {
       let order = await prisma.orders.create({
         data: {
           expiry_date: new Date(parseInt(params.expiry_date)),
-          maker_users: { connect: { id: parseInt(params.maker_address) } },
-          categories: { connect: { id: parseInt(params.maker_token) } },
-          tokens_id: params.maker_token_id,
-          min_price: params.min_price,
-          price: params.min_price,
-          signature: params.signature,
-          erc20tokens: { connect: { id: parseInt(params.taker_token) } },
+          taker_users: { connect: { id: parseInt(params.taker_address) } },
+          categories: { connect: { id: parseInt(params.taker_token) } },
+          tokens_id: params.taker_token_id,
+          min_price: parseFloat(params.min_price),
+          taker_amount: 1,
+          price: parseFloat(params.min_price),
+          erc20tokens: { connect: { id: parseInt(params.maker_token) } },
           type: params.type,
           chain_id: params.chain_id,
         },
@@ -103,6 +104,10 @@ class OrderService {
           min_price: true,
           price: true,
           expiry_date: true,
+          txhash: true,
+          taker_address: true,
+          taker_amount: true,
+          maker_amount: true,
           status: true,
           type: true,
           categories: {
@@ -114,7 +119,14 @@ class OrderService {
             },
           },
           tokens_id: true,
-          erc20tokens: { select: { id: true } },
+          erc20tokens: {
+            include: {
+              erc20tokensaddresses: {
+                where: { chain_id: "80001" },
+                select: { address: true },
+              },
+            },
+          },
           views: true,
           bids: true,
           updated: true,
@@ -142,13 +154,16 @@ class OrderService {
           id: parseInt(params.orderId),
         },
         select: {
-          id: true,
           maker_address: true,
+          id: true,
           created: true,
           min_price: true,
           price: true,
           expiry_date: true,
-          signature: true,
+          txhash: true,
+          taker_address: true,
+          taker_amount: true,
+          maker_amount: true,
           status: true,
           type: true,
           categories: {
@@ -160,7 +175,14 @@ class OrderService {
             },
           },
           tokens_id: true,
-          erc20tokens: { select: { id: true } },
+          erc20tokens: {
+            include: {
+              erc20tokensaddresses: {
+                where: { chain_id: "80001" },
+                select: { address: true },
+              },
+            },
+          },
           views: true,
           bids: true,
           updated: true,
@@ -193,6 +215,7 @@ class OrderService {
         where: { id: parseInt(params.orderId) },
         data: {
           taker_users: { connect: { id: parseInt(params.taker_address) } },
+          txhash: params.tx_hash,
           status: 2,
           updated: new Date(),
         },
@@ -211,8 +234,9 @@ class OrderService {
         bids: {
           create: [
             {
-              price: params.bid,
-              users: { connect: { id: parseInt(params.taker_address) } },
+              price: parseFloat(params.bid),
+              signature: params.signature,
+              users: { connect: { id: parseInt(params.maker_address) } },
             },
           ],
         },
@@ -267,8 +291,9 @@ class OrderService {
       let order = await prisma.orders.update({
         where: { id: parseInt(params.orderId) },
         data: {
-          taker_users: { connect: { id: parseInt(params.taker_address) } },
-          taker_amount: params.taker_amount,
+          maker_users: { connect: { id: parseInt(params.maker_address) } },
+          maker_amount: params.maker_amount,
+          txhash: params.tx_hash,
           status: 2,
           updated: new Date(),
         },

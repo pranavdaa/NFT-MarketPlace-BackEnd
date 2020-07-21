@@ -71,6 +71,8 @@ class CategoryService {
       let categories = await prisma.categoriesaddresses.findOne({
         where: { address: params.address },
       });
+
+      categories;
       return categories;
     } catch (err) {
       console.log(err);

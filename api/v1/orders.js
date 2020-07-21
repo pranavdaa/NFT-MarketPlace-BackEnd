@@ -34,9 +34,7 @@ router.post(
   [
     check("maker_token", "A valid id is required").exists(),
     check("chain_id", "A valid id is required").exists(),
-    check("maker_token_id", "A valid id is required").exists(),
     check("taker_token", "A valid id is required").exists(),
-    check("signature", "A valid signature is required").exists(),
     check("type", "A valid type is required")
       .exists()
       .isIn(["FIXED", "NEGOTIATION", "AUCTION"]),
@@ -50,20 +48,33 @@ router.post(
         return res.status(400).json({ error: errors.array() });
       }
 
-      let params = { ...req.body, ...{ maker_address: req.userId } };
+      let {
+        maker_token,
+        maker_token_id,
+        taker_token_id,
+        price: price,
+        signature,
+        taker_token,
+        type,
+        chain_id,
+        min_price,
+        expiry_date,
+      } = req.body;
 
-      let { maker_token, maker_token_id, taker_token, type } = req.body;
+      let categoryType = type === "FIXED" ? maker_token : taker_token;
 
       let category = await categoryServiceInstance.getCategory({
-        categoryId: maker_token,
+        categoryId: categoryType,
       });
 
       if (!category) {
         return res.status(400).json({ message: "Invalid Category" });
       }
 
+      let erc20Type = type === "FIXED" ? taker_token : maker_token;
+
       let erc20token = await erc20TokenServiceInstance.getERC20Token({
-        id: taker_token,
+        id: erc20Type,
       });
 
       if (!erc20token) {
@@ -74,24 +85,51 @@ router.post(
 
       switch (type) {
         case "FIXED": {
-          if (!params.price) {
+          if (!price || !signature || !maker_token_id) {
             return res.status(400).json({ message: "Input validation failed" });
           }
-          orderAdd = await orderServiceInstance.placeFixedOrder(params);
+          orderAdd = await orderServiceInstance.placeFixedOrder({
+            maker_address: req.userId,
+            maker_token,
+            maker_token_id,
+            price,
+            signature,
+            taker_token,
+            type,
+            chain_id,
+          });
           break;
         }
         case "NEGOTIATION": {
-          if (!params.min_price || !params.price) {
+          if (!min_price || !price || !taker_token_id) {
             return res.status(400).json({ message: "Input validation failed" });
           }
-          orderAdd = await orderServiceInstance.placeNegotiationOrder(params);
+          orderAdd = await orderServiceInstance.placeNegotiationOrder({
+            taker_address: req.userId,
+            taker_token,
+            taker_token_id,
+            price,
+            min_price,
+            maker_token,
+            type,
+            chain_id,
+          });
           break;
         }
         case "AUCTION": {
-          if (!params.min_price || !params.expiry_date) {
+          if (!min_price || !expiry_date || !taker_token_id) {
             return res.status(400).json({ message: "Input validation failed" });
           }
-          orderAdd = await orderServiceInstance.placeAuctionOrder(params);
+          orderAdd = await orderServiceInstance.placeAuctionOrder({
+            taker_address: req.userId,
+            taker_token,
+            taker_token_id,
+            expiry_date,
+            min_price,
+            maker_token,
+            type,
+            chain_id,
+          });
           break;
         }
       }
@@ -229,15 +267,15 @@ router.patch(
         return res.status(400).json({ error: errors.array() });
       }
 
-      let params = {
-        ...req.body,
-        ...req.params,
-        ...{ taker_address: req.userId },
-      };
+      let orderId = req.params.orderId;
+      let { tx_hash, bid, signature } = req.body;
 
-      let order = await orderServiceInstance.orderExists(params);
+      let order = await orderServiceInstance.orderExists({ orderId });
 
-      if (order.maker_address === req.userId) {
+      if (
+        (order.type === "FIXED" && order.maker_address === req.userId) ||
+        (order.type !== "FIXED" && order.taker_address === req.userId)
+      ) {
         return res
           .status(400)
           .json({ message: "Seller and Buyer can't be the same" });
@@ -255,7 +293,11 @@ router.patch(
 
       switch (order.type) {
         case "FIXED": {
-          orderAdd = await orderServiceInstance.buyFixedOrder(params);
+          orderAdd = await orderServiceInstance.buyFixedOrder({
+            orderId,
+            taker_address: req.userId,
+            tx_hash,
+          });
           if (orderAdd) {
             helper.notify({
               userId: req.userId,
@@ -279,26 +321,31 @@ router.patch(
           break;
         }
         case "NEGOTIATION": {
-          if (!params.bid) {
+          if (!bid || !signature) {
             return res.status(400).json({ message: "Input validation failed" });
           }
-          orderAdd = await orderServiceInstance.makeBid(params);
+          orderAdd = await orderServiceInstance.makeBid({
+            orderId,
+            bid,
+            signature,
+            maker_address: req.userId,
+          });
           if (orderAdd) {
             helper.notify({
               userId: req.userId,
               message:
                 "You made an offer of " +
-                params.bid +
+                bid +
                 " on " +
                 category.name +
                 " token",
               order_id: orderAdd.id,
             });
             helper.notify({
-              userId: orderAdd.maker_address,
+              userId: orderAdd.taker_address,
               message:
                 "An offer of " +
-                params.bid +
+                bid +
                 " has been made on your " +
                 category.name +
                 " token",
@@ -308,26 +355,31 @@ router.patch(
           break;
         }
         case "AUCTION": {
-          if (!params.bid) {
+          if (!bid || !signature) {
             return res.status(400).json({ message: "Input validation failed" });
           }
-          orderAdd = await orderServiceInstance.makeBid(params);
+          orderAdd = await orderServiceInstance.makeBid({
+            orderId,
+            bid,
+            signature,
+            maker_address: req.userId,
+          });
           if (orderAdd) {
             helper.notify({
               userId: req.userId,
               message:
                 "You placed a bid of " +
-                params.bid +
+                bid +
                 " on " +
                 category.name +
                 " token",
               order_id: orderAdd.id,
             });
             helper.notify({
-              userId: orderAdd.maker_address,
+              userId: orderAdd.taker_address,
               message:
                 "A bid of " +
-                params.bid +
+                bid +
                 " has been placed on your " +
                 category.name +
                 " token",
@@ -482,9 +534,10 @@ router.patch(
       });
 
       let params = {
+        tx_hash: req.body.tx_hash,
         orderId: order.id,
-        taker_address: req.userId,
-        taker_amount: bid.price,
+        maker_address: req.userId,
+        maker_amount: bid.price,
       };
 
       if (
@@ -499,21 +552,21 @@ router.patch(
 
       if (orderExecute) {
         helper.notify({
-          userId: orderExecute.taker_address,
+          userId: orderExecute.maker_address,
           message:
             "You bought a " +
             category.name +
             " token for " +
-            orderExecute.taker_amount,
+            orderExecute.maker_amount,
           order_id: orderExecute.id,
         });
         helper.notify({
-          userId: orderExecute.maker_address,
+          userId: orderExecute.taker_address,
           message:
             "Your " +
             category.name +
             " token has been bought for " +
-            orderExecute.taker_amount,
+            orderExecute.maker_amount,
           order_id: orderExecute.id,
         });
         return res.status(200).json({
@@ -533,7 +586,7 @@ router.patch(
 );
 
 /**
- *  Gets single order details
+ *  Gets bid list from order
  *  @params orderId type: int
  */
 

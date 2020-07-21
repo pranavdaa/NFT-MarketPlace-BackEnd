@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = "***"
 }
 
 model bids {
@@ -12,7 +12,7 @@ model bids {
   created   DateTime @default(now())
   id        Int      @default(autoincrement()) @id
   orders_id Int
-  price     Float
+  price     String
   signature String
   status    Int?     @default(0)
   updated   DateTime @default(now())
@@ -87,13 +87,12 @@ model orders {
   expiry_date    DateTime?
   id             Int             @default(autoincrement()) @id
   maker_address  Int?
-  min_price      Float
-  price          Float
+  min_price      String
+  price          String
   signature      String?
   status         Int?            @default(0)
   taker_address  Int?
-  taker_amount   Float?
-  maker_amount   Float?
+  taker_amount   String?
   tokens_id      String
   txhash         String?
   type           String
