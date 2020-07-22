@@ -237,8 +237,8 @@ router.get(
         let orderBy = requestUtil.getSortBy(req.query, "+id");
 
         if (order.type !== "FIXED") {
-          let bids = orderServiceInstance.getBids({
-            orderId,
+          let bids = await orderServiceInstance.getBids({
+            orderId: order.id,
             limit,
             offset,
             orderBy,
@@ -246,7 +246,7 @@ router.get(
 
           if (bids.order.length > 0) {
             order["highest_bid"] = bids.order[0].price;
-            order["lowest_bid"] = bids.order[bids.length - 1].price;
+            order["lowest_bid"] = bids.order[bids.order.length - 1].price;
           }
         }
 
