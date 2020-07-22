@@ -12,8 +12,9 @@ class OrderService {
     try {
       let order = await prisma.orders.create({
         data: {
-          maker_users: { connect: { id: parseInt(params.maker_address) } },
+          seller_users: { connect: { id: parseInt(params.maker_address) } },
           categories: { connect: { id: parseInt(params.maker_token) } },
+          maker_address: params.maker_address,
           tokens_id: params.maker_token_id,
           price: parseFloat(params.price),
           min_price: parseFloat(params.price),
@@ -36,8 +37,9 @@ class OrderService {
     try {
       let order = await prisma.orders.create({
         data: {
-          taker_users: { connect: { id: parseInt(params.taker_address) } },
+          seller_users: { connect: { id: parseInt(params.taker_address) } },
           categories: { connect: { id: parseInt(params.taker_token) } },
+          taker_address: params.taker_address,
           tokens_id: params.taker_token_id,
           min_price: parseFloat(params.min_price),
           price: parseFloat(params.price),
@@ -59,7 +61,8 @@ class OrderService {
       let order = await prisma.orders.create({
         data: {
           expiry_date: new Date(parseInt(params.expiry_date)),
-          taker_users: { connect: { id: parseInt(params.taker_address) } },
+          seller_users: { connect: { id: parseInt(params.taker_address) } },
+          taker_address: params.taker_address,
           categories: { connect: { id: parseInt(params.taker_token) } },
           tokens_id: params.taker_token_id,
           min_price: parseFloat(params.min_price),
@@ -99,6 +102,8 @@ class OrderService {
         where,
         select: {
           maker_address: true,
+          buyer: true,
+          seller: true,
           id: true,
           created: true,
           min_price: true,
@@ -157,6 +162,8 @@ class OrderService {
           maker_address: true,
           id: true,
           created: true,
+          buyer: true,
+          seller: true,
           min_price: true,
           price: true,
           expiry_date: true,
@@ -215,7 +222,8 @@ class OrderService {
       let order = await prisma.orders.update({
         where: { id: parseInt(params.orderId) },
         data: {
-          taker_users: { connect: { id: parseInt(params.taker_address) } },
+          buyer_users: { connect: { id: parseInt(params.taker_address) } },
+          taker_address: params.taker_address,
           txhash: params.tx_hash,
           status: 2,
           updated: new Date(),
@@ -292,7 +300,8 @@ class OrderService {
       let order = await prisma.orders.update({
         where: { id: parseInt(params.orderId) },
         data: {
-          maker_users: { connect: { id: parseInt(params.maker_address) } },
+          buyer_users: { connect: { id: parseInt(params.maker_address) } },
+          maker_address: params.maker_address,
           maker_amount: params.maker_amount,
           txhash: params.tx_hash,
           status: 2,
@@ -317,7 +326,9 @@ class OrderService {
         where: {
           orders_id: parseInt(orderId),
         },
-        orderBy,
+        orderBy: {
+          price: "desc",
+        },
         take: limit,
         skip: offset,
         include: { users: true },

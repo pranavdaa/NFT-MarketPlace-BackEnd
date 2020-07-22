@@ -205,6 +205,44 @@ router.get(
 );
 
 /**
+ *  Gets users sell orders(maker order)
+ */
+
+router.get(
+  "/:userId/activeorders",
+  [check("userId", "A valid id is required").exists()],
+  async (req, res) => {
+    try {
+      let userId = req.params.userId;
+
+      let limit = requestUtil.getLimit(req.query);
+      let offset = requestUtil.getOffset(req.query);
+      let orderBy = requestUtil.getSortBy(req.query, "+id");
+
+      let orders = await userServiceInstance.getUsersActiveOrders({
+        userId,
+        limit,
+        offset,
+        orderBy,
+      });
+      if (orders) {
+        return res.status(200).json({
+          message: "User's orders retrieved successfully",
+          data: orders,
+        });
+      } else {
+        return res.status(404).json({ message: "User's orders not found" });
+      }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(500)
+        .json({ message: "Internal Server error. Please try again!" });
+    }
+  }
+);
+
+/**
  *  Gets users buy orders(taker order)
  */
 

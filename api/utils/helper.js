@@ -8,6 +8,10 @@ function isValidEthereumAddress(address) {
   return web3.utils.isAddress(address);
 }
 
+function toChecksumAddress(address) {
+  return web3.utils.toChecksumAddress(address);
+}
+
 function hasNextPage({ limit, offset, count }) {
   // accepts options with keys limit, offset, count
   if (offset + limit >= count) {
@@ -72,4 +76,5 @@ module.exports = {
   isValidEthereumAddress,
   notify,
   getRate,
+  toChecksumAddress,
 };

@@ -65,14 +65,49 @@ class UserService {
   async getUsersMakerOrders({ userId, limit, offset, orderBy }) {
     try {
       let count = await prisma.orders.count({
-        where: { AND: [{ maker_address: parseInt(userId) }, { active: true }] },
+        where: { AND: [{ seller: parseInt(userId) }, { active: true }] },
       });
       let orders = await prisma.users.findMany({
         where: {
           id: parseInt(userId),
         },
         select: {
-          maker_orders: {
+          seller_orders: {
+            where: {
+              active: true,
+            },
+            orderBy,
+            take: limit,
+            skip: offset,
+          },
+        },
+      });
+
+      return {
+        orders,
+        limit,
+        offset,
+        has_next_page: hasNextPage({ limit, offset, count }),
+      };
+    } catch (err) {
+      console.log(err);
+      throw new Error("Internal Server Error");
+    }
+  }
+
+  async getUsersActiveOrders({ userId, limit, offset, orderBy }) {
+    try {
+      let count = await prisma.orders.count({
+        where: {
+          AND: [{ seller: parseInt(userId) }, { active: true }, { status: 0 }],
+        },
+      });
+      let orders = await prisma.users.findMany({
+        where: {
+          id: parseInt(userId),
+        },
+        select: {
+          seller_orders: {
             where: {
               active: true,
             },
@@ -98,14 +133,14 @@ class UserService {
   async getUsersTakerOrders({ userId, limit, offset, orderBy }) {
     try {
       let count = await prisma.orders.count({
-        where: { AND: [{ taker_address: parseInt(userId) }, { active: true }] },
+        where: { AND: [{ buyer: parseInt(userId) }, { active: true }] },
       });
       let orders = await prisma.users.findMany({
         where: {
           id: parseInt(userId),
         },
         select: {
-          taker_orders: {
+          buyer_orders: {
             where: {
               active: true,
             },

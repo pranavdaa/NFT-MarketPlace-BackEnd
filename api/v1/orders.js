@@ -232,6 +232,24 @@ router.get(
           order.categories.categoriesaddresses[0].address
         );
 
+        let limit = requestUtil.getLimit(req.query);
+        let offset = requestUtil.getOffset(req.query);
+        let orderBy = requestUtil.getSortBy(req.query, "+id");
+
+        if (order.type !== "FIXED") {
+          let bids = orderServiceInstance.getBids({
+            orderId,
+            limit,
+            offset,
+            orderBy,
+          });
+
+          if (bids.order.length > 0) {
+            order["highest_bid"] = bids.order[0].price;
+            order["lowest_bid"] = bids.order[bids.length - 1].price;
+          }
+        }
+
         let orderData = { ...order, ...metadata };
         return res.status(200).json({
           message: "Order details retrieved successfully",
@@ -422,7 +440,9 @@ router.patch(
         return res.status(200).json({ message: "Invalid order" });
       }
 
-      let cancel = await orderServiceInstance.cancelOrder(req.params);
+      let cancel = await orderServiceInstance.cancelOrder({
+        orderId: req.params.orderId,
+      });
       let category = await categoryServiceInstance.getCategory({
         categoryId: cancel.categories_id,
       });
