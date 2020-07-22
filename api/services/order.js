@@ -192,7 +192,7 @@ class OrderService {
             },
           },
           views: true,
-          bids: true,
+          bids: { orderBy: { price: "desc" } },
           updated: true,
         },
       });
@@ -261,8 +261,9 @@ class OrderService {
         where: { id: parseInt(params.orderId) },
         data: {
           status: 3,
+          signature: "",
+          updated: new Date(),
         },
-        updated: new Date(),
       });
       return order;
     } catch (err) {
@@ -276,6 +277,7 @@ class OrderService {
       where: { id: parseInt(params.bidId) },
       data: {
         status: 3,
+        signature: "",
       },
     });
     return order;

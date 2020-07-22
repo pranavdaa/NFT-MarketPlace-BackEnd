@@ -248,6 +248,10 @@ router.get(
             order["highest_bid"] = bids.order[0].price;
             order["lowest_bid"] = bids.order[bids.order.length - 1].price;
           }
+        } else {
+          if (order.status !== 0) {
+            order.signature = null;
+          }
         }
 
         let orderData = { ...order, ...metadata };
@@ -571,6 +575,23 @@ router.patch(
       let orderExecute = await orderServiceInstance.executeOrder(params);
 
       if (orderExecute) {
+        if (order.type !== "FIXED") {
+          let limit = requestUtil.getLimit(req.query);
+          let offset = requestUtil.getOffset(req.query);
+          let orderBy = requestUtil.getSortBy(req.query, "+id");
+
+          let bids = await orderServiceInstance.getBids({
+            orderId: order.id,
+            limit,
+            offset,
+            orderBy,
+          });
+
+          for (data of bids.order) {
+            orderServiceInstance.cancelBid({ bidId: data.id });
+          }
+        }
+
         helper.notify({
           userId: orderExecute.maker_address,
           message:
