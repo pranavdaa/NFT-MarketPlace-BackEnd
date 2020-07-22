@@ -110,6 +110,7 @@ class UserService {
           seller_orders: {
             where: {
               active: true,
+              status: 0,
             },
             orderBy,
             take: limit,
