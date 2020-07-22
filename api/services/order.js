@@ -162,6 +162,7 @@ class OrderService {
           expiry_date: true,
           txhash: true,
           taker_address: true,
+          signature: true,
           taker_amount: true,
           maker_amount: true,
           status: true,
