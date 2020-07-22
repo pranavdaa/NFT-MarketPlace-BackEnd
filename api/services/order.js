@@ -1,6 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 let { hasNextPage } = require("../utils/helper.js");
+let constants = require("../../config/constants");
 
 /**
  * Includes all the Order services that controls
@@ -29,7 +30,7 @@ class OrderService {
       return order;
     } catch (err) {
       console.log(err);
-      throw new Error("Internal Server Error");
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -52,7 +53,7 @@ class OrderService {
       return order;
     } catch (err) {
       console.log(err);
-      throw new Error("Internal Server Error");
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -76,7 +77,7 @@ class OrderService {
       return order;
     } catch (err) {
       console.log(err);
-      throw new Error("Internal Server Error");
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -118,7 +119,7 @@ class OrderService {
           categories: {
             include: {
               categoriesaddresses: {
-                where: { chain_id: "80001" },
+                where: { chain_id: constants.MATIC_CHAIN_ID },
                 select: { address: true },
               },
             },
@@ -127,7 +128,7 @@ class OrderService {
           erc20tokens: {
             include: {
               erc20tokensaddresses: {
-                where: { chain_id: "80001" },
+                where: { chain_id: constants.MATIC_CHAIN_ID },
                 select: { address: true },
               },
             },
@@ -148,7 +149,24 @@ class OrderService {
       };
     } catch (err) {
       console.log(err);
-      throw new Error("Internal Server Error");
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getAuctionOrders() {
+    try {
+      let order = await prisma.orders.findMany({
+        where: {
+          status: 0,
+          active: true,
+          type: "AUCTION",
+        },
+        select: { id: true, expiry_date: true },
+      });
+      return order;
+    } catch (err) {
+      console.log(err);
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -177,7 +195,7 @@ class OrderService {
           categories: {
             include: {
               categoriesaddresses: {
-                where: { chain_id: "80001" },
+                where: { chain_id: constants.MATIC_CHAIN_ID },
                 select: { address: true },
               },
             },
@@ -186,20 +204,20 @@ class OrderService {
           erc20tokens: {
             include: {
               erc20tokensaddresses: {
-                where: { chain_id: "80001" },
+                where: { chain_id: constants.MATIC_CHAIN_ID },
                 select: { address: true },
               },
             },
           },
           views: true,
-          bids: { orderBy: { price: "desc" } },
+          bids: { orderBy: { price: constants.SORT_DIRECTION.DESC } },
           updated: true,
         },
       });
       return order;
     } catch (err) {
       console.log(err);
-      throw new Error("Internal Server Error");
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -213,7 +231,28 @@ class OrderService {
       return order;
     } catch (err) {
       console.log(err);
-      throw new Error("Internal Server Error");
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async checkValidOrder(params) {
+    try {
+      let order = await prisma.orders.findMany({
+        where: {
+          tokens_id: params.tokenId,
+          seller: parseInt(params.userId),
+          status: 0,
+        },
+      });
+
+      if (order.length > 0) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (err) {
+      console.log(err);
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -232,7 +271,7 @@ class OrderService {
       return order;
     } catch (err) {
       console.log(err);
-      throw new Error("Internal Server Error");
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -268,7 +307,24 @@ class OrderService {
       return order;
     } catch (err) {
       console.log(err);
-      throw new Error("Internal Server Error");
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async expireOrder(params) {
+    try {
+      let order = await prisma.orders.update({
+        where: { id: parseInt(params.orderId) },
+        data: {
+          status: 4,
+          signature: "",
+          updated: new Date(),
+        },
+      });
+      return order;
+    } catch (err) {
+      console.log(err);
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -293,7 +349,7 @@ class OrderService {
       return bid;
     } catch (err) {
       console.log(err);
-      throw new Error("Internal Server Error");
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -313,7 +369,7 @@ class OrderService {
       return order;
     } catch (err) {
       console.log(err);
-      throw new Error("Internal Server Error");
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -329,7 +385,7 @@ class OrderService {
           orders_id: parseInt(orderId),
         },
         orderBy: {
-          price: "desc",
+          price: constants.SORT_DIRECTION.DESC,
         },
         take: limit,
         skip: offset,
@@ -343,7 +399,7 @@ class OrderService {
       };
     } catch (err) {
       console.log(err);
-      throw new Error("Internal Server Error");
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 }

@@ -7,6 +7,7 @@ const upload = require("../utils/upload");
 const validate = require("../utils/helper");
 const verifyAdmin = require("../middlewares/verify-admin");
 let requestUtil = require("../utils/request-utils");
+let constants = require("../../config/constants");
 
 /**
  * Category routes
@@ -30,7 +31,9 @@ router.post(
       let { name, address } = req.body;
 
       if (!name || !address) {
-        return res.status(400).json({ message: "input validation failed" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
 
       let categoryExists = await categoryServiceInstance.categoryExists(
@@ -38,7 +41,9 @@ router.post(
       );
 
       if (categoryExists) {
-        return res.status(400).json({ message: "category already exists" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
 
       for (let data of JSON.parse(address)) {
@@ -49,8 +54,8 @@ router.post(
           }))
         ) {
           return res
-            .status(400)
-            .json({ message: "category address already exists" });
+            .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+            .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
         }
       }
 
@@ -60,16 +65,18 @@ router.post(
       );
       if (category) {
         return res
-          .status(200)
-          .json({ message: "category addedd successfully", data: category });
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: category });
       } else {
-        return res.status(400).json({ message: "category addition failed" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.RESPONSE_STATUS.FAILURE });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error.Please try again" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -90,18 +97,20 @@ router.get("/", async (req, res) => {
       orderBy,
     });
     if (categories) {
-      return res.status(200).json({
-        message: "categories retrieved successfully",
+      return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+        message: constants.RESPONSE_STATUS.SUCCESS,
         data: categories,
       });
     } else {
-      return res.status(400).json({ message: "categories retrieved failed" });
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+        .json({ message: constants.RESPONSE_STATUS.FAILURE });
     }
   } catch (err) {
     console.log(err);
     return res
-      .status(500)
-      .json({ message: "Internal Server error.Please try again" });
+      .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -118,22 +127,26 @@ router.get(
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        return res.status(400).json({ error: errors.array() });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
       }
 
       let category = await categoryServiceInstance.getCategory(req.params);
       if (category) {
         return res
-          .status(200)
-          .json({ message: "Category retrieved successfully", data: category });
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: category });
       } else {
-        return res.status(400).json({ message: "Category doesnt exist" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
+          .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error.Please try again" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -156,13 +169,17 @@ router.put(
       let params = { ...req.params, ...req.body };
 
       if (!params.categoryId) {
-        return res.status(400).json({ message: "Input validation failed" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
 
       let categoryExists = await categoryServiceInstance.getCategory(params);
 
       if (!categoryExists) {
-        return res.status(400).json({ message: "Category doesnt exists" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: "Category doesnt exists" });
       }
 
       if (params.address) {
@@ -174,7 +191,7 @@ router.put(
             }))
           ) {
             return res
-              .status(400)
+              .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
               .json({ message: "category address already exists" });
           }
         }
@@ -186,16 +203,18 @@ router.put(
       );
       if (category) {
         return res
-          .status(200)
+          .status(constants.RESPONSE_STATUS_CODES.OK)
           .json({ message: "category addedd successfully", data: category });
       } else {
-        return res.status(400).json({ message: "category addition failed" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: "category addition failed" });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error.Please try again" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );

@@ -7,6 +7,7 @@ const validate = require("../utils/helper");
 const verifyAdmin = require("../middlewares/verify-admin");
 let requestUtil = require("../utils/request-utils");
 let helper = require("../utils/helper");
+let constants = require("../../config/constants");
 
 /**
  * erc20token routes
@@ -34,13 +35,17 @@ router.post(
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        return res.status(400).json({ error: errors.array() });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
       }
 
       let { name, symbol, decimal, address } = req.body;
 
       if (!name || !address || !decimal || !symbol) {
-        return res.status(400).json({ message: "input validation failed" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
 
       let erc20TokenExists = await erc20TokenServiceInstance.erc20TokenExists(
@@ -48,8 +53,8 @@ router.post(
       );
 
       if (erc20TokenExists) {
-        return res.status(200).json({
-          message: "erc20token already exists",
+        return res.status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST).json({
+          message: constants.MESSAGES.INPUT_VALIDATION_ERROR,
           data: erc20TokenExists,
         });
       }
@@ -62,25 +67,27 @@ router.post(
           }))
         ) {
           return res
-            .status(400)
-            .json({ message: "ERC20 token address already exists" });
+            .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+            .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
         }
       }
 
       let erc20Token = await erc20TokenServiceInstance.addERC20Token(req.body);
       if (erc20Token) {
-        return res.status(200).json({
-          message: "erc20token addedd successfully",
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
           data: erc20Token,
         });
       } else {
-        return res.status(400).json({ message: "erc20token addition failed" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.RESPONSE_STATUS.FAILURE });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error.Please try again" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -98,7 +105,9 @@ router.get(
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        return res.status(400).json({ error: errors.array() });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
       }
 
       let { symbol } = req.query;
@@ -106,18 +115,20 @@ router.get(
       let price = await helper.getRate(symbol);
 
       if (price) {
-        return res.status(200).json({
-          message: "Token price retrieved successfully",
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
           data: price,
         });
       } else {
-        return res.status(400).json({ message: "Price retrieval failed" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.RESPONSE_STATUS.FAILURE });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error.Please try again" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -138,18 +149,20 @@ router.get("/", async (req, res) => {
       orderBy,
     });
     if (erc20Tokens) {
-      return res.status(200).json({
-        message: "erc20tokens retrieved successfully",
+      return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+        message: constants.RESPONSE_STATUS.SUCCESS,
         data: erc20Tokens,
       });
     } else {
-      return res.status(400).json({ message: "erc20tokens retrieved failed" });
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+        .json({ message: constants.RESPONSE_STATUS.FAILURE });
     }
   } catch (err) {
     console.log(err);
     return res
-      .status(500)
-      .json({ message: "Internal Server error.Please try again" });
+      .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -166,25 +179,29 @@ router.get(
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        return res.status(400).json({ error: errors.array() });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
       }
 
       let erc20Token = await erc20TokenServiceInstance.getERC20Token(
         req.params
       );
       if (erc20Token) {
-        return res.status(200).json({
-          message: "erc20token retrieved successfully",
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
           data: erc20Token,
         });
       } else {
-        return res.status(400).json({ message: "erc20token retrieved failed" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.RESPONSE_STATUS.FAILURE });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error.Please try again" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -202,26 +219,25 @@ router.put("/:id", verifyAdmin, async (req, res) => {
     let params = { ...req.params, ...req.body };
 
     if (!params.id) {
-      return res.status(400).json({ message: "Input validation failed" });
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+        .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
     }
 
     let tokenExists = await erc20TokenServiceInstance.getERC20Token(params);
 
     if (!tokenExists) {
-      return res.status(400).json({ message: "Token doesnt exists" });
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+        .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
     }
 
     if (params.address) {
       for (data of JSON.parse(params.address)) {
-        if (
-          !validate.isValidEthereumAddress(data.address) ||
-          (await erc20TokenServiceInstance.erc20TokenAddressExists({
-            address: data.address,
-          }))
-        ) {
+        if (!validate.isValidEthereumAddress(data.address)) {
           return res
-            .status(400)
-            .json({ message: "Token address already exists" });
+            .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+            .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
         }
       }
     }
@@ -229,16 +245,18 @@ router.put("/:id", verifyAdmin, async (req, res) => {
     let token = await erc20TokenServiceInstance.updateERC20Token(params);
     if (token) {
       return res
-        .status(200)
-        .json({ message: "Token addedd successfully", data: token });
+        .status(constants.RESPONSE_STATUS_CODES.OK)
+        .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: token });
     } else {
-      return res.status(400).json({ message: "Token addition failed" });
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+        .json({ message: constants.RESPONSE_STATUS.FAILURE });
     }
   } catch (err) {
     console.log(err);
     return res
-      .status(500)
-      .json({ message: "Internal Server error.Please try again" });
+      .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 

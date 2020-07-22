@@ -1,5 +1,6 @@
 const { Client } = require("pg");
 const config = require("../../config/config");
+let constants = require("../../config/constants");
 
 const connectionString = config.hermoine;
 
@@ -21,7 +22,7 @@ class TokenService {
       return tokens.rows;
     } catch (err) {
       console.log(err);
-      throw new Error("Internal Server Error");
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -36,7 +37,7 @@ class TokenService {
       return tokens.rows;
     } catch (err) {
       console.log(err);
-      throw new Error("Internal Server Error");
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 }

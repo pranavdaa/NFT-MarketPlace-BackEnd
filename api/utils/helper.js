@@ -1,8 +1,10 @@
 const web3 = require("web3");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-var coinMarketCapKey = "d0c9d885-8f21-4964-93d5-115af3bacf63";
+let config = require("../../config/config");
+var coinMarketCapKey = config.coinmarket_apikey;
 const rp = require("request-promise");
+let constants = require("../../config/constants");
 
 function isValidEthereumAddress(address) {
   return web3.utils.isAddress(address);
@@ -10,6 +12,14 @@ function isValidEthereumAddress(address) {
 
 function toChecksumAddress(address) {
   return web3.utils.toChecksumAddress(address);
+}
+
+function toNumber(tokenId) {
+  return web3.utils.hexToNumberString(tokenId);
+}
+
+function toHex(value) {
+  return web3.utils.numberToHex(value);
 }
 
 function hasNextPage({ limit, offset, count }) {
@@ -33,7 +43,7 @@ async function notify({ userId, message, order_id }) {
     return notification;
   } catch (err) {
     console.log(err);
-    throw new Error("Internal Server Error");
+    throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
   }
 }
 
@@ -77,4 +87,6 @@ module.exports = {
   notify,
   getRate,
   toChecksumAddress,
+  toNumber,
+  toHex,
 };

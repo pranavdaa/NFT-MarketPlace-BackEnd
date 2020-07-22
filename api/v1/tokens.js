@@ -3,8 +3,13 @@ const router = express.Router();
 const { check, validationResult } = require("express-validator");
 const TokenService = require("../services/tokens");
 const tokenServiceInstance = new TokenService();
+const userService = require("../services/user");
+let userServiceInstance = new userService();
+const orderService = require("../services/order");
+let orderServiceInstance = new orderService();
 let redisCache = require("../utils/redis-cache");
 let helper = require("../utils/helper");
+let constants = require("../../config/constants");
 
 /**
  * Token routes
@@ -16,18 +21,29 @@ let helper = require("../utils/helper");
 
 router.get(
   "/matic",
-  [check("owner", "input a valid address").exists().isEthereumAddress()],
+  [check("userId", "input a valid id").exists()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        return res.status(400).json({ error: errors.array() });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
       }
 
-      let { owner } = req.query;
+      let { userId } = req.query;
+
+      let user = await userServiceInstance.getUser({ userId });
+
+      if (!user) {
+        return res.status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST).json({
+          message: constants.MESSAGES.INPUT_VALIDATION_ERROR,
+        });
+      }
+
       let tokens = await tokenServiceInstance.getTokens({
-        owner: owner.toLowerCase(),
+        owner: user.address.toLowerCase(),
       });
 
       let tokensOwned = [];
@@ -38,23 +54,30 @@ router.get(
             token.token_id,
             token.contract
           );
-          tokensOwned.push({ ...token, ...metadata });
+          let active = {
+            active_order: await orderServiceInstance.checkValidOrder({
+              userId,
+              tokenId: helper.toNumber(token.token_id),
+            }),
+          };
+
+          tokensOwned.push({ ...token, ...metadata, ...active });
         }
 
-        return res.status(200).json({
-          message: "Token balance retieved successfully",
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
           data: tokensOwned,
         });
       } else {
-        return res.status(404).json({
-          message: "No tokens found",
+        return res.status(constants.RESPONSE_STATUS_CODES.NOT_FOUND).json({
+          message: constants.RESPONSE_STATUS.NOT_FOUND,
         });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error.Please try again" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -71,7 +94,9 @@ router.get(
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        return res.status(400).json({ error: errors.array() });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
       }
 
       let { owner } = req.query;
@@ -89,20 +114,20 @@ router.get(
           );
           tokensOwned.push({ ...token, ...metadata });
         }
-        return res.status(200).json({
-          message: "Token balance retieved successfully",
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
           data: tokensOwned,
         });
       } else {
-        return res.status(404).json({
-          message: "No tokens found",
+        return res.status(constants.RESPONSE_STATUS_CODES.NOT_FOUND).json({
+          message: constants.RESPONSE_STATUS.NOT_FOUND,
         });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error.Please try again" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );

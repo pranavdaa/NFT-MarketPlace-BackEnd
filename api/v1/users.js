@@ -10,6 +10,7 @@ const orderService = require("../services/order");
 let orderServiceInstance = new orderService();
 let requestUtil = require("../utils/request-utils");
 let config = require("../../config/config");
+let constants = require("../../config/constants");
 
 /**
  * User routes
@@ -35,7 +36,9 @@ router.post(
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({ error: errors.array() });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
       }
 
       let userExists = await userServiceInstance.userExists(req.body);
@@ -47,15 +50,17 @@ router.post(
           })
         ) {
           var token = jwt.sign({ userId: userExists.id }, config.secret, {
-            expiresIn: "24h",
+            expiresIn: constants.JWT_EXPIRY,
           });
-          return res.status(200).json({
-            message: "User authorized successfully",
+          return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+            message: constants.RESPONSE_STATUS.SUCCESS,
             data: userExists,
             auth_token: token,
           });
         } else {
-          return res.status(401).json({ message: "User authorization failed" });
+          return res
+            .status(401)
+            .json({ message: constants.MESSAGES.UNAUTHORIZED });
         }
       } else {
         let user = await userServiceInstance.createUser(req.body);
@@ -67,27 +72,29 @@ router.post(
             })
           ) {
             var token = jwt.sign({ userId: user.id }, config.secret, {
-              expiresIn: "24h",
+              expiresIn: constants.JWT_EXPIRY,
             });
-            return res.status(200).json({
-              message: "User added and authorized successfully",
+            return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+              message: constants.RESPONSE_STATUS.SUCCESS,
               data: user,
               auth_token: token,
             });
           } else {
             return res
               .status(401)
-              .json({ message: "User authorization failed" });
+              .json({ message: constants.MESSAGES.UNAUTHORIZED });
           }
         } else {
-          return res.status(400).json({ message: "User creation failed" });
+          return res
+            .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+            .json({ message: constants.RESPONSE_STATUS.FAILURE });
         }
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error. Please try again!" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -106,16 +113,18 @@ router.get("/", async (req, res) => {
 
     if (data.users) {
       return res
-        .status(200)
-        .json({ message: "Users retrieved successfully", data: data });
+        .status(constants.RESPONSE_STATUS_CODES.OK)
+        .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: data });
     } else {
-      return res.status(404).json({ message: "No user found" });
+      return res
+        .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+        .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
     }
   } catch (err) {
     console.log(err);
     return res
-      .status(500)
-      .json({ message: "Internal Server error. Please try again!" });
+      .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -128,13 +137,13 @@ router.get("/details", verifyToken, async (req, res) => {
     let userId = req.userId;
     let users = await userServiceInstance.getUser({ userId });
     return res
-      .status(200)
-      .json({ message: "Users retrieved successfully", data: users });
+      .status(constants.RESPONSE_STATUS_CODES.OK)
+      .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: users });
   } catch (err) {
     console.log(err);
     return res
-      .status(500)
-      .json({ message: "Internal Server error. Please try again!" });
+      .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -152,16 +161,18 @@ router.get(
       let users = await userServiceInstance.getUser({ userId });
       if (users) {
         return res
-          .status(200)
-          .json({ message: "Users retrieved successfully", data: users });
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: users });
       } else {
-        return res.status(404).json({ message: "User not found" });
+        return res
+          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error. Please try again!" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -188,18 +199,20 @@ router.get(
         orderBy,
       });
       if (orders) {
-        return res.status(200).json({
-          message: "User's orders retrieved successfully",
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
           data: orders,
         });
       } else {
-        return res.status(404).json({ message: "User's orders not found" });
+        return res
+          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error. Please try again!" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -226,18 +239,20 @@ router.get(
         orderBy,
       });
       if (orders) {
-        return res.status(200).json({
-          message: "User's orders retrieved successfully",
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
           data: orders,
         });
       } else {
-        return res.status(404).json({ message: "User's orders not found" });
+        return res
+          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error. Please try again!" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -264,18 +279,20 @@ router.get(
         orderBy,
       });
       if (orders) {
-        return res.status(200).json({
-          message: "User's orders retrieved successfully",
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
           data: orders,
         });
       } else {
-        return res.status(404).json({ message: "User's orders not found" });
+        return res
+          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error. Please try again!" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -303,16 +320,18 @@ router.get(
       });
       if (bids) {
         return res
-          .status(200)
-          .json({ message: "User's bids retrieved successfully", data: bids });
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: bids });
       } else {
-        return res.status(404).json({ message: "User's bids not found" });
+        return res
+          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error. Please try again!" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -334,12 +353,16 @@ router.post(
 
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({ error: errors.array() });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
       }
 
       let order = await orderServiceInstance.getOrder({ orderId });
       if (!order || order.status !== 0) {
-        return res.status(400).json({ message: "Invalid Order Id" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
 
       let favouriteExists = await userServiceInstance.favouriteExists({
@@ -349,8 +372,8 @@ router.post(
 
       if (favouriteExists.length !== 0) {
         return res
-          .status(400)
-          .json({ message: "User's favourites already exists" });
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
 
       let favourites = await userServiceInstance.createUsersFavourite({
@@ -358,20 +381,20 @@ router.post(
         orderId,
       });
       if (favourites) {
-        return res.status(200).json({
-          message: "User's favourites added successfully",
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
           data: favourites,
         });
       } else {
         return res
-          .status(404)
-          .json({ message: "User's favourites addition failed" });
+          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .json({ message: constants.RESPONSE_STATUS.FAILURE });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error. Please try again!" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -394,18 +417,20 @@ router.get("/:userId/favourites", async (req, res) => {
       orderBy,
     });
     if (favourites) {
-      return res.status(200).json({
-        message: "User's favourites retrieved successfully",
+      return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+        message: constants.RESPONSE_STATUS.SUCCESS,
         data: favourites,
       });
     } else {
-      return res.status(404).json({ message: "Favourite orders not found" });
+      return res
+        .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+        .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
     }
   } catch (err) {
     console.log(err);
     return res
-      .status(500)
-      .json({ message: "Internal Server error. Please try again!" });
+      .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -420,7 +445,9 @@ router.delete("/favourites/:favouriteId", verifyToken, async (req, res) => {
     let favourite = await userServiceInstance.getFavourite({ favouriteId });
 
     if (!favourite || favourite.users_id !== userId) {
-      return res.status(404).json({ message: "Favourite doesnot exist" });
+      return res
+        .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+        .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
     }
 
     let deleted = await userServiceInstance.deleteUsersFavourite({
@@ -428,18 +455,20 @@ router.delete("/favourites/:favouriteId", verifyToken, async (req, res) => {
       favouriteId,
     });
     if (deleted) {
-      return res.status(200).json({
-        message: "User's favourites deleted successfully",
+      return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+        message: constants.RESPONSE_STATUS.SUCCESS,
         data: deleted,
       });
     } else {
-      return res.status(400).json({ message: "Favourite deletion failed" });
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+        .json({ message: constants.RESPONSE_STATUS.FAILURE });
     }
   } catch (err) {
     console.log(err);
     return res
-      .status(500)
-      .json({ message: "Internal Server error. Please try again!" });
+      .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -462,18 +491,20 @@ router.get("/notification/:userId", async (req, res) => {
     });
 
     if (notifications.notifications.length > 0) {
-      return res.status(200).json({
-        message: "notifications retrieved successfully",
+      return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+        message: constants.RESPONSE_STATUS.SUCCESS,
         data: notifications,
       });
     } else {
-      return res.status(404).json({ message: "notifications not found" });
+      return res
+        .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+        .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
     }
   } catch (err) {
     console.log(err);
     return res
-      .status(500)
-      .json({ message: "Internal Server error. Please try again!" });
+      .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
 

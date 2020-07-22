@@ -1,5 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
+let constants = require("../../config/constants");
 
 /**
  * Includes all the Admin services that controls
@@ -18,7 +19,7 @@ class AdminService {
       return admin;
     } catch (err) {
       console.log(err);
-      throw new Error("Internal Server Error");
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -32,7 +33,7 @@ class AdminService {
       return admin;
     } catch (err) {
       console.log(err);
-      throw new Error("Internal Server Error");
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 }

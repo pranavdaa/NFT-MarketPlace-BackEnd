@@ -2,11 +2,14 @@ module.exports = {
   PAGINATION_MAX_LIMIT: 50,
   PAGINATION_DEFAULT_LIMIT: 20,
   PAGINATION_DEFAULT_OFFSET: 0,
+  JWT_EXPIRY: "24h",
+  MATIC_CHAIN_ID: "80001",
   RESPONSE_STATUS: {
     SUCCESS: "success",
     FAILURE: "failure",
     ERROR: "error",
     AUTH_ERROR: "auth_error",
+    NOT_FOUND: "not found",
   },
   RESPONSE_STATUS_CODES: {
     OK: 200,
@@ -18,5 +21,17 @@ module.exports = {
   SORT_DIRECTION: {
     ASC: "asc",
     DESC: "desc",
+  },
+  MESSAGES: {
+    INTERNAL_SERVER_ERROR: "Internal Server error. Please try again!",
+    INVALID_CREDENTIALS: "Invalid credentials",
+    LOGIN_SUCCESS: "Login Success",
+    UNAUTHORIZED: "Unauthorized access",
+    INPUT_VALIDATION_ERROR: "Input Validation Error",
+  },
+  ORDER_TYPES: {
+    FIXED: "FIXED",
+    NEGOTIATION: "NEGOTIATION",
+    AUCTION: "AUCTION",
   },
 };

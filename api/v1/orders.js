@@ -11,6 +11,7 @@ const verifyToken = require("../middlewares/verify-token");
 let requestUtil = require("../utils/request-utils");
 let helper = require("../utils/helper");
 let redisCache = require("../utils/redis-cache");
+let constants = require("../../config/constants");
 
 /**
  * Order routes
@@ -37,7 +38,11 @@ router.post(
     check("taker_token", "A valid id is required").exists(),
     check("type", "A valid type is required")
       .exists()
-      .isIn(["FIXED", "NEGOTIATION", "AUCTION"]),
+      .isIn([
+        constants.ORDER_TYPES.FIXED,
+        constants.ORDER_TYPES.NEGOTIATION,
+        constants.ORDER_TYPES.AUCTION,
+      ]),
   ],
   verifyToken,
   async (req, res) => {
@@ -45,7 +50,9 @@ router.post(
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        return res.status(400).json({ error: errors.array() });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
       }
 
       let {
@@ -61,32 +68,54 @@ router.post(
         expiry_date,
       } = req.body;
 
-      let categoryType = type === "FIXED" ? maker_token : taker_token;
+      let categoryType =
+        type === constants.ORDER_TYPES.FIXED ? maker_token : taker_token;
 
       let category = await categoryServiceInstance.getCategory({
         categoryId: categoryType,
       });
 
       if (!category) {
-        return res.status(400).json({ message: "Invalid Category" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
 
-      let erc20Type = type === "FIXED" ? taker_token : maker_token;
+      let erc20Type =
+        type === constants.ORDER_TYPES.FIXED ? taker_token : maker_token;
 
       let erc20token = await erc20TokenServiceInstance.getERC20Token({
         id: erc20Type,
       });
 
       if (!erc20token) {
-        return res.status(200).json({ message: "Invalid Token" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
+
+      let tokenId =
+        type === constants.ORDER_TYPES.FIXED ? maker_token_id : taker_token_id;
+
+      let validOrder = await orderServiceInstance.checkValidOrder({
+        userId: req.userId,
+        tokenId,
+      });
+
+      if (validOrder) {
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.MESSAGES.INPUT_VALIDATION_ERROR,
+        });
       }
 
       let orderAdd;
 
       switch (type) {
-        case "FIXED": {
+        case constants.ORDER_TYPES.FIXED: {
           if (!price || !signature || !maker_token_id) {
-            return res.status(400).json({ message: "Input validation failed" });
+            return res
+              .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+              .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
           }
           orderAdd = await orderServiceInstance.placeFixedOrder({
             maker_address: req.userId,
@@ -100,9 +129,11 @@ router.post(
           });
           break;
         }
-        case "NEGOTIATION": {
+        case constants.ORDER_TYPES.NEGOTIATION: {
           if (!min_price || !price || !taker_token_id) {
-            return res.status(400).json({ message: "Input validation failed" });
+            return res
+              .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+              .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
           }
           orderAdd = await orderServiceInstance.placeNegotiationOrder({
             taker_address: req.userId,
@@ -116,9 +147,11 @@ router.post(
           });
           break;
         }
-        case "AUCTION": {
+        case constants.ORDER_TYPES.AUCTION: {
           if (!min_price || !expiry_date || !taker_token_id) {
-            return res.status(400).json({ message: "Input validation failed" });
+            return res
+              .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+              .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
           }
           orderAdd = await orderServiceInstance.placeAuctionOrder({
             taker_address: req.userId,
@@ -145,16 +178,18 @@ router.post(
           order_id: orderAdd.id,
         });
         return res
-          .status(200)
-          .json({ message: "Sell Order addedd successfully", data: orderAdd });
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: orderAdd });
       } else {
-        return res.status(400).json({ message: "Sell Order creation failed" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.RESPONSE_STATUS.FAILURE });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error.Please try again" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -194,8 +229,8 @@ router.get(
           );
           ordersList.push({ ...order, ...metadata });
         }
-        return res.status(200).json({
-          message: "Orders retrieved successfully",
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
           data: {
             order: ordersList,
             limit: orders.limit,
@@ -204,13 +239,15 @@ router.get(
           },
         });
       } else {
-        return res.status(400).json({ message: "Orders do not exist" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
+          .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error.Please try again" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -236,7 +273,7 @@ router.get(
         let offset = requestUtil.getOffset(req.query);
         let orderBy = requestUtil.getSortBy(req.query, "+id");
 
-        if (order.type !== "FIXED") {
+        if (order.type !== constants.ORDER_TYPES.FIXED) {
           let bids = await orderServiceInstance.getBids({
             orderId: order.id,
             limit,
@@ -255,18 +292,20 @@ router.get(
         }
 
         let orderData = { ...order, ...metadata };
-        return res.status(200).json({
-          message: "Order details retrieved successfully",
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
           data: orderData,
         });
       } else {
-        return res.status(400).json({ message: "Order does not exist" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
+          .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error.Please try again" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -286,7 +325,9 @@ router.patch(
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        return res.status(400).json({ error: errors.array() });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
       }
 
       let orderId = req.params.orderId;
@@ -295,12 +336,14 @@ router.patch(
       let order = await orderServiceInstance.orderExists({ orderId });
 
       if (
-        (order.type === "FIXED" && order.maker_address === req.userId) ||
-        (order.type !== "FIXED" && order.taker_address === req.userId)
+        (order.type === constants.ORDER_TYPES.FIXED &&
+          order.maker_address === req.userId) ||
+        (order.type !== constants.ORDER_TYPES.FIXED &&
+          order.taker_address === req.userId)
       ) {
         return res
-          .status(400)
-          .json({ message: "Seller and Buyer can't be the same" });
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
 
       let category = await categoryServiceInstance.getCategory({
@@ -308,13 +351,15 @@ router.patch(
       });
 
       if (!order || order.status !== 0) {
-        return res.status(400).json({ message: "Invalid order" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
 
       let orderAdd;
 
       switch (order.type) {
-        case "FIXED": {
+        case constants.ORDER_TYPES.FIXED: {
           orderAdd = await orderServiceInstance.buyFixedOrder({
             orderId,
             taker_address: req.userId,
@@ -342,9 +387,11 @@ router.patch(
           }
           break;
         }
-        case "NEGOTIATION": {
+        case constants.ORDER_TYPES.NEGOTIATION: {
           if (!bid || !signature) {
-            return res.status(400).json({ message: "Input validation failed" });
+            return res
+              .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+              .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
           }
           orderAdd = await orderServiceInstance.makeBid({
             orderId,
@@ -376,9 +423,11 @@ router.patch(
           }
           break;
         }
-        case "AUCTION": {
+        case constants.ORDER_TYPES.AUCTION: {
           if (!bid || !signature) {
-            return res.status(400).json({ message: "Input validation failed" });
+            return res
+              .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+              .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
           }
           orderAdd = await orderServiceInstance.makeBid({
             orderId,
@@ -412,18 +461,20 @@ router.patch(
         }
       }
       if (orderAdd) {
-        return res.status(200).json({
-          message: "Buy order placed successfully",
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
           data: orderAdd,
         });
       } else {
-        return res.status(400).json({ message: "Buy order failed" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.RESPONSE_STATUS.FAILURE });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error.Please try again" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -441,7 +492,9 @@ router.patch(
       let order = await orderServiceInstance.orderExists(req.params);
 
       if (!order || order.status !== 0) {
-        return res.status(200).json({ message: "Invalid order" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
 
       let cancel = await orderServiceInstance.cancelOrder({
@@ -463,16 +516,18 @@ router.patch(
           order_id: cancel.id,
         });
         return res
-          .status(200)
-          .json({ message: "Order cancelled successfully", data: cancel });
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: cancel });
       } else {
-        return res.status(400).json({ message: "Order cancellation failed" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.RESPONSE_STATUS.FAILURE });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error.Please try again" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -490,7 +545,9 @@ router.patch(
       let bid = await orderServiceInstance.bidExists(req.params);
 
       if (!bid || bid.status !== 0) {
-        return res.status(200).json({ message: "Invalid bid" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
 
       let cancel = await orderServiceInstance.cancelBid(req.params);
@@ -510,16 +567,18 @@ router.patch(
           order_id: order.id,
         });
         return res
-          .status(200)
-          .json({ message: "bid/offer cancelled successfully", data: cancel });
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: cancel });
       } else {
-        return res.status(400).json({ message: "bid cancel failed" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.RESPONSE_STATUS.FAILURE });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error.Please try again" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -540,13 +599,17 @@ router.patch(
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        return res.status(400).json({ error: errors.array() });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
       }
 
       let bid = await orderServiceInstance.bidExists(req.params);
 
       if (!bid || bid.status !== 0) {
-        return res.status(200).json({ message: "Invalid bid/offer" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
 
       let order = await orderServiceInstance.getOrder({
@@ -567,15 +630,18 @@ router.patch(
       if (
         !order ||
         order.status !== 0 ||
-        (order.type !== "NEGOTIATION" && order.type !== "AUCTION")
+        (order.type !== constants.ORDER_TYPES.NEGOTIATION &&
+          order.type !== constants.ORDER_TYPES.AUCTION)
       ) {
-        return res.status(200).json({ message: "Invalid order" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
 
       let orderExecute = await orderServiceInstance.executeOrder(params);
 
       if (orderExecute) {
-        if (order.type !== "FIXED") {
+        if (order.type !== constants.ORDER_TYPES.FIXED) {
           let limit = requestUtil.getLimit(req.query);
           let offset = requestUtil.getOffset(req.query);
           let orderBy = requestUtil.getSortBy(req.query, "+id");
@@ -610,18 +676,20 @@ router.patch(
             orderExecute.maker_amount,
           order_id: orderExecute.id,
         });
-        return res.status(200).json({
-          message: "Order executed successfully",
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
           data: orderExecute.id,
         });
       } else {
-        return res.status(400).json({ message: "Order execution failed" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.RESPONSE_STATUS.FAILURE });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error.Please try again" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );
@@ -648,18 +716,20 @@ router.get(
         orderBy,
       });
       if (bids.order.length > 0) {
-        return res.status(200).json({
-          message: "Order details retrieved successfully",
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
           data: bids,
         });
       } else {
-        return res.status(400).json({ message: "Bids/Offers empty" });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
+          .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .json({ message: "Internal Server error.Please try again" });
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
   }
 );

@@ -30,4 +30,5 @@ module.exports = {
   address: process.env.address,
   signature: process.env.signature,
   hermoine: process.env.hermoine,
+  coinmarket_apikey: process.env.coinmarket_apikey,
 };
