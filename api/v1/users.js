@@ -416,14 +416,15 @@ router.get("/:userId/favourites", async (req, res) => {
       offset,
       orderBy,
     });
-    if (favourites) {
+    if (favourites.favourites.length > 0) {
       return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
         message: constants.RESPONSE_STATUS.SUCCESS,
         data: favourites,
+        count: favourites.favourites.length,
       });
     } else {
       return res
-        .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+        .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
         .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
     }
   } catch (err) {

@@ -61,12 +61,15 @@ router.get(
             }),
           };
 
+          token.token_id = helper.toNumber(token.token_id);
+
           tokensOwned.push({ ...token, ...metadata, ...active });
         }
 
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
           data: tokensOwned,
+          count: tokensOwned.length,
         });
       } else {
         return res.status(constants.RESPONSE_STATUS_CODES.NOT_FOUND).json({
@@ -117,6 +120,7 @@ router.get(
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
           data: tokensOwned,
+          count: tokensOwned.length,
         });
       } else {
         return res.status(constants.RESPONSE_STATUS_CODES.NOT_FOUND).json({

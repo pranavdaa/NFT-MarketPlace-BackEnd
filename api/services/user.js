@@ -212,12 +212,13 @@ class UserService {
             orderBy,
             take: limit,
             skip: offset,
+            include: { orders: true },
           },
         },
       });
 
       return {
-        favourites,
+        favourites: favourites[0].favourites,
         limit,
         offset,
         has_next_page: hasNextPage({ limit, offset, count }),

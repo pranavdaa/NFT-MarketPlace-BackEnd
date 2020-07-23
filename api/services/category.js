@@ -55,6 +55,25 @@ class CategoryService {
     }
   }
 
+  async getCategoryList({ chainId }) {
+    try {
+      let where = {
+        active: true,
+        chain_id: chainId,
+      };
+
+      let categories = await prisma.categoriesaddresses.findMany({
+        where,
+        select: { address: true },
+      });
+
+      return categories;
+    } catch (err) {
+      console.log(err);
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   async categoryExists(params) {
     try {
       let categories = await prisma.categories.findOne({
