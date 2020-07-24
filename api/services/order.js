@@ -209,6 +209,11 @@ class OrderService {
               },
             },
           },
+          seller_users: {
+            select: {
+              address: true,
+            },
+          },
           views: true,
           bids: { orderBy: { price: constants.SORT_DIRECTION.DESC } },
           updated: true,
