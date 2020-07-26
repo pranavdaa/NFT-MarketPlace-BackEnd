@@ -29,7 +29,7 @@ function getSortBy(options, defaultArg) {
   if (sort.startsWith("-")) {
     orderBy[sort.substring(1)] = SORT_DIRECTION.DESC;
   } else if (sort.startsWith(" ") || sort.startsWith("+")) {
-    orderBy[sort.substring(1)] = SORT_DIRECTION.ASC;
+    orderBy["updated"] = SORT_DIRECTION.DESC;
   } else {
     orderBy[sort] = SORT_DIRECTION.DESC;
   }
