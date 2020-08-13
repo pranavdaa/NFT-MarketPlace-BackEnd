@@ -5,7 +5,7 @@ const tokenServiceInstance = new TokenService();
 
 const client = redis.createClient(6379);
 
-async function getTokenData(tokenId, contract) {
+async function getTokenData(tokenId, contract, chainId) {
   const redisKey = "metadata:" + contract + ":" + tokenId;
 
   return new Promise((resolve, reject) => {
@@ -19,18 +19,19 @@ async function getTokenData(tokenId, contract) {
       } else {
         let token = await tokenServiceInstance.getTokenDetail({
           tokenId,
-          contract,
+          contractAddress: contract,
+          chainId,
         });
 
-        if (!token.length) {
+        if (!token) {
           client.setex(redisKey, 86400, JSON.stringify({}));
           resolve({});
         } else {
-          if (token[0].uri === "") {
+          if (token.uri === "") {
             client.setex(redisKey, 86400, JSON.stringify({}));
             resolve({});
           }
-          fetch(token[0].uri)
+          fetch(token.uri)
             .then((response) => {
               return response.json();
             })

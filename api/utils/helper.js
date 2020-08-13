@@ -1,4 +1,16 @@
-const web3 = require("web3");
+let Web3 = require("web3");
+let artifacts = require("./artifacts.json");
+
+const provider = new Web3.providers.HttpProvider(
+  "https://rpc-mumbai.matic.today"
+);
+
+const web3 = new Web3(provider);
+
+const root_provider = new Web3.providers.HttpProvider(
+  "https://goerli.infura.io/v3/7ff035fb434149dd8a9b1dc106b6905a"
+);
+const root_web3 = new Web3(root_provider);
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 let config = require("../../config/config");
@@ -81,6 +93,98 @@ var getRate = async function (symbol) {
   }
 };
 
+async function ethereum_balance(owner, rootContractAddress) {
+  const rootContractInstance = new root_web3.eth.Contract(
+    artifacts.pos_RootERC721,
+    rootContractAddress
+  );
+  let balance = await rootContractInstance.methods.balanceOf(owner).call();
+
+  let token_array = [];
+
+  for (i = 0; i < balance; i++) {
+    let tokenId = await rootContractInstance.methods
+      .tokenOfOwnerByIndex(owner, i)
+      .call();
+
+    let uri = await rootContractInstance.methods.tokenURI(tokenId).call();
+
+    token_array.push({
+      contract: rootContractAddress,
+      token_id: tokenId,
+      owner: owner,
+      uri: uri,
+    });
+  }
+
+  return token_array;
+}
+
+async function matic_balance(owner, childContractAddress) {
+  const childContractInstance = new web3.eth.Contract(
+    artifacts.pos_ChildERC721,
+    childContractAddress
+  );
+
+  let balance = await childContractInstance.methods.balanceOf(owner).call();
+
+  let token_array = [];
+
+  for (i = 0; i < balance; i++) {
+    let tokenId = await childContractInstance.methods
+      .tokenOfOwnerByIndex(owner, i)
+      .call();
+
+    let uri = await childContractInstance.methods.tokenURI(tokenId).call();
+
+    token_array.push({
+      contract: childContractAddress,
+      token_id: tokenId,
+      owner: owner,
+      uri: uri,
+    });
+  }
+  return token_array;
+}
+
+async function matic_nft_detail(tokenId, childContractAddress) {
+  const childContractInstance = new web3.eth.Contract(
+    artifacts.pos_ChildERC721,
+    childContractAddress
+  );
+
+  let owner = await childContractInstance.methods.ownerOf(tokenId).call();
+  let uri = await childContractInstance.methods.tokenURI(tokenId).call();
+
+  token_detail = {
+    contract: childContractAddress,
+    token_id: tokenId,
+    owner: owner,
+    uri: uri,
+  };
+
+  return token_detail;
+}
+
+async function ethereum_nft_detail(tokenId, rootContractAddress) {
+  const rootContractInstance = new root_web3.eth.Contract(
+    artifacts.pos_RootERC721,
+    rootContractAddress
+  );
+
+  let owner = await rootContractInstance.methods.ownerOf(tokenId).call();
+  let uri = await rootContractInstance.methods.tokenURI(tokenId).call();
+
+  token_detail = {
+    contract: rootContractAddress,
+    token_id: tokenId,
+    owner: owner,
+    uri: uri,
+  };
+
+  return token_detail;
+}
+
 module.exports = {
   hasNextPage,
   isValidEthereumAddress,
@@ -89,4 +193,8 @@ module.exports = {
   toChecksumAddress,
   toNumber,
   toHex,
+  matic_balance,
+  ethereum_balance,
+  matic_nft_detail,
+  ethereum_nft_detail,
 };
