@@ -77,6 +77,24 @@ class UserService {
             where: {
               active: true,
             },
+            include: {
+              categories: {
+                include: {
+                  categoriesaddresses: {
+                    where: { chain_id: "80001" },
+                    select: { address: true },
+                  },
+                },
+              },
+              erc20tokens: {
+                include: {
+                  erc20tokensaddresses: {
+                    where: { chain_id: "80001" },
+                    select: { address: true },
+                  },
+                },
+              },
+            },
             orderBy,
             take: limit,
             skip: offset,
@@ -113,6 +131,24 @@ class UserService {
               active: true,
               status: 0,
             },
+            include: {
+              categories: {
+                include: {
+                  categoriesaddresses: {
+                    where: { chain_id: "80001" },
+                    select: { address: true },
+                  },
+                },
+              },
+              erc20tokens: {
+                include: {
+                  erc20tokensaddresses: {
+                    where: { chain_id: "80001" },
+                    select: { address: true },
+                  },
+                },
+              },
+            },
             orderBy,
             take: limit,
             skip: offset,
@@ -145,6 +181,24 @@ class UserService {
           buyer_orders: {
             where: {
               active: true,
+            },
+            include: {
+              categories: {
+                include: {
+                  categoriesaddresses: {
+                    where: { chain_id: "80001" },
+                    select: { address: true },
+                  },
+                },
+              },
+              erc20tokens: {
+                include: {
+                  erc20tokensaddresses: {
+                    where: { chain_id: "80001" },
+                    select: { address: true },
+                  },
+                },
+              },
             },
             orderBy,
             take: limit,
@@ -212,7 +266,28 @@ class UserService {
             orderBy,
             take: limit,
             skip: offset,
-            include: { orders: true },
+            include: {
+              orders: {
+                include: {
+                  categories: {
+                    include: {
+                      categoriesaddresses: {
+                        where: { chain_id: "80001" },
+                        select: { address: true },
+                      },
+                    },
+                  },
+                  erc20tokens: {
+                    include: {
+                      erc20tokensaddresses: {
+                        where: { chain_id: "80001" },
+                        select: { address: true },
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       });

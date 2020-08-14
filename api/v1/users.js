@@ -11,6 +11,7 @@ let orderServiceInstance = new orderService();
 let requestUtil = require("../utils/request-utils");
 let config = require("../../config/config");
 let constants = require("../../config/constants");
+let redisCache = require("../utils/redis-cache");
 
 /**
  * User routes
@@ -198,10 +199,21 @@ router.get(
         offset,
         orderBy,
       });
+
+      let ordersList = [];
       if (orders) {
+        for (order of orders.orders[0].seller_orders) {
+          let metadata = await redisCache.getTokenData(
+            order.tokens_id,
+            order.categories.categoriesaddresses[0].address,
+            "80001"
+          );
+
+          ordersList.push({ ...order, ...metadata });
+        }
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
-          data: orders,
+          data: ordersList,
         });
       } else {
         return res
@@ -238,10 +250,20 @@ router.get(
         offset,
         orderBy,
       });
+      let ordersList = [];
       if (orders) {
+        for (order of orders.orders[0].seller_orders) {
+          let metadata = await redisCache.getTokenData(
+            order.tokens_id,
+            order.categories.categoriesaddresses[0].address,
+            "80001"
+          );
+
+          ordersList.push({ ...order, ...metadata });
+        }
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
-          data: orders,
+          data: ordersList,
         });
       } else {
         return res
@@ -278,10 +300,22 @@ router.get(
         offset,
         orderBy,
       });
+
+      let ordersList = [];
+
       if (orders) {
+        for (order of orders.orders[0].buyer_orders) {
+          let metadata = await redisCache.getTokenData(
+            order.tokens_id,
+            order.categories.categoriesaddresses[0].address,
+            "80001"
+          );
+
+          ordersList.push({ ...order, ...metadata });
+        }
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
-          data: orders,
+          data: ordersList,
         });
       } else {
         return res
@@ -416,10 +450,20 @@ router.get("/:userId/favourites", async (req, res) => {
       offset,
       orderBy,
     });
+
+    let favList = [];
     if (favourites.favourites.length > 0) {
+      for (order of favourites.favourites) {
+        let metadata = await redisCache.getTokenData(
+          order.orders.tokens_id,
+          order.orders.categories.categoriesaddresses[0].address,
+          "80001"
+        );
+        favList.push({ ...order, ...metadata });
+      }
       return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
         message: constants.RESPONSE_STATUS.SUCCESS,
-        data: favourites,
+        data: favList,
         count: favourites.favourites.length,
       });
     } else {
