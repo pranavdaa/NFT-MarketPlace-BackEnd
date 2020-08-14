@@ -224,9 +224,9 @@ router.get(
       if (orders) {
         for (order of orders.order) {
           let metadata = await redisCache.getTokenData(
-            "80001",
             order.tokens_id,
-            order.categories.categoriesaddresses[0].address
+            order.categories.categoriesaddresses[0].address,
+            "80001"
           );
           ordersList.push({ ...order, ...metadata });
         }
@@ -266,9 +266,9 @@ router.get(
       let order = await orderServiceInstance.getOrder(req.params);
       if (order) {
         let metadata = await redisCache.getTokenData(
-          "80001",
           order.tokens_id,
-          order.categories.categoriesaddresses[0].address
+          order.categories.categoriesaddresses[0].address,
+          "80001"
         );
 
         let limit = requestUtil.getLimit(req.query);
