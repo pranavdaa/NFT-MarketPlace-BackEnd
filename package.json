@@ -20,6 +20,12 @@
   },
   "homepage": "https://github.com/maticnetwork/marketplace-api#readme",
   "dependencies": {
+    "@0x/contract-wrappers": "^13.8.0",
+    "@0x/contracts-exchange": "^3.2.7",
+    "@0x/order-utils": "^10.3.0",
+    "@0x/subproviders": "^6.1.1",
+    "@0x/utils": "^5.5.1",
+    "@0x/web3-wrapper": "^7.2.0",
     "@prisma/client": "^2.0.0-beta.5",
     "babel": "^6.23.0",
     "bcryptjs": "^2.4.3",

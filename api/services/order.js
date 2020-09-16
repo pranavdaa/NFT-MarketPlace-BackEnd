@@ -2,6 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 let { hasNextPage } = require("../utils/helper.js");
 let constants = require("../../config/constants");
+let zeroxUtil = require("../utils/zerox-util");
 
 /**
  * Includes all the Order services that controls
@@ -263,12 +264,16 @@ class OrderService {
 
   async buyFixedOrder(params) {
     try {
+      let txHash = await zeroxUtil.execute(
+        JSON.parse(params.signature),
+        JSON.parse(params.takerSign)
+      );
       let order = await prisma.orders.update({
         where: { id: parseInt(params.orderId) },
         data: {
           buyer_users: { connect: { id: parseInt(params.taker_address) } },
           taker_address: params.taker_address,
-          txhash: params.tx_hash,
+          txhash: txHash,
           status: 2,
           updated: new Date(),
         },
@@ -301,11 +306,19 @@ class OrderService {
 
   async cancelOrder(params) {
     try {
+      let txHash = "";
+      if (params.type === constants.ORDER_TYPES.FIXED) {
+        txHash = await zeroxUtil.execute(
+          JSON.parse(params.signature),
+          JSON.parse(params.takerSign)
+        );
+      }
       let order = await prisma.orders.update({
         where: { id: parseInt(params.orderId) },
         data: {
           status: 3,
           signature: "",
+          txhash: txHash,
           updated: new Date(),
         },
       });
@@ -334,11 +347,16 @@ class OrderService {
   }
 
   async cancelBid(params) {
+    let txHash = await zeroxUtil.execute(
+      JSON.parse(params.signature),
+      JSON.parse(params.takerSign)
+    );
     const order = await prisma.bids.update({
       where: { id: parseInt(params.bidId) },
       data: {
         status: 3,
         signature: "",
+        txHash: txHash,
       },
     });
     return order;
@@ -360,13 +378,17 @@ class OrderService {
 
   async executeOrder(params) {
     try {
+      let txHash = await zeroxUtil.execute(
+        JSON.parse(params.signature),
+        JSON.parse(params.takerSign)
+      );
       let order = await prisma.orders.update({
         where: { id: parseInt(params.orderId) },
         data: {
           buyer_users: { connect: { id: parseInt(params.maker_address) } },
           maker_address: params.maker_address,
           maker_amount: params.maker_amount,
-          txhash: params.tx_hash,
+          txhash: txHash,
           status: 2,
           updated: new Date(),
         },

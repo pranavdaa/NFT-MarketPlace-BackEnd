@@ -333,7 +333,7 @@ router.patch(
       }
 
       let orderId = req.params.orderId;
-      let { tx_hash, bid, signature } = req.body;
+      let { bid, signature } = req.body;
 
       let order = await orderServiceInstance.orderExists({ orderId });
 
@@ -365,7 +365,8 @@ router.patch(
           orderAdd = await orderServiceInstance.buyFixedOrder({
             orderId,
             taker_address: req.userId,
-            tx_hash,
+            signature,
+            takerSign: req.params.taker_signature,
           });
           if (orderAdd) {
             helper.notify({
@@ -501,6 +502,9 @@ router.patch(
 
       let cancel = await orderServiceInstance.cancelOrder({
         orderId: req.params.orderId,
+        signature: order.signature,
+        type: order.type,
+        takerSign: req.params.taker_signature,
       });
       let category = await categoryServiceInstance.getCategory({
         categoryId: cancel.categories_id,
@@ -552,13 +556,22 @@ router.patch(
           .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
 
-      let cancel = await orderServiceInstance.cancelBid(req.params);
+      let { bidId } = req.params;
+      let { takerSign } = req.query;
+
       let order = await orderServiceInstance.getOrder({
-        orderId: cancel.orders_id,
+        orderId: bid.orders_id,
       });
 
       let category = await categoryServiceInstance.getCategory({
         categoryId: order.categories.id,
+      });
+
+      let cancel = await orderServiceInstance.cancelBid({
+        orderId: order.id,
+        bidId,
+        signature: order.signature,
+        takerSign,
       });
 
       if (cancel) {
@@ -623,10 +636,11 @@ router.patch(
       });
 
       let params = {
-        tx_hash: req.body.tx_hash,
         orderId: order.id,
         maker_address: req.userId,
         maker_amount: bid.price,
+        signature: order.signature,
+        takerSign: req.body.taker_signature,
       };
 
       if (
