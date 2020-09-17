@@ -3,9 +3,9 @@ let constants = require("../../config/constants");
 let { Web3Wrapper } = require("@0x/web3-wrapper");
 let utils = require("../utils/helper");
 
-async function execute(takerSign, signedOrder) {
+async function execute(signedOrder, takerSign) {
   const contractWrappers = new ContractWrappers(utils.providerEngine(), {
-    chainId: constants.MATIC_CHAIN_ID,
+    chainId: parseInt(constants.MATIC_CHAIN_ID),
   });
   const web3Wrapper = new Web3Wrapper(utils.providerEngine());
   const [
@@ -25,7 +25,6 @@ async function execute(takerSign, signedOrder) {
       value: utils.calculateProtocolFee([signedOrder]),
     });
   utils.providerEngine().stop();
-  console.log(txHash);
   return tx.transactionHash;
 }
 

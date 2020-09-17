@@ -333,9 +333,15 @@ router.patch(
       }
 
       let orderId = req.params.orderId;
-      let { bid, signature } = req.body;
+      let { bid, signature, taker_signature } = req.body;
 
       let order = await orderServiceInstance.orderExists({ orderId });
+
+      if (!order || order.status !== 0) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
 
       if (
         (order.type === constants.ORDER_TYPES.FIXED &&
@@ -365,8 +371,8 @@ router.patch(
           orderAdd = await orderServiceInstance.buyFixedOrder({
             orderId,
             taker_address: req.userId,
-            signature,
-            takerSign: req.params.taker_signature,
+            signature: order.signature,
+            takerSign: taker_signature,
           });
           if (orderAdd) {
             helper.notify({
@@ -504,7 +510,7 @@ router.patch(
         orderId: req.params.orderId,
         signature: order.signature,
         type: order.type,
-        takerSign: req.params.taker_signature,
+        takerSign: req.body.taker_signature,
       });
       let category = await categoryServiceInstance.getCategory({
         categoryId: cancel.categories_id,
@@ -741,6 +747,43 @@ router.get(
           .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
           .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+  }
+);
+
+/**
+ *  Gets zrx exchange data encoded
+ *  @params orderId type: int
+ */
+
+router.get(
+  "/exchangedata/encoded/",
+  [check("orderId", "A valid id is required").exists()],
+  async (req, res) => {
+    try {
+      let { orderId, functionName } = req.query;
+
+      let order = await orderServiceInstance.orderExists({ orderId });
+
+      if (!order || order.status !== 0) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
+
+      let encodedData = helper.encodeExchangeData(
+        JSON.parse(order.signature),
+        functionName
+      );
+      return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+        message: constants.RESPONSE_STATUS.SUCCESS,
+        data: encodedData,
+      });
     } catch (err) {
       console.log(err);
       return res

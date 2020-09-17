@@ -3,6 +3,7 @@ let artifacts = require("./artifacts.json");
 const provider = new Web3.providers.HttpProvider(
   "https://rpc-mumbai.matic.today"
 );
+let { exchangeDataEncoder } = require("@0x/contracts-exchange");
 const web3 = new Web3(provider);
 const root_provider = new Web3.providers.HttpProvider(
   "https://goerli.infura.io/v3/7ff035fb434149dd8a9b1dc106b6905a"
@@ -207,6 +208,14 @@ const providerEngine = () => {
   return pe;
 };
 
+const encodeExchangeData = (signedOrder, functionName) => {
+  signedOrder.takerAssetAmount = new BigNumber(signedOrder.takerAssetAmount);
+  let data = exchangeDataEncoder.encodeOrdersToExchangeData(functionName, [
+    signedOrder,
+  ]);
+  return data;
+};
+
 module.exports = {
   hasNextPage,
   isValidEthereumAddress,
@@ -221,4 +230,5 @@ module.exports = {
   ethereum_nft_detail,
   calculateProtocolFee,
   providerEngine,
+  encodeExchangeData,
 };
