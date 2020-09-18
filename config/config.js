@@ -27,9 +27,8 @@ module.exports = {
   admin_username: process.env.admin_username,
   admin_password: process.env.admin_password,
   NODE_ENV: process.env.NODE_ENV,
-  address: process.env.address,
-  signature: process.env.signature,
   hermoine: process.env.hermoine,
   coinmarket_apikey: process.env.coinmarket_apikey,
-  admin_private_key: process.env.private_key
+  admin_private_key: process.env.private_key,
+  MNEMONIC: process.env.MNEMONIC
 };

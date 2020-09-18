@@ -1,15 +1,14 @@
 let Web3 = require("web3");
 let artifacts = require("./artifacts.json");
-
 const provider = new Web3.providers.HttpProvider(
   "https://rpc-mumbai.matic.today"
 );
-
+let { exchangeDataEncoder } = require("@0x/contracts-exchange");
 const web3 = new Web3(provider);
-
 const root_provider = new Web3.providers.HttpProvider(
   "https://goerli.infura.io/v3/7ff035fb434149dd8a9b1dc106b6905a"
 );
+let { BigNumber, providerUtils } = require("@0x/utils");
 const root_web3 = new Web3(root_provider);
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
@@ -17,6 +16,11 @@ let config = require("../../config/config");
 var coinMarketCapKey = config.coinmarket_apikey;
 const rp = require("request-promise");
 let constants = require("../../config/constants");
+let {
+  MnemonicWalletSubprovider,
+  RPCSubprovider,
+  Web3ProviderEngine,
+} = require("@0x/subproviders");
 
 function isValidEthereumAddress(address) {
   return web3.utils.isAddress(address);
@@ -235,6 +239,32 @@ async function executeMetaTransaction (txDetails) {
   return execution
 }
 
+const calculateProtocolFee = (
+  orders,
+  gasPrice = constants.ZERO_EX.GAS_PRICE
+) => {
+  return new BigNumber(150000).times(gasPrice).times(orders.length);
+};
+
+const providerEngine = () => {
+  const mnemonicWallet = new MnemonicWalletSubprovider({
+    mnemonic: config.MNEMONIC,
+    baseDerivationPath: constants.ZERO_EX.BASE_DERIVATION_PATH,
+  });
+  const pe = new Web3ProviderEngine();
+  pe.addProvider(mnemonicWallet);
+  pe.addProvider(new RPCSubprovider(constants.ZERO_EX.RPC_URL));
+  providerUtils.startProviderEngine(pe);
+  return pe;
+};
+
+const encodeExchangeData = (signedOrder, functionName) => {
+  signedOrder.takerAssetAmount = new BigNumber(signedOrder.takerAssetAmount);
+  let data = exchangeDataEncoder.encodeOrdersToExchangeData(functionName, [
+    signedOrder,
+  ]);
+  return data;
+};
 
 module.exports = {
   hasNextPage,
@@ -248,5 +278,8 @@ module.exports = {
   ethereum_balance,
   matic_nft_detail,
   ethereum_nft_detail,
-  executeMetaTransaction
+  executeMetaTransaction,
+  calculateProtocolFee,
+  providerEngine,
+  encodeExchangeData
 };

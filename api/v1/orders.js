@@ -353,9 +353,15 @@ router.patch(
       }
 
       let orderId = req.params.orderId;
-      let { tx_hash, bid, signature } = req.body;
+      let { bid, signature, taker_signature } = req.body;
 
       let order = await orderServiceInstance.orderExists({ orderId });
+
+      if (!order || order.status !== 0) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
 
       if (
         (order.type === constants.ORDER_TYPES.FIXED &&
@@ -385,7 +391,8 @@ router.patch(
           orderAdd = await orderServiceInstance.buyFixedOrder({
             orderId,
             taker_address: req.userId,
-            tx_hash,
+            signature: order.signature,
+            takerSign: taker_signature,
           });
           if (orderAdd) {
             helper.notify({
@@ -521,6 +528,9 @@ router.patch(
 
       let cancel = await orderServiceInstance.cancelOrder({
         orderId: req.params.orderId,
+        signature: order.signature,
+        type: order.type,
+        takerSign: req.body.taker_signature,
       });
       let category = await categoryServiceInstance.getCategory({
         categoryId: cancel.categories_id,
@@ -572,13 +582,22 @@ router.patch(
           .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
 
-      let cancel = await orderServiceInstance.cancelBid(req.params);
+      let { bidId } = req.params;
+      let { taker_signature } = req.body;
+
       let order = await orderServiceInstance.getOrder({
-        orderId: cancel.orders_id,
+        orderId: bid.orders_id,
       });
 
       let category = await categoryServiceInstance.getCategory({
         categoryId: order.categories.id,
+      });
+
+      let cancel = await orderServiceInstance.cancelBid({
+        orderId: order.id,
+        bidId,
+        signature: bid.signature,
+        takerSign: taker_signature,
       });
 
       if (cancel) {
@@ -643,10 +662,11 @@ router.patch(
       });
 
       let params = {
-        tx_hash: req.body.tx_hash,
         orderId: order.id,
         maker_address: req.userId,
         maker_amount: bid.price,
+        signature: bid.signature,
+        takerSign: req.body.taker_signature,
       };
 
       if (
@@ -676,7 +696,7 @@ router.patch(
           });
 
           for (data of bids.order) {
-            orderServiceInstance.cancelBid({ bidId: data.id });
+            orderServiceInstance.clearBids({ bidId: data.id });
           }
         }
 
@@ -747,6 +767,80 @@ router.get(
           .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
           .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+  }
+);
+
+/**
+ *  Gets zrx exchange data encoded
+ *  @params orderId type: int
+ */
+
+router.get(
+  "/exchangedata/encoded/",
+  [check("orderId", "A valid id is required").exists()],
+  async (req, res) => {
+    try {
+      let { orderId, functionName } = req.query;
+
+      let order = await orderServiceInstance.orderExists({ orderId });
+
+      if (!order || order.status !== 0) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
+
+      let encodedData = helper.encodeExchangeData(
+        JSON.parse(order.signature),
+        functionName
+      );
+      return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+        message: constants.RESPONSE_STATUS.SUCCESS,
+        data: encodedData,
+      });
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+  }
+);
+
+/**
+ *  Gets zrx exchange data encoded
+ *  @params orderId type: int
+ */
+
+router.get(
+  "/exchangedata/encodedbid/",
+  [check("bidId", "A valid id is required").exists()],
+  async (req, res) => {
+    try {
+      let { bidId, functionName } = req.query;
+
+      let bid = await orderServiceInstance.bidExists({ bidId });
+
+      if (!bid || bid.status !== 0) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
+
+      let encodedData = helper.encodeExchangeData(
+        JSON.parse(bid.signature),
+        functionName
+      );
+      return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+        message: constants.RESPONSE_STATUS.SUCCESS,
+        data: encodedData,
+      });
     } catch (err) {
       console.log(err);
       return res

@@ -34,4 +34,9 @@ module.exports = {
     NEGOTIATION: "NEGOTIATION",
     AUCTION: "AUCTION",
   },
+  ZERO_EX: {
+    GAS_PRICE: 10000000000,
+    BASE_DERIVATION_PATH: `44'/60'/0'/0`,
+    RPC_URL: "https://rpc-mumbai.matic.today",
+  },
 };
