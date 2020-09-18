@@ -563,7 +563,7 @@ router.patch(
       }
 
       let { bidId } = req.params;
-      let { takerSign } = req.query;
+      let { taker_signature } = req.body;
 
       let order = await orderServiceInstance.getOrder({
         orderId: bid.orders_id,
@@ -576,8 +576,8 @@ router.patch(
       let cancel = await orderServiceInstance.cancelBid({
         orderId: order.id,
         bidId,
-        signature: order.signature,
-        takerSign,
+        signature: bid.signature,
+        takerSign: taker_signature,
       });
 
       if (cancel) {
@@ -645,7 +645,7 @@ router.patch(
         orderId: order.id,
         maker_address: req.userId,
         maker_amount: bid.price,
-        signature: order.signature,
+        signature: bid.signature,
         takerSign: req.body.taker_signature,
       };
 
@@ -676,7 +676,7 @@ router.patch(
           });
 
           for (data of bids.order) {
-            orderServiceInstance.cancelBid({ bidId: data.id });
+            orderServiceInstance.clearBids({ bidId: data.id });
           }
         }
 

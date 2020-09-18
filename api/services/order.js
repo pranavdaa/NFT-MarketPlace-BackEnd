@@ -356,7 +356,17 @@ class OrderService {
       data: {
         status: 3,
         signature: "",
-        txHash: txHash,
+      },
+    });
+    return order;
+  }
+
+  async clearBids(params) {
+    const order = await prisma.bids.update({
+      where: { id: parseInt(params.bidId) },
+      data: {
+        status: 3,
+        signature: "",
       },
     });
     return order;
