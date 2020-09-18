@@ -194,6 +194,26 @@ router.post(
   }
 );
 
+router.post (
+  "/executeMetaTx",
+  async (req, res) => {
+    const { intent, fnSig, from, contractAddress } = req.body;
+    const txDetails = { intent, fnSig, from, contractAddress }
+    let txResult
+    try {
+      txResult = await helper.executeMetaTransaction(txDetails)
+    } catch (err) {
+      console.log(err)
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR })
+    }
+    return res
+      .status(constants.RESPONSE_STATUS_CODES.OK)
+      .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: txResult })
+  }
+);
+
 /**
  *  Gets all the order details
  *  @params categoryId
