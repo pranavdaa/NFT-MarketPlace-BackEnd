@@ -793,4 +793,41 @@ router.get(
   }
 );
 
+/**
+ *  Gets zrx exchange data encoded
+ *  @params orderId type: int
+ */
+
+router.get(
+  "/exchangedata/encodedbid/",
+  [check("bidId", "A valid id is required").exists()],
+  async (req, res) => {
+    try {
+      let { bidId, functionName } = req.query;
+
+      let bid = await orderServiceInstance.bidExists({ bidId });
+
+      if (!bid || bid.status !== 0) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
+
+      let encodedData = helper.encodeExchangeData(
+        JSON.parse(bid.signature),
+        functionName
+      );
+      return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+        message: constants.RESPONSE_STATUS.SUCCESS,
+        data: encodedData,
+      });
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+  }
+);
+
 module.exports = router;
