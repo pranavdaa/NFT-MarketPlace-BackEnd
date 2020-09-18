@@ -29,5 +29,6 @@ module.exports = {
   NODE_ENV: process.env.NODE_ENV,
   hermoine: process.env.hermoine,
   coinmarket_apikey: process.env.coinmarket_apikey,
-  MNEMONIC: process.env.MNEMONIC,
+  admin_private_key: process.env.private_key,
+  MNEMONIC: process.env.MNEMONIC
 };

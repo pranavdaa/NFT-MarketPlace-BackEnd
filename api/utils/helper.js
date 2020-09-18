@@ -189,6 +189,56 @@ async function ethereum_nft_detail(tokenId, rootContractAddress) {
   return token_detail;
 }
 
+function getSignatureParameters (signature) {
+  if (!web3.utils.isHexStrict(signature)) {
+    throw new Error(
+      'Given value "'.concat(signature, '" is not a valid hex string.')
+    );
+  }
+  var r = signature.slice(0, 66);
+  var s = "0x".concat(signature.slice(66, 130));
+  var v = "0x".concat(signature.slice(130, 132));
+  v = web3.utils.hexToNumber(v);
+  if (![27, 28].includes(v)) v += 27;
+  return { r, s, v }
+}
+
+/**
+ * extracts r,s,v params from the given signature, constructs a function call to `executeMetaTransaction` function on the smart contract and executes it. The execution happens on Mumbai (80001) chain
+ * txDetails = { intent, fnSig, from, contractAddress }
+ * @param {object} txDetails transaction object that will be executed on 80001 chain
+ */
+async function executeMetaTransaction (txDetails) {
+  const { r, s, v } = getSignatureParameters(txDetails.intent)
+  const inputs = `[{ "name": "userAddress", "type": "address" }, { "name": "functionSignature", "type": "bytes" }, { "name": "sigR", "type": "bytes32" }, { "name": "sigS", "type": "bytes32" }, { "name": "sigV", "type": "uint8" }]`
+
+  if (!isValidEthereumAddress(txDetails.from)) {
+    console.log('`from` not valid account address');
+    throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
+  }
+
+  const data = web3.eth.abi.encodeFunctionCall({
+    name: 'executeMetaTransaction', 
+    type: 'function', 
+    inputs
+  }, [txDetails.from, txDetails.fnSig, r, s, v])
+  // add private key
+  web3.eth.accounts.wallet.add(config.admin_private_key)
+  let execution
+  try {
+    execution = await web3.eth.sendTransaction ({
+      from: web3.eth.accounts.wallet[0].address, 
+      data, 
+      to: txDetails.contractAddress,
+      gas: 80000
+    })
+  } catch (err) {
+    console.log(err);
+    throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
+  }
+  return execution
+}
+
 const calculateProtocolFee = (
   orders,
   gasPrice = constants.ZERO_EX.GAS_PRICE
@@ -228,7 +278,8 @@ module.exports = {
   ethereum_balance,
   matic_nft_detail,
   ethereum_nft_detail,
+  executeMetaTransaction,
   calculateProtocolFee,
   providerEngine,
-  encodeExchangeData,
+  encodeExchangeData
 };
