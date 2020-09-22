@@ -26,7 +26,7 @@ router.post(
   "/",
   [
     check("category_id", "A valid id is required").exists(),
-    check("txHash", "A valid transaction hash is required").exists(),
+    check("txhash", "A valid transaction hash is required").exists(),
     check("token_array", "A valid token list is required").exists(),
     check("type", "A valid type is required")
       .exists()
@@ -51,10 +51,10 @@ router.post(
           .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
 
-      let assetMigrate = await assetMigrateServiceInstance.createAssetMigrate(
-        req.body,
-        ...userId
-      );
+      let assetMigrate = await assetMigrateServiceInstance.createAssetMigrate({
+        ...req.body,
+        ...{ userId: userId },
+      });
       if (assetMigrate) {
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
@@ -94,6 +94,8 @@ router.get(
       let limit = requestUtil.getLimit(req.query);
       let offset = requestUtil.getOffset(req.query);
       let orderBy = requestUtil.getSortBy(req.query, "+id");
+
+      let { user_id, type } = req.query;
 
       let assetMigrations = await assetMigrateServiceInstance.getAssetMigrations(
         {
@@ -195,7 +197,7 @@ router.put(
           .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
 
-      let assetMigration = await assetMigrationServiceInstance.updateassetMigration(
+      let assetMigration = await assetMigrateServiceInstance.updateAssetMigration(
         params,
         req.file
       );

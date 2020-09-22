@@ -11,13 +11,13 @@ let constants = require("../../config/constants");
 class AssetMigrateService {
   async createAssetMigrate(params) {
     try {
-      let assetMigrate = await prisma.categories.create({
+      let assetMigrate = await prisma.assetmigrate.create({
         data: {
           type: params.type,
           txhash: params.txhash,
           categories: { connect: { id: parseInt(params.category_id) } },
           users: { connect: { id: parseInt(params.userId) } },
-          tokenarray: JSON.parse(params.address),
+          token_array: { set: ["1", "2"] },
         },
       });
       return assetMigrate;
@@ -30,9 +30,8 @@ class AssetMigrateService {
   async getAssetMigrations({ type, userId, limit, offset, orderBy }) {
     try {
       let where = {
-        active: true,
         type: type,
-        users_id: userId,
+        users_id: parseInt(userId),
       };
 
       let count = await prisma.assetmigrate.count({ where });
@@ -57,7 +56,7 @@ class AssetMigrateService {
   async getAssetMigration(params) {
     try {
       let assetMigration = await prisma.assetmigrate.findOne({
-        where: { id: parseInt(params.assetMigrateId) },
+        where: { id: parseInt(params.assetMigrationId) },
       });
       return assetMigration;
     } catch (err) {
@@ -72,7 +71,7 @@ class AssetMigrateService {
       let assetMigration = await prisma.assetmigrate.update({
         where: { id: parseInt(params.assetMigrationId) },
         data: {
-          status: params.status ? params.status : current.status,
+          status: params.status ? parseInt(params.status) : current.status,
           exit_txhash: params.exit_txhash
             ? params.exit_txhash
             : current.exit_txhash,
