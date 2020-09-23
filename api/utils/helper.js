@@ -120,8 +120,7 @@ async function ethereum_balance(owner, rootContractAddress) {
       uri: uri,
     });
   }
-
-  return token_array;
+  return { token_array, balance };
 }
 
 async function matic_balance(owner, childContractAddress) {
