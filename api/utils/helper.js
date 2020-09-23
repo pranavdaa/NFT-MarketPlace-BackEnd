@@ -120,8 +120,7 @@ async function ethereum_balance(owner, rootContractAddress) {
       uri: uri,
     });
   }
-
-  return token_array;
+  return { token_array, balance };
 }
 
 async function matic_balance(owner, childContractAddress) {
@@ -210,7 +209,7 @@ function getSignatureParameters (signature) {
  */
 async function executeMetaTransaction (txDetails) {
   const { r, s, v } = getSignatureParameters(txDetails.intent)
-  const inputs = `[{ "name": "userAddress", "type": "address" }, { "name": "functionSignature", "type": "bytes" }, { "name": "sigR", "type": "bytes32" }, { "name": "sigS", "type": "bytes32" }, { "name": "sigV", "type": "uint8" }]`
+  const inputs = [{ "name": "userAddress", "type": "address" }, { "name": "functionSignature", "type": "bytes" }, { "name": "sigR", "type": "bytes32" }, { "name": "sigS", "type": "bytes32" }, { "name": "sigV", "type": "uint8" }]
 
   if (!isValidEthereumAddress(txDetails.from)) {
     console.log('`from` not valid account address');
