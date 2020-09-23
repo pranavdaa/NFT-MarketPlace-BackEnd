@@ -43,13 +43,13 @@ router.get(
         });
       }
 
-      let tokens = await tokenServiceInstance.getTokens({
+      let _r = await tokenServiceInstance.getTokens({
         chainId,
         owner: user.address.toLowerCase(),
       });
-
+      
+      tokens = _r.nft_array
       let tokensOwned = [];
-
       if (tokens.length > 0) {
         for (token of tokens) {
           let metadata = await redisCache.getTokenData(
@@ -63,15 +63,13 @@ router.get(
               tokenId: token.token_id,
             }),
           };
-
           token.token_id = token.token_id;
-
           tokensOwned.push({ ...token, ...metadata, ...active });
         }
-
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
           data: tokensOwned,
+          balances: _r.totalTokens,
           count: tokensOwned.length,
         });
       } else {
