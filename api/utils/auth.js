@@ -15,7 +15,7 @@ function getSignTypedData({ owner }) {
     },
     domain: {
       name: "Ether Mail",
-      host: "https://goerli.infura.io/v3/7234f042c3a409599c60f96f6dd9fbc",
+      host: "",
       version: "1",
       verifyingContract: "0x0",
       chainId: 5,
