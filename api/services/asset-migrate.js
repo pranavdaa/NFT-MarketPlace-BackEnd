@@ -17,7 +17,7 @@ class AssetMigrateService {
           txhash: params.txhash,
           categories: { connect: { id: parseInt(params.category_id) } },
           users: { connect: { id: parseInt(params.userId) } },
-          token_array: { set: ["1", "2"] },
+          token_array: { set: params.token_array },
         },
       });
       return assetMigrate;
