@@ -194,25 +194,22 @@ router.post(
   }
 );
 
-router.post (
-  "/executeMetaTx",
-  async (req, res) => {
-    const { intent, fnSig, from, contractAddress } = req.body;
-    const txDetails = { intent, fnSig, from, contractAddress }
-    let txResult
-    try {
-      txResult = await helper.executeMetaTransaction(txDetails)
-    } catch (err) {
-      console.log(err)
-      return res
-        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR })
-    }
+router.post("/executeMetaTx", async (req, res) => {
+  const { intent, fnSig, from, contractAddress } = req.body;
+  const txDetails = { intent, fnSig, from, contractAddress };
+  let txResult;
+  try {
+    txResult = await helper.executeMetaTransaction(txDetails);
+  } catch (err) {
+    console.log(err);
     return res
-      .status(constants.RESPONSE_STATUS_CODES.OK)
-      .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: txResult })
+      .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
   }
-);
+  return res
+    .status(constants.RESPONSE_STATUS_CODES.OK)
+    .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: txResult });
+});
 
 /**
  *  Gets all the order details
@@ -593,12 +590,19 @@ router.patch(
         categoryId: order.categories.id,
       });
 
-      let cancel = await orderServiceInstance.cancelBid({
-        orderId: order.id,
-        bidId,
-        signature: bid.signature,
-        takerSign: taker_signature,
-      });
+      let cancel;
+      if (order.type === constants.ORDER_TYPES.FIXED) {
+        cancel = await orderServiceInstance.cancelBid({
+          orderId: order.id,
+          bidId,
+          signature: bid.signature,
+          takerSign: taker_signature,
+        });
+      }
+
+      if (order.type === constants.ORDER_TYPES.NEGOTIATION) {
+        cancel = await orderServiceInstance.clearBids({ bidId });
+      }
 
       if (cancel) {
         helper.notify({
