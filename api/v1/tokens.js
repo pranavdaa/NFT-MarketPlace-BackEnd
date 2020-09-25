@@ -5,6 +5,8 @@ const TokenService = require("../services/tokens");
 const tokenServiceInstance = new TokenService();
 const userService = require("../services/user");
 let userServiceInstance = new userService();
+const categoryService = require("../services/category");
+let categoryServiceInstance = new categoryService();
 const orderService = require("../services/order");
 let orderServiceInstance = new orderService();
 let redisCache = require("../utils/redis-cache");
@@ -43,13 +45,13 @@ router.get(
         });
       }
 
-      let _r = await tokenServiceInstance.getTokens({
+      let tokens = await tokenServiceInstance.getTokens({
         chainId,
         owner: user.address.toLowerCase(),
       });
-      
-      tokens = _r.nft_array
+
       let tokensOwned = [];
+
       if (tokens.length > 0) {
         for (token of tokens) {
           let metadata = await redisCache.getTokenData(
@@ -63,14 +65,34 @@ router.get(
               tokenId: token.token_id,
             }),
           };
+
           token.token_id = token.token_id;
+
           tokensOwned.push({ ...token, ...metadata, ...active });
         }
+
+        let tokensOwnedPerCategory = {};
+        for (tokenDetail of tokensOwned) {
+          let singleCategory = (
+            await categoryServiceInstance.getCategoryByAddress(
+              tokenDetail.contract
+            )
+          ).filter((res) => {
+            return res.chain_id === chainId;
+          });
+
+          if (tokensOwnedPerCategory[singleCategory[0].id]) {
+            tokensOwnedPerCategory[singleCategory[0].id].push(tokenDetail);
+          } else {
+            temp_array = [];
+            temp_array.push(tokenDetail);
+            tokensOwnedPerCategory[singleCategory[0].id] = temp_array;
+          }
+        }
+
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
-          data: tokensOwned,
-          balances: _r.totalTokens,
-          count: tokensOwned.length,
+          data: tokensOwnedPerCategory,
         });
       } else {
         return res.status(constants.RESPONSE_STATUS_CODES.NOT_FOUND).json({
