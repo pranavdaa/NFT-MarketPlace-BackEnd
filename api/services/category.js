@@ -41,9 +41,9 @@ class CategoryService {
         orderBy,
         take: limit,
         skip: offset,
-        include: { 
+        include: {
           categoriesaddresses: true,
-          orders: true
+          orders: true,
         },
       });
       return {
@@ -78,6 +78,7 @@ class CategoryService {
   }
 
   async getCategoryByAddress({ categoryAddress }) {
+    // console.log(categoryAddress);
     try {
       let category = await prisma.categoriesaddresses.findMany({
         where: {

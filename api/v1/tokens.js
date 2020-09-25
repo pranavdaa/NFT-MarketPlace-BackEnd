@@ -74,19 +74,23 @@ router.get(
         let tokensOwnedPerCategory = {};
         for (tokenDetail of tokensOwned) {
           let singleCategory = (
-            await categoryServiceInstance.getCategoryByAddress(
-              tokenDetail.contract
-            )
+            await categoryServiceInstance.getCategoryByAddress({
+              categoryAddress: tokenDetail.contract,
+            })
           ).filter((res) => {
             return res.chain_id === chainId;
           });
 
-          if (tokensOwnedPerCategory[singleCategory[0].id]) {
-            tokensOwnedPerCategory[singleCategory[0].id].push(tokenDetail);
+          if (tokensOwnedPerCategory[singleCategory[0].categories_id]) {
+            tokensOwnedPerCategory[singleCategory[0].categories_id].push(
+              tokenDetail
+            );
           } else {
             temp_array = [];
             temp_array.push(tokenDetail);
-            tokensOwnedPerCategory[singleCategory[0].id] = temp_array;
+            tokensOwnedPerCategory[
+              singleCategory[0].categories_id
+            ] = temp_array;
           }
         }
 
