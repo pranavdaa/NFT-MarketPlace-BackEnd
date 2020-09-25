@@ -1,0 +1,223 @@
+{
+  "version": "0.3.14-fixed",
+  "steps": [
+    {
+      "tag": "CreateField",
+      "model": "orders",
+      "field": "buyer",
+      "type": "Int",
+      "arity": "Optional"
+    },
+    {
+      "tag": "CreateField",
+      "model": "orders",
+      "field": "seller",
+      "type": "Int",
+      "arity": "Optional"
+    },
+    {
+      "tag": "CreateField",
+      "model": "orders",
+      "field": "buyer_users",
+      "type": "users",
+      "arity": "Optional"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "buyer_users"
+        },
+        "directive": "relation"
+      }
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "buyer_users"
+        },
+        "directive": "relation"
+      },
+      "argument": "",
+      "value": "\"buyer_orders\""
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "buyer_users"
+        },
+        "directive": "relation"
+      },
+      "argument": "fields",
+      "value": "[buyer]"
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "buyer_users"
+        },
+        "directive": "relation"
+      },
+      "argument": "references",
+      "value": "[id]"
+    },
+    {
+      "tag": "CreateField",
+      "model": "orders",
+      "field": "seller_users",
+      "type": "users",
+      "arity": "Optional"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "seller_users"
+        },
+        "directive": "relation"
+      }
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "seller_users"
+        },
+        "directive": "relation"
+      },
+      "argument": "",
+      "value": "\"seller_orders\""
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "seller_users"
+        },
+        "directive": "relation"
+      },
+      "argument": "fields",
+      "value": "[seller]"
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "seller_users"
+        },
+        "directive": "relation"
+      },
+      "argument": "references",
+      "value": "[id]"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "orders",
+      "field": "maker_users"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "orders",
+      "field": "taker_users"
+    },
+    {
+      "tag": "CreateField",
+      "model": "users",
+      "field": "buyer_orders",
+      "type": "orders",
+      "arity": "List"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "users",
+          "field": "buyer_orders"
+        },
+        "directive": "relation"
+      }
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "users",
+          "field": "buyer_orders"
+        },
+        "directive": "relation"
+      },
+      "argument": "",
+      "value": "\"buyer_orders\""
+    },
+    {
+      "tag": "CreateField",
+      "model": "users",
+      "field": "seller_orders",
+      "type": "orders",
+      "arity": "List"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "users",
+          "field": "seller_orders"
+        },
+        "directive": "relation"
+      }
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "users",
+          "field": "seller_orders"
+        },
+        "directive": "relation"
+      },
+      "argument": "",
+      "value": "\"seller_orders\""
+    },
+    {
+      "tag": "DeleteField",
+      "model": "users",
+      "field": "maker_orders"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "users",
+      "field": "taker_orders"
+    }
+  ]
+}

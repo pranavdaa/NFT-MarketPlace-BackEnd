@@ -1,15 +1,17 @@
-const express = require('express')
+const express = require("express");
 const router = express.Router();
-const { check, validationResult } = require('express-validator');
-const orderService = require('../services/order')
+const { check, validationResult } = require("express-validator");
+const orderService = require("../services/order");
 let orderServiceInstance = new orderService();
-const erc20tokenService = require('../services/erc20-token')
-let erc20tokenServiceInstance = new erc20tokenService();
-const tokenService = require('../services/token')
-let tokenServiceInstance = new tokenService();
-const categoryService = require('../services/category')
+const erc20TokenService = require("../services/erc20-token");
+let erc20TokenServiceInstance = new erc20TokenService();
+const categoryService = require("../services/category");
 let categoryServiceInstance = new categoryService();
-const verifyToken = require('../middlewares/verify-token')
+const verifyToken = require("../middlewares/verify-token");
+let requestUtil = require("../utils/request-utils");
+let helper = require("../utils/helper");
+let redisCache = require("../utils/redis-cache");
+let constants = require("../../config/constants");
 
 /**
  * Order routes
@@ -18,7 +20,7 @@ const verifyToken = require('../middlewares/verify-token')
 /**
  *  Create a new order
  *  @params maker_token type: Integer
- *  @params maker_token_id type: Integer
+ *  @params maker_token_id type: String
  *  @params taker_token type: Integer
  *  @params signature type: String
  *  @params type type: String
@@ -28,148 +30,304 @@ const verifyToken = require('../middlewares/verify-token')
  *  @params chainw_id type: String
  */
 
-router.post('/', [
-  check('maker_token', 'A valid id is required').exists(),
-  check('chain_id', 'A valid id is required').exists(),
-  check('maker_token_id', 'A valid id is required').exists(),
-  check('taker_token', 'A valid id is required').exists(),
-  check('signature', 'A valid signature is required').exists().isLength({ min: 132, max: 132 }),
-  check('type', 'A valid type is required').exists().isIn(['FIXED', 'NEGOTIATION', 'AUCTION']),
-], verifyToken, async (req, res) => {
+router.post(
+  "/",
+  [
+    check("maker_token", "A valid id is required").exists(),
+    check("chain_id", "A valid id is required").exists(),
+    check("taker_token", "A valid id is required").exists(),
+    check("type", "A valid type is required")
+      .exists()
+      .isIn([
+        constants.ORDER_TYPES.FIXED,
+        constants.ORDER_TYPES.NEGOTIATION,
+        constants.ORDER_TYPES.AUCTION,
+      ]),
+  ],
+  verifyToken,
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
 
-  try {
-
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ error: errors.array() });
-    }
-
-    let params = { ...req.body, ...{ maker_address: req.userId } }
-
-    let { maker_token, maker_token_id, taker_token, type } = req.body;
-
-    let category = await categoryServiceInstance.getCategory({ categoryId: maker_token })
-
-    if (!category) {
-      return res.status(400).json({ message: 'Invalid Category' })
-    }
-
-    let token = await tokenServiceInstance.getToken({ tokenId: maker_token_id })
-
-    if (!token) {
-      return res.status(400).json({ message: 'Invalid Token' })
-    }
-
-    let erc20token = await erc20tokenServiceInstance.geterc20token({ id: taker_token })
-
-    if (!erc20token) {
-      return res.status(200).json({ message: 'Invalid Token' })
-    }
-
-    let orderAdd;
-
-    switch (type) {
-      case 'FIXED': {
-        if (!params.price) {
-          return res.status(400).json({ message: 'Input validation failed' })
-        }
-        orderAdd = await orderServiceInstance.placeFixedOrder(params)
-        break;
+      if (!errors.isEmpty()) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
       }
-      case 'NEGOTIATION': {
-        if (!params.min_price || !params.price) {
-          return res.status(400).json({ message: 'Input validation failed' })
-        }
-        orderAdd = await orderServiceInstance.placeNegotiationOrder(params)
-        break;
+
+      let {
+        maker_token,
+        maker_token_id,
+        taker_token_id,
+        price: price,
+        signature,
+        taker_token,
+        type,
+        chain_id,
+        min_price,
+        expiry_date,
+      } = req.body;
+
+      let categoryType =
+        type === constants.ORDER_TYPES.FIXED ? maker_token : taker_token;
+
+      let category = await categoryServiceInstance.getCategory({
+        categoryId: categoryType,
+      });
+
+      if (!category) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
-      case 'AUCTION': {
-        if (!params.min_price || !params.expiry_date) {
-          return res.status(400).json({ message: 'Input validation failed' })
-        }
-        orderAdd = await orderServiceInstance.placeAuctionOrder(params)
-        break;
+
+      let erc20Type =
+        type === constants.ORDER_TYPES.FIXED ? taker_token : maker_token;
+
+      let erc20token = await erc20TokenServiceInstance.getERC20Token({
+        id: erc20Type,
+      });
+
+      if (!erc20token) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
+
+      let tokenId =
+        type === constants.ORDER_TYPES.FIXED ? maker_token_id : taker_token_id;
+
+      let validOrder = await orderServiceInstance.checkValidOrder({
+        userId: req.userId,
+        tokenId,
+      });
+
+      if (validOrder) {
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.MESSAGES.INPUT_VALIDATION_ERROR,
+        });
+      }
+
+      let orderAdd;
+
+      switch (type) {
+        case constants.ORDER_TYPES.FIXED: {
+          if (!price || !signature || !maker_token_id) {
+            return res
+              .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+              .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+          }
+          orderAdd = await orderServiceInstance.placeFixedOrder({
+            maker_address: req.userId,
+            maker_token,
+            maker_token_id,
+            price,
+            signature,
+            taker_token,
+            type,
+            chain_id,
+          });
+          break;
+        }
+        case constants.ORDER_TYPES.NEGOTIATION: {
+          if (!min_price || !price || !taker_token_id) {
+            return res
+              .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+              .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+          }
+          orderAdd = await orderServiceInstance.placeNegotiationOrder({
+            taker_address: req.userId,
+            taker_token,
+            taker_token_id,
+            price,
+            min_price,
+            maker_token,
+            type,
+            chain_id,
+          });
+          break;
+        }
+        case constants.ORDER_TYPES.AUCTION: {
+          if (!min_price || !expiry_date || !taker_token_id) {
+            return res
+              .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+              .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+          }
+          orderAdd = await orderServiceInstance.placeAuctionOrder({
+            taker_address: req.userId,
+            taker_token,
+            taker_token_id,
+            expiry_date,
+            min_price,
+            maker_token,
+            type,
+            chain_id,
+          });
+          break;
+        }
+      }
+      if (orderAdd) {
+        helper.notify({
+          userId: req.userId,
+          message:
+            "You placed a " +
+            type +
+            " sell order on " +
+            category.name +
+            " token",
+          order_id: orderAdd.id,
+        });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: orderAdd });
+      } else {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.RESPONSE_STATUS.FAILURE });
+      }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
-    if (orderAdd) {
-      return res.status(200).json({ message: 'Sell Order addedd successfully', data: orderAdd.id })
-    } else {
-      return res.status(400).json({ message: 'Sell Order creation failed' })
-    }
-  } catch (err) {
-    console.log(err)
-    return res.status(500).json({ message: 'Internal Server error.Please try again' })
   }
-})
+);
 
+router.post("/executeMetaTx", async (req, res) => {
+  const { intent, fnSig, from, contractAddress } = req.body;
+  const txDetails = { intent, fnSig, from, contractAddress };
+  let txResult;
+  try {
+    txResult = await helper.executeMetaTransaction(txDetails);
+  } catch (err) {
+    console.log(err);
+    return res
+      .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
+  }
+  return res
+    .status(constants.RESPONSE_STATUS_CODES.OK)
+    .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: txResult });
+});
 
 /**
- *  Gets all the order details 
+ *  Gets all the order details
  *  @params categoryId
  *  @params search
  *  @params filter
  */
 
-router.get('/', [
-  check('categoryArray', 'A valid id is required').exists(),
-  check('filter', 'A valid id is required').exists().isIn(['views', 'recent', 'pricehigh', 'pricelow']),
-], async (req, res) => {
-  try {
+router.get(
+  "/",
+  [check("categoryArray", "A valid id is required").exists()],
+  async (req, res) => {
+    try {
+      let limit = requestUtil.getLimit(req.query);
+      let offset = requestUtil.getOffset(req.query);
+      let orderBy = requestUtil.getSortBy(req.query, "+id");
 
-    let params = req.query;
+      let { categoryArray } = req.query;
 
-    switch (params.filter) {
-      case 'views': {
-        params.filter = { views: "desc" }
-        break;
+      let orders = await orderServiceInstance.getOrders({
+        categoryArray,
+        limit,
+        offset,
+        orderBy,
+      });
+
+      let ordersList = [];
+
+      if (orders) {
+        for (order of orders.order) {
+          let metadata = await redisCache.getTokenData(
+            order.tokens_id,
+            order.categories.categoriesaddresses[0].address,
+            "80001"
+          );
+          ordersList.push({ ...order, ...metadata });
+        }
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
+          data: {
+            order: ordersList,
+            limit: orders.limit,
+            offset: orders.offset,
+            has_next_page: orders.has_next_page,
+          },
+        });
+      } else {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
+          .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
-      case 'recent': {
-        params.filter = { created: "desc" }
-      }
-      case 'pricehigh': {
-        params.filter = { price: "desc" }
-        break;
-      }
-      case 'pricelow': {
-        params.filter = { price: "asc" }
-      }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
-
-
-    let orders = await orderServiceInstance.getOrders(params);
-    if (orders.length > 0) {
-      return res.status(200).json({ message: 'Orders retrieved successfully', data: orders })
-    } else {
-      return res.status(400).json({ message: 'Orders do not exist' })
-    }
-  } catch (err) {
-    console.log(err)
-    return res.status(500).json({ message: 'Internal Server error.Please try again' })
   }
-})
+);
 
 /**
- *  Gets single order details 
+ *  Gets single order details
  *  @params orderId type: int
  */
 
-router.get('/:orderId', [
-  check('orderId', 'A valid id is required').exists()
-], async (req, res) => {
-  try {
+router.get(
+  "/:orderId",
+  [check("orderId", "A valid id is required").exists()],
+  async (req, res) => {
+    try {
+      let order = await orderServiceInstance.getOrder(req.params);
+      if (order) {
+        let metadata = await redisCache.getTokenData(
+          order.tokens_id,
+          order.categories.categoriesaddresses[0].address,
+          "80001"
+        );
 
-    let order = await orderServiceInstance.getOrder(req.params);
-    if (order) {
-      return res.status(200).json({ message: 'Order details retrieved successfully', data: order })
-    } else {
-      return res.status(400).json({ message: 'Order does not exist' })
+        let limit = requestUtil.getLimit(req.query);
+        let offset = requestUtil.getOffset(req.query);
+        let orderBy = requestUtil.getSortBy(req.query, "+id");
+
+        if (order.type !== constants.ORDER_TYPES.FIXED) {
+          let bids = await orderServiceInstance.getBids({
+            orderId: order.id,
+            limit,
+            offset,
+            orderBy,
+          });
+
+          if (bids.order.length > 0) {
+            order["highest_bid"] = bids.order[0].price;
+            order["lowest_bid"] = bids.order[bids.order.length - 1].price;
+          }
+        } else {
+          if (order.status !== 0) {
+            order.signature = null;
+          }
+        }
+
+        let orderData = { ...order, ...metadata };
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
+          data: orderData,
+        });
+      } else {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
+          .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
+      }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
-  } catch (err) {
-    console.log(err)
-    return res.status(500).json({ message: 'Internal Server error.Please try again' })
   }
-})
+);
 
 /**
  *  Buy order
@@ -177,154 +335,523 @@ router.get('/:orderId', [
  *  @params bid type: string
  */
 
-router.patch('/:orderId/buy', [
-  check('orderId', 'A valid order id is required').exists(),
-], verifyToken, async (req, res) => {
+router.patch(
+  "/:orderId/buy",
+  [check("orderId", "A valid order id is required").exists()],
+  verifyToken,
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
 
-  try {
-
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ error: errors.array() });
-    }
-
-    let params = { ...req.body, ...req.params, ...{ taker_address: req.userId } }
-
-    let order = await orderServiceInstance.orderExists(params);
-
-    if (!order || order.status !== 0) {
-      return res.status(200).json({ message: 'Invalid order' })
-    }
-
-    let orderAdd;
-
-    switch (order.type) {
-      case 'FIXED': {
-
-        orderAdd = await orderServiceInstance.buyFixedOrder(params)
-        break;
-
+      if (!errors.isEmpty()) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
       }
-      case 'NEGOTIATION':
-      case 'AUCTION':
-        {
 
-          if (!params.bid) {
-            return res.status(400).json({ message: 'Input validation failed' })
+      let orderId = req.params.orderId;
+      let { bid, signature, taker_signature } = req.body;
+
+      let order = await orderServiceInstance.orderExists({ orderId });
+
+      if (!order || order.status !== 0) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
+
+      if (
+        (order.type === constants.ORDER_TYPES.FIXED &&
+          order.maker_address === req.userId) ||
+        (order.type !== constants.ORDER_TYPES.FIXED &&
+          order.taker_address === req.userId)
+      ) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
+
+      let category = await categoryServiceInstance.getCategory({
+        categoryId: order.categories_id,
+      });
+
+      if (!order || order.status !== 0) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
+
+      let orderAdd;
+
+      switch (order.type) {
+        case constants.ORDER_TYPES.FIXED: {
+          orderAdd = await orderServiceInstance.buyFixedOrder({
+            orderId,
+            taker_address: req.userId,
+            signature: order.signature,
+            takerSign: taker_signature,
+          });
+          if (orderAdd) {
+            helper.notify({
+              userId: req.userId,
+              message:
+                "You bought a " +
+                category.name +
+                " token for " +
+                orderAdd.taker_amount,
+              order_id: orderAdd.id,
+            });
+            helper.notify({
+              userId: orderAdd.maker_address,
+              message:
+                "Your " +
+                category.name +
+                " token has been bought for " +
+                orderAdd.taker_amount,
+              order_id: orderAdd.id,
+            });
           }
-          orderAdd = await orderServiceInstance.makeBid(params)
           break;
-
         }
-
+        case constants.ORDER_TYPES.NEGOTIATION: {
+          if (!bid || !signature) {
+            return res
+              .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+              .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+          }
+          orderAdd = await orderServiceInstance.makeBid({
+            orderId,
+            bid,
+            signature,
+            maker_address: req.userId,
+          });
+          if (orderAdd) {
+            helper.notify({
+              userId: req.userId,
+              message:
+                "You made an offer of " +
+                bid +
+                " on " +
+                category.name +
+                " token",
+              order_id: orderAdd.id,
+            });
+            helper.notify({
+              userId: orderAdd.taker_address,
+              message:
+                "An offer of " +
+                bid +
+                " has been made on your " +
+                category.name +
+                " token",
+              order_id: orderAdd.id,
+            });
+          }
+          break;
+        }
+        case constants.ORDER_TYPES.AUCTION: {
+          if (!bid || !signature) {
+            return res
+              .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+              .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+          }
+          orderAdd = await orderServiceInstance.makeBid({
+            orderId,
+            bid,
+            signature,
+            maker_address: req.userId,
+          });
+          if (orderAdd) {
+            helper.notify({
+              userId: req.userId,
+              message:
+                "You placed a bid of " +
+                bid +
+                " on " +
+                category.name +
+                " token",
+              order_id: orderAdd.id,
+            });
+            helper.notify({
+              userId: orderAdd.taker_address,
+              message:
+                "A bid of " +
+                bid +
+                " has been placed on your " +
+                category.name +
+                " token",
+              order_id: orderAdd.id,
+            });
+          }
+          break;
+        }
+      }
+      if (orderAdd) {
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
+          data: orderAdd,
+        });
+      } else {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.RESPONSE_STATUS.FAILURE });
+      }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
-    if (orderAdd) {
-      return res.status(200).json({ message: 'Buy order placed successfully', data: orderAdd.id })
-    } else {
-      return res.status(400).json({ message: 'Buy order failed' })
-    }
-  } catch (err) {
-    console.log(err)
-    return res.status(500).json({ message: 'Internal Server error.Please try again' })
   }
-})
+);
 
 /**
- *  cancel order 
+ *  cancel order
  */
 
-router.patch('/:orderId/cancel', [
-  check('orderId', 'A valid id is required').exists()
-], verifyToken, async (req, res) => {
-  try {
+router.patch(
+  "/:orderId/cancel",
+  [check("orderId", "A valid id is required").exists()],
+  verifyToken,
+  async (req, res) => {
+    try {
+      let order = await orderServiceInstance.orderExists(req.params);
 
+      if (!order || order.status !== 0) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
 
-    let order = await orderServiceInstance.orderExists(req.params);
+      let cancel = await orderServiceInstance.cancelOrder({
+        orderId: req.params.orderId,
+        signature: order.signature,
+        type: order.type,
+        takerSign: req.body.taker_signature,
+      });
+      let category = await categoryServiceInstance.getCategory({
+        categoryId: cancel.categories_id,
+      });
 
-    if (!order || order.status !== 0) {
-      return res.status(200).json({ message: 'Invalid order' })
+      if (cancel) {
+        helper.notify({
+          userId: req.userId,
+          message:
+            "You cancelled your " +
+            cancel.type +
+            " sell order on " +
+            category.name +
+            " token",
+          order_id: cancel.id,
+        });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: cancel });
+      } else {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.RESPONSE_STATUS.FAILURE });
+      }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
-
-    let cancel = await orderServiceInstance.cancelOrder(req.params);
-    if (cancel) {
-      return res.status(200).json({ message: 'Order cancelled successfully', data: cancel })
-    } else {
-      return res.status(400).json({ message: 'Order cancellation failed' })
-    }
-  } catch (err) {
-    console.log(err)
-    return res.status(500).json({ message: 'Internal Server error.Please try again' })
   }
-})
+);
 
 /**
- *  cancel bid 
+ *  cancel bid
  */
 
-router.patch('/bid/:bidId/cancel', [
-  check('bidId', 'A valid id is required').exists()
-], verifyToken, async (req, res) => {
-  try {
+router.patch(
+  "/bid/:bidId/cancel",
+  [check("bidId", "A valid id is required").exists()],
+  verifyToken,
+  async (req, res) => {
+    try {
+      let bid = await orderServiceInstance.bidExists(req.params);
 
-    let bid = await orderServiceInstance.bidExists(req.params);
+      if (!bid || bid.status !== 0) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
 
-    if (!bid || bid.status !== 0) {
-      return res.status(200).json({ message: 'Invalid bid' })
+      let { bidId } = req.params;
+      let { taker_signature } = req.body;
+
+      let order = await orderServiceInstance.getOrder({
+        orderId: bid.orders_id,
+      });
+
+      let category = await categoryServiceInstance.getCategory({
+        categoryId: order.categories.id,
+      });
+
+      let cancel;
+      if (order.type === constants.ORDER_TYPES.FIXED) {
+        cancel = await orderServiceInstance.cancelBid({
+          orderId: order.id,
+          bidId,
+          signature: bid.signature,
+          takerSign: taker_signature,
+        });
+      }
+
+      if (order.type === constants.ORDER_TYPES.NEGOTIATION) {
+        cancel = await orderServiceInstance.clearBids({ bidId });
+      }
+
+      if (cancel) {
+        helper.notify({
+          userId: req.userId,
+          message:
+            "You cancelled your bid/offer on " + category.name + " token",
+          order_id: order.id,
+        });
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: cancel });
+      } else {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.RESPONSE_STATUS.FAILURE });
+      }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
-
-    let cancel = await orderServiceInstance.cancelBid(req.params);
-    if (cancel) {
-      return res.status(200).json({ message: 'bid cancelled successfully', data: cancel })
-    } else {
-      return res.status(400).json({ message: 'bid cancel failed' })
-    }
-  } catch (err) {
-    console.log(err)
-    return res.status(500).json({ message: 'Internal Server error.Please try again' })
   }
-})
+);
 
 /**
- *  Buy order
+ *  Execute order
  *  @params orderId type: int
  *  @params maker_token type: int
  *  @params bid type: string
  */
 
-router.patch('/:orderId/execute', [
-  check('orderId', 'A valid order id is required').exists(),
-  check('taker_amount', 'A valid amount is required').exists()
-], verifyToken, async (req, res) => {
+router.patch(
+  "/:bidId/execute",
+  [check("bidId", "A valid bid id is required").exists()],
+  verifyToken,
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
 
-  try {
+      if (!errors.isEmpty()) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
+      }
 
-    const errors = validationResult(req);
+      let bid = await orderServiceInstance.bidExists(req.params);
 
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ error: errors.array() });
+      if (!bid || bid.status !== 0) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
+
+      let order = await orderServiceInstance.getOrder({
+        orderId: bid.orders_id,
+      });
+
+      let category = await categoryServiceInstance.getCategory({
+        categoryId: order.categories.id,
+      });
+
+      let params = {
+        orderId: order.id,
+        maker_address: req.userId,
+        maker_amount: bid.price,
+        signature: bid.signature,
+        takerSign: req.body.taker_signature,
+      };
+
+      if (
+        !order ||
+        order.status !== 0 ||
+        (order.type !== constants.ORDER_TYPES.NEGOTIATION &&
+          order.type !== constants.ORDER_TYPES.AUCTION)
+      ) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
+
+      let orderExecute = await orderServiceInstance.executeOrder(params);
+
+      if (orderExecute) {
+        if (order.type !== constants.ORDER_TYPES.FIXED) {
+          let limit = requestUtil.getLimit(req.query);
+          let offset = requestUtil.getOffset(req.query);
+          let orderBy = requestUtil.getSortBy(req.query, "+id");
+
+          let bids = await orderServiceInstance.getBids({
+            orderId: order.id,
+            limit,
+            offset,
+            orderBy,
+          });
+
+          for (data of bids.order) {
+            orderServiceInstance.clearBids({ bidId: data.id });
+          }
+        }
+
+        helper.notify({
+          userId: orderExecute.maker_address,
+          message:
+            "You bought a " +
+            category.name +
+            " token for " +
+            orderExecute.maker_amount,
+          order_id: orderExecute.id,
+        });
+        helper.notify({
+          userId: orderExecute.taker_address,
+          message:
+            "Your " +
+            category.name +
+            " token has been bought for " +
+            orderExecute.maker_amount,
+          order_id: orderExecute.id,
+        });
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
+          data: orderExecute.id,
+        });
+      } else {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.RESPONSE_STATUS.FAILURE });
+      }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
-
-    let params = { ...req.body, ...req.params, ...{ taker_address: req.userId } }
-
-    let order = await orderServiceInstance.orderExists(req.params);
-
-    if (!order || order.status !== 0 || (order.type !== 'NEGOTIATION' && order.type !== 'AUCTION')) {
-      return res.status(200).json({ message: 'Invalid order' })
-    }
-
-    let orderExecute = await orderServiceInstance.executeOrder(params)
-
-    if (orderExecute) {
-      return res.status(200).json({ message: 'Order addedd successfully', data: orderExecute.id })
-    } else {
-      return res.status(400).json({ message: 'Order addition failed' })
-    }
-  } catch (err) {
-    console.log(err)
-    return res.status(500).json({ message: 'Internal Server error.Please try again' })
   }
-})
+);
 
+/**
+ *  Gets bid list from order
+ *  @params orderId type: int
+ */
+
+router.get(
+  "/bids/:orderId",
+  [check("orderId", "A valid id is required").exists()],
+  async (req, res) => {
+    try {
+      let orderId = req.params.orderId;
+      let limit = requestUtil.getLimit(req.query);
+      let offset = requestUtil.getOffset(req.query);
+      let orderBy = requestUtil.getSortBy(req.query, "+id");
+
+      let bids = await orderServiceInstance.getBids({
+        orderId,
+        limit,
+        offset,
+        orderBy,
+      });
+      if (bids.order.length > 0) {
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
+          data: bids,
+        });
+      } else {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
+          .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
+      }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+  }
+);
+
+/**
+ *  Gets zrx exchange data encoded
+ *  @params orderId type: int
+ */
+
+router.get(
+  "/exchangedata/encoded/",
+  [check("orderId", "A valid id is required").exists()],
+  async (req, res) => {
+    try {
+      let { orderId, functionName } = req.query;
+
+      let order = await orderServiceInstance.orderExists({ orderId });
+
+      if (!order || order.status !== 0) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
+
+      let encodedData = helper.encodeExchangeData(
+        JSON.parse(order.signature),
+        functionName
+      );
+      return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+        message: constants.RESPONSE_STATUS.SUCCESS,
+        data: encodedData,
+      });
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+  }
+);
+
+/**
+ *  Gets zrx exchange data encoded
+ *  @params orderId type: int
+ */
+
+router.get(
+  "/exchangedata/encodedbid/",
+  [check("bidId", "A valid id is required").exists()],
+  async (req, res) => {
+    try {
+      let { bidId, functionName } = req.query;
+
+      let bid = await orderServiceInstance.bidExists({ bidId });
+
+      if (!bid || bid.status !== 0) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
+
+      let encodedData = helper.encodeExchangeData(
+        JSON.parse(bid.signature),
+        functionName
+      );
+      return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+        message: constants.RESPONSE_STATUS.SUCCESS,
+        data: encodedData,
+      });
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+  }
+);
 
 module.exports = router;

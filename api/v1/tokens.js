@@ -1,152 +1,111 @@
-const express = require('express')
+const express = require("express");
 const router = express.Router();
-const { check, validationResult } = require('express-validator');
-const tokenService = require('../services/token')
-let tokenServiceInstance = new tokenService();
-const categoryService = require('../services/category')
+const { check, validationResult } = require("express-validator");
+const TokenService = require("../services/tokens");
+const tokenServiceInstance = new TokenService();
+const userService = require("../services/user");
+let userServiceInstance = new userService();
+const categoryService = require("../services/category");
 let categoryServiceInstance = new categoryService();
-const upload = require('../utils/upload')
-const verifyToken = require('../middlewares/verify-token')
+const orderService = require("../services/order");
+let orderServiceInstance = new orderService();
+let redisCache = require("../utils/redis-cache");
+let helper = require("../utils/helper");
+let constants = require("../../config/constants");
 
 /**
  * Token routes
  */
 
 /**
- *  Adds a new token for a particular category
- *  @params name type: name
- *  @params description type: description
- *  @params categoryId type: integer
- *  @params metadata type: string
- *  @params token_id type: string
- *  @param tokenImage type: image-file 
+ *  Gets all the token details on matic
  */
 
-router.post('/', verifyToken, upload.single('tokenImage'), async (req, res) => {
+router.get(
+  "/balance",
+  [check("userId", "input a valid id").exists()],
+  [check("chainId", "input a valid id").exists()],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
 
-  try {
+      if (!errors.isEmpty()) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
+      }
 
-    let userId = req.userId;
-    let { categoryId, token_id, name } = req.body
+      let { userId, chainId } = req.query;
 
-    if (!categoryId || !token_id || !name) {
-      return res.status(400).json({ message: 'input validation failed' })
+      let user = await userServiceInstance.getUser({ userId });
+
+      if (!user) {
+        return res.status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST).json({
+          message: constants.MESSAGES.INPUT_VALIDATION_ERROR,
+        });
+      }
+
+      let tokens = await tokenServiceInstance.getTokens({
+        chainId,
+        owner: user.address.toLowerCase(),
+      });
+
+      let tokensOwned = [];
+
+      if (tokens.length > 0) {
+        for (token of tokens) {
+          let metadata = await redisCache.getTokenData(
+            token.token_id,
+            token.contract,
+            chainId
+          );
+          let active = {
+            active_order: await orderServiceInstance.checkValidOrder({
+              userId,
+              tokenId: token.token_id,
+            }),
+          };
+
+          token.token_id = token.token_id;
+
+          tokensOwned.push({ ...token, ...metadata, ...active });
+        }
+
+        let tokensOwnedPerCategory = {};
+        for (tokenDetail of tokensOwned) {
+          let singleCategory = (
+            await categoryServiceInstance.getCategoryByAddress(
+              tokenDetail.contract
+            )
+          ).filter((res) => {
+            return res.chain_id === chainId;
+          });
+
+          if (tokensOwnedPerCategory[singleCategory[0].id]) {
+            tokensOwnedPerCategory[singleCategory[0].id].push(tokenDetail);
+          } else {
+            temp_array = [];
+            temp_array.push(tokenDetail);
+            tokensOwnedPerCategory[singleCategory[0].id] = temp_array;
+          }
+        }
+
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
+          data: tokensOwnedPerCategory,
+        });
+      } else {
+        return res.status(constants.RESPONSE_STATUS_CODES.NOT_FOUND).json({
+          message: constants.RESPONSE_STATUS.NOT_FOUND,
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
-
-    let category = await categoryServiceInstance.getCategory({ categoryId })
-
-    if (!category) {
-      return res.status(400).json({ message: 'Category doesnt exist' })
-    }
-
-    // Token validation correction needed. Does not consider composite key now.
-
-    let tokens = await tokenServiceInstance.tokenExists(req.body)
-
-    if (tokens.length > 0) {
-      return res.status(400).json({ message: 'Token already exist' })
-    }
-
-    req.body.userId = userId;
-    let token = await tokenServiceInstance.createToken(req.body, req.file);
-    if (token) {
-      return res.status(200).json({ message: 'Token addedd successfully', data: token })
-    } else {
-      return res.status(400).json({ message: 'Token addition failed' })
-    }
-  } catch (err) {
-    console.log(err)
-    return res.status(500).json({ message: 'Internal Server error.Please try again' })
   }
-})
-
-
-/**
- *  Gets all the token details 
- */
-
-router.get('/', async (req, res) => {
-  try {
-
-    let tokens = await tokenServiceInstance.getTokens();
-    if (tokens) {
-      return res.status(200).json({ message: 'Tokens retrieved successfully', data: tokens })
-    } else {
-      return res.status(400).json({ message: 'Tokens retrieved failed' })
-    }
-  } catch (err) {
-    console.log(err)
-    return res.status(500).json({ message: 'Internal Server error.Please try again' })
-  }
-})
-
-
-
-/**
- *  Gets single token detail 
- *  @param id type: integer
- */
-
-router.get('/:tokenId', [
-  check('tokenId', 'A valid id is required').exists()
-], async (req, res) => {
-  try {
-
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ error: errors.array() });
-    }
-
-    let token = await tokenServiceInstance.getToken(req.params);
-    if (token) {
-      return res.status(200).json({ message: 'Token retrieved successfully', data: token })
-    } else {
-      return res.status(400).json({ message: 'Token does not exist' })
-    }
-  } catch (err) {
-    console.log(err)
-    return res.status(500).json({ message: 'Internal Server error.Please try again' })
-  }
-})
-
-/**
- *  Updates an existing NFT token
- *  @params tokenId type: Integer
- *  @params name type: name
- *  @params description type: description
- *  @params metadata type: string
- *  @param tokenImage type: image-file 
- */
-
-router.put('/:tokenId', verifyToken, upload.single('tokenImage'), async (req, res) => {
-
-  try {
-
-
-    let params = { ...req.params, ...req.body }
-
-    if (!params.tokenId) {
-      return res.status(400).json({ message: 'Input validation failed' })
-    }
-
-    let tokenExists = await tokenServiceInstance.getToken(params)
-
-    if (!tokenExists) {
-      return res.status(400).json({ message: 'Token doesnt exists' })
-    }
-
-    // Pending 
-    let token = await tokenServiceInstance.updateToken(params, req.file);
-    if (token) {
-      return res.status(200).json({ message: 'token addedd successfully', data: token })
-    } else {
-      return res.status(400).json({ message: 'token addition failed' })
-    }
-  } catch (err) {
-    console.log(err)
-    return res.status(500).json({ message: 'Internal Server error.Please try again' })
-  }
-})
+);
 
 module.exports = router;

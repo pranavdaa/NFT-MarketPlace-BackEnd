@@ -4,7 +4,7 @@ This repository contains api to retrieve marketplace data for matic network mark
 
 ## setup
 
-##### Installation
+#### Installation
 
 ```sh
 $ git clone https://github.com/maticnetwork/marketplace-api
@@ -16,13 +16,23 @@ $ npm install
 # follow prisma/README.md for database client setup
 ```
 
-##### Development
+## Configure environment
+
+You need to configure your environment variables now. Copy `.env.example` and rename as `.env`. Now provide values for the keys mentioned there.
+
+#### Development
 
 ```sh
+# apply migrations
+$ npm run migrate-up
+
 # start the development server with hot reload
 $ npm run dev
+
+# create migration for database schema changes
+$ npm run migrate-save
 ```
 
-##### database
+#### database
 
 Refer to [readme.md](./prisma/README.md)

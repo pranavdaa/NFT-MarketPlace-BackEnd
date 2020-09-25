@@ -1,18 +1,34 @@
-import path from 'path'
-import dotenv from 'dotenv'
+let path = require("path");
+let dotenv = require("dotenv");
 
 // load config env
-let root = path.normalize(`${__dirname}/..`)
-const fileName =
-    process.env.NODE_ENV === 'production'
-        ? '/config-production.env'
-        : '/.env'
-const configFile = `${root}${fileName}`
-dotenv.config({ path: configFile, silent: true })
+let root = path.normalize(`${__dirname}/..`);
+let fileName = "";
 
-export default {
-    secret: process.env.jwt_secret,
-    port: process.env.PORT,
-    admin_username: process.env.admin_username,
-    admin_password: process.env.admin_password
+switch (process.env.NODE_ENV) {
+  case "production": {
+    fileName = "/config-production.env";
+    break;
+  }
+  case "test": {
+    fileName = "/config-test.env";
+    break;
+  }
+  default:
+    fileName = "/.env";
 }
+
+const configFile = `${root}${fileName}`;
+dotenv.config({ path: configFile, silent: true });
+
+module.exports = {
+  secret: process.env.jwt_secret,
+  port: process.env.PORT,
+  admin_username: process.env.admin_username,
+  admin_password: process.env.admin_password,
+  NODE_ENV: process.env.NODE_ENV,
+  hermoine: process.env.hermoine,
+  coinmarket_apikey: process.env.coinmarket_apikey,
+  admin_private_key: process.env.private_key,
+  MNEMONIC: process.env.MNEMONIC
+};

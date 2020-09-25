@@ -1,0 +1,36 @@
+{
+  "version": "0.3.14-fixed",
+  "steps": [
+    {
+      "tag": "UpdateField",
+      "model": "assetmigrate",
+      "field": "status",
+      "arity": "Optional"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "assetmigrate",
+          "field": "status"
+        },
+        "directive": "default"
+      }
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "assetmigrate",
+          "field": "status"
+        },
+        "directive": "default"
+      },
+      "argument": "",
+      "value": "0"
+    }
+  ]
+}

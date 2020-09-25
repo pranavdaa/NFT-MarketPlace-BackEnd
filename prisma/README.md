@@ -12,13 +12,15 @@ $ npm install
 # setup and start PostgreSQL
 ```
 
+### Configure environment
+
+You need to configure your environment variables now. Copy `.env.example` and rename as `.env`. Now provide values for the keys mentioned there.
+
 ### Setting up the database
 
 #### production
 
 ```sh
-# user .env file at prisma/ folder to configure database
-
 # apply migrations
 $ prisma migrate up --experimental
 # or

@@ -1,5 +1,7 @@
-const { PrismaClient } = require("@prisma/client")
-const prisma = new PrismaClient()
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
+let { hasNextPage } = require("../utils/helper.js");
+let constants = require("../../config/constants");
 
 /**
  * Includes all the Category services that controls
@@ -7,11 +9,8 @@ const prisma = new PrismaClient()
  */
 
 class CategoryService {
-
   async createCategory(params, file) {
-
     try {
-
       let category = await prisma.categories.create({
         data: {
           name: params.name,
@@ -19,105 +18,137 @@ class CategoryService {
           url: params.url,
           img_url: file ? file.path : "",
           categoriesaddresses: {
-            create: JSON.parse(params.address)
-          }
-        }
-      })
+            create: JSON.parse(params.address),
+          },
+        },
+      });
       return category;
     } catch (err) {
-      console.log(err)
-      throw new Error("Internal Server Error");
+      console.log(err);
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 
-  async getCategories() {
+  async getCategories({ limit, offset, orderBy }) {
     try {
+      let where = {
+        active: true,
+      };
+
+      let count = await prisma.categories.count({ where });
       let categories = await prisma.categories.findMany({
-        include: { categoriesaddresses: true }
+        where,
+        orderBy,
+        take: limit,
+        skip: offset,
+        include: { categoriesaddresses: true },
       });
+      return {
+        categories,
+        limit,
+        offset,
+        has_next_page: hasNextPage({ limit, offset, count }),
+      };
+    } catch (err) {
+      console.log(err);
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getCategoryList({ chainId }) {
+    try {
+      let where = {
+        active: true,
+        chain_id: chainId,
+      };
+
+      let categories = await prisma.categoriesaddresses.findMany({
+        where,
+        select: { address: true },
+      });
+
       return categories;
     } catch (err) {
-      console.log(err)
-      throw new Error("Internal Server Error");
+      console.log(err);
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getCategoryByAddress({ categoryAddress }) {
+    try {
+      let category = await prisma.categoriesaddresses.findMany({
+        where: {
+          address: categoryAddress,
+        },
+      });
+
+      return category;
+    } catch (err) {
+      console.log(err);
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 
   async categoryExists(params) {
     try {
-
       let categories = await prisma.categories.findOne({
-        where: { name: params.name }
+        where: { name: params.name },
       });
       return categories;
     } catch (err) {
-      console.log(err)
-      throw new Error("Internal Server Error");
+      console.log(err);
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 
   async categoryAddressExists(params) {
     try {
-
       let categories = await prisma.categoriesaddresses.findOne({
-        where: { address: params.address }
+        where: { address: params.address },
       });
+
+      categories;
       return categories;
     } catch (err) {
-      console.log(err)
-      throw new Error("Internal Server Error");
+      console.log(err);
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 
   async getCategory(params) {
     try {
-
       let categories = await prisma.categories.findOne({
-        where: { id: parseInt(params.categoryId) }
+        where: { id: parseInt(params.categoryId) },
       });
       return categories;
     } catch (err) {
-      console.log(err)
-      throw new Error("Internal Server Error");
-    }
-  }
-
-  async getTokensFromCategory(params) {
-    try {
-
-      let tokens = await prisma.categories.findOne({
-        select: { tokens: true },
-        where: { id: parseInt(params.categoryId) },
-      });
-      return tokens.tokens;
-    } catch (err) {
-      console.log(err)
-      throw new Error("Internal Server Error");
+      console.log(err);
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 
   async updateCategory(params, file) {
-
     try {
-
       let current = await this.getCategory(params);
       let category = await prisma.categories.update({
         where: { id: parseInt(params.categoryId) },
         data: {
-          description: params.description ? params.description : current.description,
+          description: params.description
+            ? params.description
+            : current.description,
           url: params.url ? params.url : current.url,
           img_url: file ? file.path : current.img_url,
           categoriesaddresses: {
-            create: params.address ? JSON.parse(params.address) : []
-          }
-        }
-      })
+            create: params.address ? JSON.parse(params.address) : [],
+          },
+        },
+      });
       return category;
     } catch (err) {
-      console.log(err)
-      throw new Error("Internal Server Error");
+      console.log(err);
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
 }
 
-module.exports = CategoryService
-
+module.exports = CategoryService;
