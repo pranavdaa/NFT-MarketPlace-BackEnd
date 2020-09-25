@@ -39,4 +39,8 @@ module.exports = {
     BASE_DERIVATION_PATH: `44'/60'/0'/0`,
     RPC_URL: "https://rpc-mumbai.matic.today",
   },
+  ASSET_TRANSFER: {
+    DEPOSIT: "DEPOSIT",
+    WITHDRAW: "WITHDRAW",
+  },
 };

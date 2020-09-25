@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = "***"
 }
 
 model bids {
@@ -158,7 +158,7 @@ model assetmigrate {
   token_array   String[]
   users_id      Int
   categories_id Int
-  status        Int?       @default(0)
+  status        Int
   users         users      @relation(fields: [users_id], references: [id])
   categories    categories @relation(fields: [categories_id], references: [id])
 }

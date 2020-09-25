@@ -19,3 +19,5 @@
 20200721174744-auction-logic-upgrade
 20200722174445-added-buyer-seller-in-order
 20200722200442-added-market-price
+20200921092236-asset-migrate-table
+20200922154628-asset-schema-update

@@ -15,10 +15,10 @@ function getSignTypedData({ owner }) {
     },
     domain: {
       name: "Ether Mail",
-      host: "https://rpc-mumbai.matic.today",
+      host: "",
       version: "1",
       verifyingContract: "0x0",
-      chainId: 80001,
+      chainId: 5,
     },
     primaryType: "Test",
     message: { owner },
