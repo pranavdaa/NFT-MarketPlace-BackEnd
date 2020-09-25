@@ -43,7 +43,7 @@ class CategoryService {
         skip: offset,
         include: {
           categoriesaddresses: true,
-          orders: true,
+          orders: { select: { id: true }, where: { status: 0 } },
         },
       });
       return {

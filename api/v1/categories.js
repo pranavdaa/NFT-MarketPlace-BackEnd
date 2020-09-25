@@ -98,26 +98,18 @@ router.get("/", async (req, res) => {
     });
     if (categories) {
       /**
-       * re-form categories array to include count of orders in each object 
+       * re-form categories array to include count of orders in each object
        */
       let categoriesArray = categories.categories;
-      categoriesArray = categoriesArray.map((category) => {
-        // let orders = category["orders"]
-        let activeOrders = 0;
-        if (category["orders"].length) {
-          for (order in category["orders"]) {
-            if (category["orders"][order].active) activeOrders++;
-          }
-        }
-        return {
-          ...category,
-          orders: activeOrders
-        }
-      })
+
+      categoriesArray.map((categoryDetail) => {
+        return (categoryDetail.orders = categoryDetail.orders.length);
+      });
+
       return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
         message: constants.RESPONSE_STATUS.SUCCESS,
         data: {
-          "categories": categoriesArray
+          categories: categoriesArray,
         },
       });
     } else {
