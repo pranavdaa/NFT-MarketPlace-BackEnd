@@ -22,9 +22,9 @@ class TokenService {
       let categories = await categoryServiceInstance.getCategoryList({
         chainId: params.chainId,
       });
-  
+
       let nft_array = [];
-  
+
       for (let data of categories) {
         let balance_list;
         if (params.chainId === "80001") {
@@ -35,13 +35,14 @@ class TokenService {
             data.address
           );
         }
+
         if (balance_list) {
           for (let token of balance_list) {
             nft_array.push(token);
           }
         }
       }
-  
+
       return nft_array;
     } catch (err) {
       console.log(err);

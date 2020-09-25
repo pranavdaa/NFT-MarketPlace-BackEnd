@@ -120,7 +120,7 @@ async function ethereum_balance(owner, rootContractAddress) {
       uri: uri,
     });
   }
-  return { token_array, balance };
+  return token_array;
 }
 
 async function matic_balance(owner, childContractAddress) {
@@ -188,7 +188,7 @@ async function ethereum_nft_detail(tokenId, rootContractAddress) {
   return token_detail;
 }
 
-function getSignatureParameters (signature) {
+function getSignatureParameters(signature) {
   if (!web3.utils.isHexStrict(signature)) {
     throw new Error(
       'Given value "'.concat(signature, '" is not a valid hex string.')
@@ -199,7 +199,7 @@ function getSignatureParameters (signature) {
   var v = "0x".concat(signature.slice(130, 132));
   v = web3.utils.hexToNumber(v);
   if (![27, 28].includes(v)) v += 27;
-  return { r, s, v }
+  return { r, s, v };
 }
 
 /**
@@ -207,35 +207,44 @@ function getSignatureParameters (signature) {
  * txDetails = { intent, fnSig, from, contractAddress }
  * @param {object} txDetails transaction object that will be executed on 80001 chain
  */
-async function executeMetaTransaction (txDetails) {
-  const { r, s, v } = getSignatureParameters(txDetails.intent)
-  const inputs = [{ "name": "userAddress", "type": "address" }, { "name": "functionSignature", "type": "bytes" }, { "name": "sigR", "type": "bytes32" }, { "name": "sigS", "type": "bytes32" }, { "name": "sigV", "type": "uint8" }]
+async function executeMetaTransaction(txDetails) {
+  const { r, s, v } = getSignatureParameters(txDetails.intent);
+  const inputs = [
+    { name: "userAddress", type: "address" },
+    { name: "functionSignature", type: "bytes" },
+    { name: "sigR", type: "bytes32" },
+    { name: "sigS", type: "bytes32" },
+    { name: "sigV", type: "uint8" },
+  ];
 
   if (!isValidEthereumAddress(txDetails.from)) {
-    console.log('`from` not valid account address');
+    console.log("`from` not valid account address");
     throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
   }
 
-  const data = web3.eth.abi.encodeFunctionCall({
-    name: 'executeMetaTransaction', 
-    type: 'function', 
-    inputs
-  }, [txDetails.from, txDetails.fnSig, r, s, v])
+  const data = web3.eth.abi.encodeFunctionCall(
+    {
+      name: "executeMetaTransaction",
+      type: "function",
+      inputs,
+    },
+    [txDetails.from, txDetails.fnSig, r, s, v]
+  );
   // add private key
-  web3.eth.accounts.wallet.add(config.admin_private_key)
-  let execution
+  web3.eth.accounts.wallet.add(config.admin_private_key);
+  let execution;
   try {
-    execution = await web3.eth.sendTransaction ({
-      from: web3.eth.accounts.wallet[0].address, 
-      data, 
+    execution = await web3.eth.sendTransaction({
+      from: web3.eth.accounts.wallet[0].address,
+      data,
       to: txDetails.contractAddress,
-      gas: 80000
-    })
+      gas: 80000,
+    });
   } catch (err) {
     console.log(err);
     throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
   }
-  return execution
+  return execution;
 }
 
 const calculateProtocolFee = (
@@ -280,5 +289,5 @@ module.exports = {
   executeMetaTransaction,
   calculateProtocolFee,
   providerEngine,
-  encodeExchangeData
+  encodeExchangeData,
 };
