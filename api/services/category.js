@@ -41,7 +41,10 @@ class CategoryService {
         orderBy,
         take: limit,
         skip: offset,
-        include: { categoriesaddresses: true },
+        include: { 
+          categoriesaddresses: true,
+          orders: true
+        },
       });
       return {
         categories,
