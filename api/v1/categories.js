@@ -102,9 +102,16 @@ router.get("/", async (req, res) => {
        */
       let categoriesArray = categories.categories;
       categoriesArray = categoriesArray.map((category) => {
+        // let orders = category["orders"]
+        let activeOrders = 0;
+        if (category["orders"].length) {
+          for (order in category["orders"]) {
+            if (category["orders"][order].active) activeOrders++;
+          }
+        }
         return {
           ...category,
-          orders: category["orders"].length
+          orders: activeOrders
         }
       })
       return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
