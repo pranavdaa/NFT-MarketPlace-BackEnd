@@ -81,22 +81,18 @@ router.get(
             return res.chain_id === chainId;
           });
 
-          if (tokensOwnedPerCategory[singleCategory[0].categories_id]) {
-            tokensOwnedPerCategory[singleCategory[0].categories_id].push(
-              tokenDetail
-            );
+          if (tokensOwnedPerCategory[singleCategory[0].address]) {
+            tokensOwnedPerCategory[singleCategory[0].address]++;
           } else {
-            temp_array = [];
-            temp_array.push(tokenDetail);
-            tokensOwnedPerCategory[
-              singleCategory[0].categories_id
-            ] = temp_array;
+            tokensOwnedPerCategory[singleCategory[0].address] = 1;
           }
         }
 
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
-          data: tokensOwnedPerCategory,
+          data: tokensOwned,
+          balances: tokensOwnedPerCategory,
+          count: tokensOwned.length,
         });
       } else {
         return res.status(constants.RESPONSE_STATUS_CODES.NOT_FOUND).json({
