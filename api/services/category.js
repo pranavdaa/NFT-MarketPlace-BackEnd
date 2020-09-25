@@ -77,6 +77,21 @@ class CategoryService {
     }
   }
 
+  async getCategoryByAddress({ categoryAddress }) {
+    try {
+      let category = await prisma.categoriesaddresses.findMany({
+        where: {
+          address: categoryAddress,
+        },
+      });
+
+      return category;
+    } catch (err) {
+      console.log(err);
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   async categoryExists(params) {
     try {
       let categories = await prisma.categories.findOne({

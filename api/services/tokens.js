@@ -22,20 +22,18 @@ class TokenService {
       let categories = await categoryServiceInstance.getCategoryList({
         chainId: params.chainId,
       });
-
-      let nft_array = [], totalTokens = {};
-
+  
+      let nft_array = [];
+  
       for (let data of categories) {
         let balance_list;
         if (params.chainId === "80001") {
           balance_list = await helper.matic_balance(params.owner, data.address);
         } else {
-          let _b = await helper.ethereum_balance(
+          balance_list = await helper.ethereum_balance(
             params.owner,
             data.address
           );
-          balance_list = _b.token_array;
-          totalTokens[data.address] = _b.balance;
         }
         if (balance_list) {
           for (let token of balance_list) {
@@ -43,7 +41,8 @@ class TokenService {
           }
         }
       }
-      return { nft_array, totalTokens };
+  
+      return nft_array;
     } catch (err) {
       console.log(err);
       throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
