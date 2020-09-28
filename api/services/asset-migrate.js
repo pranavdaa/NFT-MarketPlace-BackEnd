@@ -18,6 +18,7 @@ class AssetMigrateService {
           categories: { connect: { id: parseInt(params.category_id) } },
           users: { connect: { id: parseInt(params.userId) } },
           token_array: { set: params.token_array },
+          block_number: params.block_number,
         },
       });
       return assetMigrate;
