@@ -88,6 +88,7 @@ router.get(
         constants.ASSET_TRANSFER.WITHDRAW,
         constants.ASSET_TRANSFER.DEPOSIT,
       ]),
+    check("status", "A valid status type is required").exists(),
   ],
   async (req, res) => {
     try {
@@ -95,7 +96,7 @@ router.get(
       let offset = requestUtil.getOffset(req.query);
       let orderBy = requestUtil.getSortBy(req.query, "+id");
 
-      let { user_id, type } = req.query;
+      let { user_id, type, status } = req.query;
 
       let assetMigrations = await assetMigrateServiceInstance.getAssetMigrations(
         {
@@ -104,6 +105,7 @@ router.get(
           orderBy,
           type,
           userId: user_id,
+          status,
         }
       );
       if (assetMigrations) {

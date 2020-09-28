@@ -27,11 +27,12 @@ class AssetMigrateService {
     }
   }
 
-  async getAssetMigrations({ type, userId, limit, offset, orderBy }) {
+  async getAssetMigrations({ status, type, userId, limit, offset, orderBy }) {
     try {
       let where = {
         type: type,
         users_id: parseInt(userId),
+        status: { in: JSON.parse(status) },
       };
 
       let count = await prisma.assetmigrate.count({ where });
