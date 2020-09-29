@@ -118,7 +118,7 @@ router.get("/", async (req, res) => {
         .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: data });
     } else {
       return res
-        .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+        .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
         .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
     }
   } catch (err) {
@@ -166,7 +166,7 @@ router.get(
           .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: users });
       } else {
         return res
-          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
           .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
@@ -217,7 +217,7 @@ router.get(
         });
       } else {
         return res
-          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
           .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
@@ -267,7 +267,7 @@ router.get(
         });
       } else {
         return res
-          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
           .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
@@ -319,7 +319,7 @@ router.get(
         });
       } else {
         return res
-          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
           .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
@@ -358,7 +358,7 @@ router.get(
           .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: bids });
       } else {
         return res
-          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
           .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
@@ -421,7 +421,7 @@ router.post(
         });
       } else {
         return res
-          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
           .json({ message: constants.RESPONSE_STATUS.FAILURE });
       }
     } catch (err) {
@@ -491,7 +491,7 @@ router.delete("/favourites/:favouriteId", verifyToken, async (req, res) => {
 
     if (!favourite || favourite.users_id !== userId) {
       return res
-        .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+        .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
         .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
     }
 
@@ -542,7 +542,7 @@ router.get("/notification/:userId", async (req, res) => {
       });
     } else {
       return res
-        .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+        .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
         .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
     }
   } catch (err) {
@@ -576,7 +576,7 @@ router.put(
         });
       } else {
         return res
-          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
           .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
