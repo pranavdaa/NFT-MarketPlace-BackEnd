@@ -27,9 +27,9 @@ function getSortBy(options, defaultArg) {
 
   let orderBy = {};
   if (sort.startsWith("-")) {
-    orderBy[sort.substring(1)] = SORT_DIRECTION.ASC;
+    orderBy[sort.substring(1)] = SORT_DIRECTION.DESC;
   } else if (sort.startsWith(" ") || sort.startsWith("+")) {
-    orderBy["updated"] = SORT_DIRECTION.DESC;
+    orderBy[sort.substring(1)] = SORT_DIRECTION.ASC;
   } else {
     orderBy[sort] = SORT_DIRECTION.DESC;
   }
