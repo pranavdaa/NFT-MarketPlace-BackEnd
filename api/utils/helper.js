@@ -232,13 +232,15 @@ async function executeMetaTransaction(txDetails) {
   );
   // add private key
   web3.eth.accounts.wallet.add(config.admin_private_key);
-  let execution;
+  let execution, txObj = {
+    from: web3.eth.accounts.wallet[0].address,
+    data,
+    to: txDetails.contractAddress
+  }
   try {
+    gas = await web3.eth.estimateGas(txObj);
     execution = await web3.eth.sendTransaction({
-      from: web3.eth.accounts.wallet[0].address,
-      data,
-      to: txDetails.contractAddress,
-      gas: 80000,
+      ...txObj, gas
     });
   } catch (err) {
     console.log(err);
