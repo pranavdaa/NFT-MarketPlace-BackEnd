@@ -569,7 +569,7 @@ router.put(
         userId,
       });
 
-      if (notifications.notifications.length > 0) {
+      if (notifications.length > 0) {
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
           data: notifications,
