@@ -392,6 +392,13 @@ class UserService {
           usersId: parseInt(userId),
         },
       });
+
+      let unread_count = await prisma.notifications.count({
+        where: {
+          usersId: parseInt(userId),
+          read: false,
+        },
+      });
       let notifications = await prisma.notifications.findMany({
         where: {
           usersId: parseInt(userId),
@@ -406,6 +413,7 @@ class UserService {
         limit,
         offset,
         has_next_page: hasNextPage({ limit, offset, count }),
+        unread_count,
       };
     } catch (err) {
       console.log(err);

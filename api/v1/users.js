@@ -539,6 +539,7 @@ router.get("/notification/:userId", async (req, res) => {
       return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
         message: constants.RESPONSE_STATUS.SUCCESS,
         data: notifications,
+        unread_count: notifications.unread_count,
       });
     } else {
       return res
@@ -576,7 +577,7 @@ router.put(
         });
       } else {
         return res
-          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
+          .status(constants.RESPONSE_STATUS_CODES.OK)
           .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
