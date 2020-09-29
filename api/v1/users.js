@@ -553,4 +553,39 @@ router.get("/notification/:userId", async (req, res) => {
   }
 });
 
+/**
+ *  Read user notifications
+ */
+
+router.put(
+  "/notification/mark-read/:userId",
+  [check("userId", "A valid user id is required").exists()],
+  verifyToken,
+  async (req, res) => {
+    try {
+      let userId = req.params.userId;
+
+      let notifications = await userServiceInstance.readUserNotification({
+        userId,
+      });
+
+      if (notifications.notifications.length > 0) {
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
+          data: notifications,
+        });
+      } else {
+        return res
+          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
+      }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+  }
+);
+
 module.exports = router;

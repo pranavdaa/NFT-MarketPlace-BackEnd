@@ -412,6 +412,23 @@ class UserService {
       throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
     }
   }
+
+  async readUserNotification({ userId }) {
+    try {
+      let notifications = await prisma.notifications.updateMany({
+        where: {
+          read: false,
+          usersId: parseInt(userId),
+        },
+        data: { read: true },
+      });
+
+      return notifications;
+    } catch (err) {
+      console.log(err);
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
+    }
+  }
 }
 
 module.exports = UserService;
