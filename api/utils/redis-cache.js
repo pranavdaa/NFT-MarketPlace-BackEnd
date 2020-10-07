@@ -40,6 +40,7 @@ async function getTokenData(tokenId, contract, chainId) {
                 name: details.name,
                 description: details.description,
                 image: details.image,
+                attributes:details.attributes
               };
               client.setex(redisKey, 86400, JSON.stringify(metadata));
               resolve(metadata);
