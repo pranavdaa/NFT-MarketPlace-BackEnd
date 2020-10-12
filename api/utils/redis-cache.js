@@ -32,9 +32,9 @@ async function getTokenData(tokenId, contract, chainId) {
             resolve({});
           }
 
-          const id= token.token_id;
-          const cadd= token.contract === "0x14cAf5c9DdC44FC3AcD03A6F28DCE60f1Df694Dd"?"0xf5b0a3efb8e8e4c201e2a935f110eaaf3ffecb8d":"0x629a673a8242c2ac4b7b8c5d8735fbeac21a6205";
-          let openSeaApiURL="https://api.opensea.io/api/v1/assets?&token_ids="+id+"&asset_contract_address="+cadd;
+          const tokenId= token.token_id;
+          const contractAddress= token.contract === "0x14cAf5c9DdC44FC3AcD03A6F28DCE60f1Df694Dd"?"0xf5b0a3efb8e8e4c201e2a935f110eaaf3ffecb8d":"0x629a673a8242c2ac4b7b8c5d8735fbeac21a6205";
+          let openSeaApiURL="https://api.opensea.io/api/v1/assets?&token_ids="+tokenId+"&asset_contract_address="+contractAddress;
           fetch(openSeaApiURL)
             .then((response) => {
               return response.json();
