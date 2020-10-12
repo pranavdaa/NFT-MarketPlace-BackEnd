@@ -31,16 +31,20 @@ async function getTokenData(tokenId, contract, chainId) {
             client.setex(redisKey, 86400, JSON.stringify({}));
             resolve({});
           }
-          fetch(token.uri)
+
+          const id= token.token_id;
+          const cadd= token.contract === "0x14cAf5c9DdC44FC3AcD03A6F28DCE60f1Df694Dd"?"0xf5b0a3efb8e8e4c201e2a935f110eaaf3ffecb8d":"0x629a673a8242c2ac4b7b8c5d8735fbeac21a6205";
+          let openSeaApiURL="https://api.opensea.io/api/v1/assets?&token_ids="+id+"&asset_contract_address="+cadd;
+          fetch(openSeaApiURL)
             .then((response) => {
               return response.json();
             })
             .then((details) => {
               let metadata = {
-                name: details.name,
-                description: details.description,
-                image: details.image,
-                attributes:details.attributes
+                name: details["assets"][0].name,
+                description: details["assets"][0].description,
+                image: details["assets"][0].image_url,
+                attributes:details["assets"][0].traits
               };
               client.setex(redisKey, 86400, JSON.stringify(metadata));
               resolve(metadata);
