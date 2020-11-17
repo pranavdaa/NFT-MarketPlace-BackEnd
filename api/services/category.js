@@ -1,6 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-let { hasNextPage } = require("../utils/helper.js");
+let { hasNextPage } = require("../utils/request-utils");
 let constants = require("../../config/constants");
 
 /**
@@ -67,7 +67,7 @@ class CategoryService {
 
       let categories = await prisma.categoriesaddresses.findMany({
         where,
-        select: { address: true },
+        select: { address: true, ethereum_address: true },
       });
 
       return categories;

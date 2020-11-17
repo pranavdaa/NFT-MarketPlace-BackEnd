@@ -1,6 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-let { hasNextPage } = require("../utils/helper.js");
+let { hasNextPage } = require("../utils/request-utils");
 let constants = require("../../config/constants");
 
 /**
@@ -403,7 +403,7 @@ class UserService {
         where: {
           usersId: parseInt(userId),
         },
-        orderBy,
+        orderBy: { created: constants.SORT_DIRECTION.DESC },
         take: limit,
         skip: offset,
       });

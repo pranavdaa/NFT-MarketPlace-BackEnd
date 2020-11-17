@@ -14,6 +14,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 let config = require("../../config/config");
 var coinMarketCapKey = config.coinmarket_apikey;
+let redisCache = require("../utils/redis-cache");
 const rp = require("request-promise");
 let constants = require("../../config/constants");
 let {
@@ -36,14 +37,6 @@ function toNumber(tokenId) {
 
 function toHex(value) {
   return web3.utils.numberToHex(value);
-}
-
-function hasNextPage({ limit, offset, count }) {
-  // accepts options with keys limit, offset, count
-  if (offset + limit >= count) {
-    return false;
-  }
-  return true;
 }
 
 async function notify({ userId, message, order_id }) {
@@ -97,7 +90,11 @@ var getRate = async function (symbol) {
   }
 };
 
-async function ethereum_balance(owner, rootContractAddress) {
+async function ethereum_balance(owner, rootContractAddress, ethereumAddress, userId) {
+
+  const orderService = require("../services/order");
+  let orderServiceInstance = new orderService();
+
   const rootContractInstance = new root_web3.eth.Contract(
     artifacts.pos_RootERC721,
     rootContractAddress
@@ -111,19 +108,30 @@ async function ethereum_balance(owner, rootContractAddress) {
       .tokenOfOwnerByIndex(owner, i)
       .call();
 
-    let uri = await rootContractInstance.methods.tokenURI(tokenId).call();
+    let metadata = await redisCache.getTokenData(tokenId, ethereumAddress);
 
     token_array.push({
       contract: rootContractAddress,
       token_id: tokenId,
       owner: owner,
-      uri: uri,
+      active_order: await orderServiceInstance.checkValidOrder({
+        userId,
+        tokenId,
+      }),
+      name: metadata.name,
+      description: metadata.description,
+      attributes: metadata.attributes,
+      image: metadata.image,
     });
   }
   return token_array;
 }
 
-async function matic_balance(owner, childContractAddress) {
+async function matic_balance(owner, childContractAddress, ethereumAddress, userId) {
+
+  const orderService = require("../services/order");
+  let orderServiceInstance = new orderService();
+
   const childContractInstance = new web3.eth.Contract(
     artifacts.pos_ChildERC721,
     childContractAddress
@@ -138,54 +146,23 @@ async function matic_balance(owner, childContractAddress) {
       .tokenOfOwnerByIndex(owner, i)
       .call();
 
-    let uri = await childContractInstance.methods.tokenURI(tokenId).call();
+    let metadata = await redisCache.getTokenData(tokenId, ethereumAddress);
 
     token_array.push({
       contract: childContractAddress,
       token_id: tokenId,
       owner: owner,
-      uri: uri,
+      active_order: await orderServiceInstance.checkValidOrder({
+        userId,
+        tokenId,
+      }),
+      name: metadata.name,
+      description: metadata.description,
+      attributes: metadata.attributes,
+      image: metadata.image,
     });
   }
   return token_array;
-}
-
-async function matic_nft_detail(tokenId, childContractAddress) {
-  const childContractInstance = new web3.eth.Contract(
-    artifacts.pos_ChildERC721,
-    childContractAddress
-  );
-
-  let owner = await childContractInstance.methods.ownerOf(tokenId).call();
-  let uri = await childContractInstance.methods.tokenURI(tokenId).call();
-
-  token_detail = {
-    contract: childContractAddress,
-    token_id: tokenId,
-    owner: owner,
-    uri: uri,
-  };
-
-  return token_detail;
-}
-
-async function ethereum_nft_detail(tokenId, rootContractAddress) {
-  const rootContractInstance = new root_web3.eth.Contract(
-    artifacts.pos_RootERC721,
-    rootContractAddress
-  );
-
-  let owner = await rootContractInstance.methods.ownerOf(tokenId).call();
-  let uri = await rootContractInstance.methods.tokenURI(tokenId).call();
-
-  token_detail = {
-    contract: rootContractAddress,
-    token_id: tokenId,
-    owner: owner,
-    uri: uri,
-  };
-
-  return token_detail;
 }
 
 function getSignatureParameters(signature) {
@@ -232,15 +209,17 @@ async function executeMetaTransaction(txDetails) {
   );
   // add private key
   web3.eth.accounts.wallet.add(config.admin_private_key);
-  let execution, txObj = {
-    from: web3.eth.accounts.wallet[0].address,
-    data,
-    to: txDetails.contractAddress
-  }
+  let execution,
+    txObj = {
+      from: web3.eth.accounts.wallet[0].address,
+      data,
+      to: txDetails.contractAddress,
+    };
   try {
     gas = await web3.eth.estimateGas(txObj);
     execution = await web3.eth.sendTransaction({
-      ...txObj, gas
+      ...txObj,
+      gas,
     });
   } catch (err) {
     console.log(err);
@@ -277,7 +256,6 @@ const encodeExchangeData = (signedOrder, functionName) => {
 };
 
 module.exports = {
-  hasNextPage,
   isValidEthereumAddress,
   notify,
   getRate,
@@ -286,8 +264,6 @@ module.exports = {
   toHex,
   matic_balance,
   ethereum_balance,
-  matic_nft_detail,
-  ethereum_nft_detail,
   executeMetaTransaction,
   calculateProtocolFee,
   providerEngine,

@@ -242,8 +242,7 @@ router.get(
         for (order of orders.order) {
           let metadata = await redisCache.getTokenData(
             order.tokens_id,
-            order.categories.categoriesaddresses[0].address,
-            "80001"
+            order.categories.categoriesaddresses[0].ethereum_address,
           );
           ordersList.push({ ...order, ...metadata });
         }
@@ -284,8 +283,7 @@ router.get(
       if (order) {
         let metadata = await redisCache.getTokenData(
           order.tokens_id,
-          order.categories.categoriesaddresses[0].address,
-          "80001"
+          order.categories.categoriesaddresses[0].ethereum_address,
         );
 
         let limit = requestUtil.getLimit(req.query);
@@ -362,9 +360,9 @@ router.patch(
 
       if (
         (order.type === constants.ORDER_TYPES.FIXED &&
-          order.maker_address === req.userId) ||
+          order.taker_address === req.userId) ||
         (order.type !== constants.ORDER_TYPES.FIXED &&
-          order.taker_address === req.userId)
+          order.maker_address === req.userId)
       ) {
         return res
           .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
@@ -667,7 +665,7 @@ router.patch(
 
       let params = {
         orderId: order.id,
-        maker_address: req.userId,
+        maker_address: bid.users_id,
         maker_amount: bid.price,
         signature: bid.signature,
         takerSign: req.body.taker_signature,
