@@ -420,7 +420,7 @@ class OrderService {
       let order = await prisma.bids.findMany({
         where: {
           orders_id: parseInt(orderId),
-          status: 3
+          status: 0
         },
         orderBy: {
           price: constants.SORT_DIRECTION.DESC,
