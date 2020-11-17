@@ -360,9 +360,9 @@ router.patch(
 
       if (
         (order.type === constants.ORDER_TYPES.FIXED &&
-          order.taker_address === req.userId) ||
+          order.maker_address === req.userId) ||
         (order.type !== constants.ORDER_TYPES.FIXED &&
-          order.maker_address === req.userId)
+          order.taker_address === req.userId)
       ) {
         return res
           .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
@@ -413,6 +413,12 @@ router.patch(
         }
         case constants.ORDER_TYPES.NEGOTIATION: {
           if (!bid || !signature) {
+            return res
+              .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+              .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+          }
+
+          if(bid > order.price) {
             return res
               .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
               .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
@@ -496,7 +502,7 @@ router.patch(
       }
     } catch (err) {
       console.log(err);
-      return res
+      return resbn
         .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
         .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
