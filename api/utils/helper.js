@@ -90,8 +90,12 @@ var getRate = async function (symbol) {
   }
 };
 
-async function ethereum_balance(owner, rootContractAddress, ethereumAddress, userId) {
-
+async function ethereum_balance(
+  owner,
+  rootContractAddress,
+  ethereumAddress,
+  userId
+) {
   const orderService = require("../services/order");
   let orderServiceInstance = new orderService();
 
@@ -102,21 +106,27 @@ async function ethereum_balance(owner, rootContractAddress, ethereumAddress, use
   let balance = await rootContractInstance.methods.balanceOf(owner).call();
 
   let token_array = [];
+  let tokenId_array = [];
 
   for (i = 0; i < balance; i++) {
-    let tokenId = await rootContractInstance.methods
-      .tokenOfOwnerByIndex(owner, i)
-      .call();
+    tokenId_array.push(
+      rootContractInstance.methods.tokenOfOwnerByIndex(owner, i).call()
+    );
+  }
 
-    let metadata = await redisCache.getTokenData(tokenId, ethereumAddress);
+  tokenId_array = await Promise.all(tokenId_array);
+
+  for (data of tokenId_array) {
+
+    let metadata = await redisCache.getTokenData(data, ethereumAddress);
 
     token_array.push({
       contract: rootContractAddress,
-      token_id: tokenId,
+      token_id: data,
       owner: owner,
       active_order: await orderServiceInstance.checkValidOrder({
         userId,
-        tokenId,
+        tokenId:data,
       }),
       name: metadata.name,
       description: metadata.description,
@@ -127,8 +137,12 @@ async function ethereum_balance(owner, rootContractAddress, ethereumAddress, use
   return token_array;
 }
 
-async function matic_balance(owner, childContractAddress, ethereumAddress, userId) {
-
+async function matic_balance(
+  owner,
+  childContractAddress,
+  ethereumAddress,
+  userId
+) {
   const orderService = require("../services/order");
   let orderServiceInstance = new orderService();
 
@@ -140,21 +154,27 @@ async function matic_balance(owner, childContractAddress, ethereumAddress, userI
   let balance = await childContractInstance.methods.balanceOf(owner).call();
 
   let token_array = [];
+  let tokenId_array = [];
 
   for (i = 0; i < balance; i++) {
-    let tokenId = await childContractInstance.methods
-      .tokenOfOwnerByIndex(owner, i)
-      .call();
+    tokenId_array.push(
+      childContractInstance.methods.tokenOfOwnerByIndex(owner, i).call()
+    );
+  }
 
-    let metadata = await redisCache.getTokenData(tokenId, ethereumAddress);
+  tokenId_array = await Promise.all(tokenId_array);
+
+  for (data of tokenId_array) {
+
+    let metadata = await redisCache.getTokenData(data, ethereumAddress);
 
     token_array.push({
       contract: childContractAddress,
-      token_id: tokenId,
+      token_id: data,
       owner: owner,
       active_order: await orderServiceInstance.checkValidOrder({
         userId,
-        tokenId,
+        tokenId:data,
       }),
       name: metadata.name,
       description: metadata.description,
@@ -162,6 +182,7 @@ async function matic_balance(owner, childContractAddress, ethereumAddress, userI
       image: metadata.image,
     });
   }
+
   return token_array;
 }
 
