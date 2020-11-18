@@ -82,7 +82,7 @@ class UserService {
                 include: {
                   categoriesaddresses: {
                     where: { chain_id: "80001" },
-                    select: { address: true },
+                    select: { address: true, ethereum_address: true },
                   },
                 },
               },
@@ -136,7 +136,7 @@ class UserService {
                 include: {
                   categoriesaddresses: {
                     where: { chain_id: "80001" },
-                    select: { address: true },
+                    select: { address: true, ethereum_address: true },
                   },
                 },
               },
@@ -187,7 +187,7 @@ class UserService {
                 include: {
                   categoriesaddresses: {
                     where: { chain_id: "80001" },
-                    select: { address: true },
+                    select: { address: true, ethereum_address: true },
                   },
                 },
               },
@@ -273,7 +273,7 @@ class UserService {
                     include: {
                       categoriesaddresses: {
                         where: { chain_id: "80001" },
-                        select: { address: true },
+                        select: { address: true, ethereum_address: true },
                       },
                     },
                   },

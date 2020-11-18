@@ -205,7 +205,7 @@ router.get(
         for (order of orders.orders[0].seller_orders) {
           let metadata = await redisCache.getTokenData(
             order.tokens_id,
-            order.categories.categoriesaddresses[0].address,
+            order.categories.categoriesaddresses[0].ethereum_address,
             "80001"
           );
 
@@ -255,8 +255,7 @@ router.get(
         for (order of orders.orders[0].seller_orders) {
           let metadata = await redisCache.getTokenData(
             order.tokens_id,
-            order.categories.categoriesaddresses[0].address,
-            "80001"
+            order.categories.categoriesaddresses[0].ethereum_address,
           );
 
           ordersList.push({ ...order, ...metadata });
@@ -307,7 +306,7 @@ router.get(
         for (order of orders.orders[0].buyer_orders) {
           let metadata = await redisCache.getTokenData(
             order.tokens_id,
-            order.categories.categoriesaddresses[0].address,
+            order.categories.categoriesaddresses[0].ethereum_address,
             "80001"
           );
 
@@ -456,7 +455,7 @@ router.get("/:userId/favourites", async (req, res) => {
       for (order of favourites.favourites) {
         let metadata = await redisCache.getTokenData(
           order.orders.tokens_id,
-          order.orders.categories.categoriesaddresses[0].address,
+          order.orders.categories.categoriesaddresses[0].ethereum_address,
           "80001"
         );
         favList.push({ ...order, ...metadata });
