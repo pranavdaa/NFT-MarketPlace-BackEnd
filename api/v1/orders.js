@@ -765,7 +765,7 @@ router.get(
         offset,
         orderBy,
       });
-      if (bids.order.length > 0) {
+      if (bids.order) {
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
           data: bids,

@@ -403,6 +403,18 @@ class UserService {
         where: {
           usersId: parseInt(userId),
         },
+        select:{
+          read: true,
+          id: true,
+          active: true,
+          created: true,
+          message: true,
+          updated: true,
+          usersId: true,
+          order_id: true,
+          type: true,
+          orders: { select: {categories: {select: {img_url: true}}}}
+        },
         orderBy: { created: constants.SORT_DIRECTION.DESC },
         take: limit,
         skip: offset,
