@@ -242,7 +242,7 @@ router.get(
         for (order of orders.order) {
           let metadata = await redisCache.getTokenData(
             order.tokens_id,
-            order.categories.categoriesaddresses[0].ethereum_address,
+            order.categories.categoriesaddresses[0].ethereum_address
           );
           ordersList.push({ ...order, ...metadata });
         }
@@ -283,7 +283,7 @@ router.get(
       if (order) {
         let metadata = await redisCache.getTokenData(
           order.tokens_id,
-          order.categories.categoriesaddresses[0].ethereum_address,
+          order.categories.categoriesaddresses[0].ethereum_address
         );
 
         let limit = requestUtil.getLimit(req.query);
@@ -373,6 +373,10 @@ router.patch(
         categoryId: order.categories_id,
       });
 
+      let erc20Token = await erc20TokenServiceInstance.getERC20Token({
+        id: order.erc20tokens_id,
+      });
+
       if (!order || order.status !== 0) {
         return res
           .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
@@ -389,6 +393,7 @@ router.patch(
             signature: order.signature,
             takerSign: taker_signature,
           });
+
           if (orderAdd) {
             helper.notify({
               userId: req.userId,
@@ -396,7 +401,9 @@ router.patch(
                 "You bought a " +
                 category.name +
                 " token for " +
-                orderAdd.taker_amount,
+                orderAdd.taker_amount +
+                " " +
+                erc20Token.symbol,
               order_id: orderAdd.id,
             });
             helper.notify({
@@ -405,7 +412,9 @@ router.patch(
                 "Your " +
                 category.name +
                 " token has been bought for " +
-                orderAdd.taker_amount,
+                orderAdd.taker_amount +
+                " " +
+                erc20Token.symbol,
               order_id: orderAdd.id,
             });
           }
@@ -418,7 +427,7 @@ router.patch(
               .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
           }
 
-          if(bid > order.price) {
+          if (bid > order.price) {
             return res
               .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
               .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
@@ -435,6 +444,8 @@ router.patch(
               message:
                 "You made an offer of " +
                 bid +
+                " " +
+                erc20Token.symbol +
                 " on " +
                 category.name +
                 " token",
@@ -445,6 +456,8 @@ router.patch(
               message:
                 "An offer of " +
                 bid +
+                " " +
+                erc20Token.symbol +
                 " has been made on your " +
                 category.name +
                 " token",
@@ -502,7 +515,7 @@ router.patch(
       }
     } catch (err) {
       console.log(err);
-      return resbn
+      return res
         .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
         .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
     }
@@ -669,6 +682,11 @@ router.patch(
         categoryId: order.categories.id,
       });
 
+      console.log(order)
+      let erc20Token = await erc20TokenServiceInstance.getERC20Token({
+        id: order.erc20tokens.id,
+      });
+
       let params = {
         orderId: order.id,
         maker_address: bid.users_id,
@@ -714,7 +732,9 @@ router.patch(
             "You bought a " +
             category.name +
             " token for " +
-            orderExecute.maker_amount,
+            orderExecute.maker_amount +
+            " " +
+            erc20Token.symbol,
           order_id: orderExecute.id,
         });
         helper.notify({
@@ -723,7 +743,9 @@ router.patch(
             "Your " +
             category.name +
             " token has been bought for " +
-            orderExecute.maker_amount,
+            orderExecute.maker_amount +
+            " " +
+            erc20Token.symbol,
           order_id: orderExecute.id,
         });
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
