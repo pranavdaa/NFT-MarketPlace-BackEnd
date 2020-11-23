@@ -19,6 +19,7 @@ class AssetMigrateService {
           users: { connect: { id: parseInt(params.userId) } },
           token_array: { set: params.token_array },
           block_number: params.block_number,
+          orders: {connect: {id: parseInt(params.orderId) }}
         },
       });
       return assetMigrate;

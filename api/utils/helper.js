@@ -39,13 +39,14 @@ function toHex(value) {
   return web3.utils.numberToHex(value);
 }
 
-async function notify({ userId, message, order_id }) {
+async function notify({ userId, message, order_id, type }) {
   try {
     let notification = await prisma.notifications.create({
       data: {
         users: { connect: { id: parseInt(userId) } },
         message,
         orders: { connect: { id: parseInt(order_id) } },
+        type,
       },
     });
 

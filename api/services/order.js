@@ -35,6 +35,27 @@ class OrderService {
     }
   }
 
+  async placeDummyOrder(params) {
+    try {
+      let order = await prisma.orders.create({
+        data: {
+          categories: { connect: { id: parseInt(params.categoryId) } },
+          tokens_id: "",
+          price: 0,
+          min_price: 0,
+          status: 3,
+          erc20tokens: { connect: { id: parseInt(params.erc20TokenId) } },
+          type: "DUMMY",
+          chain_id: constants.MATIC_CHAIN_ID,
+        },
+      });
+      return order;
+    } catch (err) {
+      console.log(err);
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   async placeNegotiationOrder(params) {
     try {
       let order = await prisma.orders.create({
