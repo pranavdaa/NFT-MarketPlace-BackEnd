@@ -59,37 +59,51 @@ async function notify({ userId, message, order_id, type }) {
 
 var getRate = async function (symbol) {
   try {
-    const requestOptions = {
-      method: "GET",
-      uri:
-        "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest",
-      qs: {
-        start: "1",
-        limit: "1000",
-        convert: "USD",
-      },
-      headers: {
-        "X-CMC_PRO_API_KEY": coinMarketCapKey,
-      },
-      json: true,
-      gzip: true,
-    };
-
-    var response = await rp(requestOptions);
-    var detailsArray = response.data;
-    let result;
-
-    for (detail of detailsArray) {
-      if (detail.symbol === symbol) {
-        result = detail.quote["USD"].price;
-      }
-    }
-
-    return result;
+    let response = await fetch(
+      "https://api.nomics.com/v1/prices?key=2ec68c7702ef56e8fa293bd7a023000f"
+    );
+    let data = await response.json();
+    data = data.filter((token) => {
+      return token.currency === symbol;
+    });
+    return data[0].price;
   } catch (err) {
     console.log(err.message);
   }
 };
+
+async function checkOwnerShip(userAddress, tokenId, contractAddress) {
+  const childContractInstance = new web3.eth.Contract(
+    artifacts.pos_ChildERC721,
+    contractAddress
+  );
+
+  try {
+    let owner = await childContractInstance.methods.ownerOf(tokenId).call();
+
+    if (toChecksumAddress(owner) === toChecksumAddress(userAddress)) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (err) {
+    return false
+  }
+}
+
+async function checkTokenBalance(userAddress, amount, contractAddress) {
+  const childContractInstance = new web3.eth.Contract(
+    artifacts.pos_ChildERC721,
+    contractAddress
+  );
+    let balance = await childContractInstance.methods.balanceOf(userAddress).call();
+
+    if (balance >= amount) {
+      return true;
+    } else {
+      return false;
+    }
+}
 
 async function ethereum_balance(
   owner,
@@ -118,7 +132,6 @@ async function ethereum_balance(
   tokenId_array = await Promise.all(tokenId_array);
 
   for (data of tokenId_array) {
-
     let metadata = await redisCache.getTokenData(data, ethereumAddress);
 
     token_array.push({
@@ -127,7 +140,7 @@ async function ethereum_balance(
       owner: owner,
       active_order: await orderServiceInstance.checkValidOrder({
         userId,
-        tokenId:data,
+        tokenId: data,
       }),
       name: metadata.name,
       description: metadata.description,
@@ -166,7 +179,6 @@ async function matic_balance(
   tokenId_array = await Promise.all(tokenId_array);
 
   for (data of tokenId_array) {
-
     let metadata = await redisCache.getTokenData(data, ethereumAddress);
 
     token_array.push({
@@ -175,7 +187,7 @@ async function matic_balance(
       owner: owner,
       active_order: await orderServiceInstance.checkValidOrder({
         userId,
-        tokenId:data,
+        tokenId: data,
       }),
       name: metadata.name,
       description: metadata.description,
@@ -290,4 +302,6 @@ module.exports = {
   calculateProtocolFee,
   providerEngine,
   encodeExchangeData,
+  checkOwnerShip,
+  checkTokenBalance
 };

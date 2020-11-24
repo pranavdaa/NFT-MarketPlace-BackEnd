@@ -682,7 +682,6 @@ router.patch(
         categoryId: order.categories.id,
       });
 
-      console.log(order)
       let erc20Token = await erc20TokenServiceInstance.getERC20Token({
         id: order.erc20tokens.id,
       });
@@ -870,6 +869,105 @@ router.get(
       return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
         message: constants.RESPONSE_STATUS.SUCCESS,
         data: encodedData,
+      });
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+  }
+);
+
+/**
+ *  Validate order
+ *  @params orderId type: int
+ */
+
+router.post(
+  "/validate",
+  [check("orderId", "A valid id is required").exists()],
+  verifyToken,
+  async (req, res) => {
+    try {
+      let { orderId } = req.body;
+
+      let order = await orderServiceInstance.getOrder({ orderId });
+
+      if (!order || order.status !== 0) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
+
+      let userAddress = order.seller_users.address;
+      let tokenId = order.tokens_id;
+      let contractAddress = order.categories.categoriesaddresses[0].address;
+
+      let valid = await helper.checkOwnerShip(
+        userAddress,
+        tokenId,
+        contractAddress
+      );
+
+      if(!valid){
+        await orderServiceInstance.expireOrder({orderId})
+      }
+
+      return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+        message: constants.RESPONSE_STATUS.SUCCESS,
+        data: valid,
+      });
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+  }
+);
+
+/**
+ *  Validate bids
+ *  @params orderId type: int
+ */
+
+router.post(
+  "/validate/bids",
+  [check("orderId", "A valid id is required").exists()],
+  verifyToken,
+  async (req, res) => {
+    try {
+      let { orderId } = req.body;
+
+      let order = await orderServiceInstance.getOrder({ orderId });
+
+      if (!order || order.status !== 0) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
+
+      let bids = await orderServiceInstance.getBids({
+        orderId,
+      });
+
+      for (data of bids.order) {
+        let signedOrder = JSON.parse(data.signature);
+        if (
+          !(await helper.checkTokenBalance(
+            signedOrder.makerAddress,
+            signedOrder.makerAssetAmount,
+            data.orders.erc20tokens.erc20tokensaddresses[0].address
+          ))
+        ) {
+          await orderServiceInstance.clearBids({ bidId: data.id });
+        }
+      }
+
+      return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+        message: constants.RESPONSE_STATUS.SUCCESS,
+        data: bids,
       });
     } catch (err) {
       console.log(err);

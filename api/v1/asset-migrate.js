@@ -227,7 +227,7 @@ router.put(
       }
 
       let assetMigration = await assetMigrateServiceInstance.updateAssetMigration(
-        params,
+        params
       );
 
       let categoryExists = await categoryServiceInstance.getCategory({
@@ -235,20 +235,21 @@ router.put(
       });
 
       if (assetMigration) {
-
-        helper.notify({
-          userId: req.userId,
-          message:
-            "You completed the " +
-            assetMigration.type +
-            " of " +
-            assetMigration.token_array.length +
-            " " +
-            categoryExists.name +
-            " tokens",
-          type: assetMigration.type,
-          order_id: assetMigration.order_id,
-        });
+        if ((assetMigration.status === 2)) {
+          helper.notify({
+            userId: req.userId,
+            message:
+              "You completed the " +
+              assetMigration.type +
+              " of " +
+              assetMigration.token_array.length +
+              " " +
+              categoryExists.name +
+              " tokens",
+            type: assetMigration.type,
+            order_id: assetMigration.order_id,
+          });
+        }
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
           data: assetMigration,

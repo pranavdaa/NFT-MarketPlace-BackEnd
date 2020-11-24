@@ -448,7 +448,7 @@ class OrderService {
         },
         take: limit,
         skip: offset,
-        include: { users: true },
+        include: { users: true, orders: { select: { erc20tokens: { select: {erc20tokensaddresses: {where: {chain_id: "80001"}}}}}} },
       });
       return {
         order,
