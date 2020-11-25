@@ -206,7 +206,7 @@ router.get(
           let metadata = await redisCache.getTokenData(
             order.tokens_id,
             order.categories.categoriesaddresses[0].ethereum_address,
-            "80001"
+            constants.MATIC_CHAIN_ID
           );
 
           ordersList.push({ ...order, ...metadata });
@@ -307,7 +307,7 @@ router.get(
           let metadata = await redisCache.getTokenData(
             order.tokens_id,
             order.categories.categoriesaddresses[0].ethereum_address,
-            "80001"
+            constants.MATIC_CHAIN_ID
           );
 
           ordersList.push({ ...order, ...metadata });
@@ -456,7 +456,7 @@ router.get("/:userId/favourites", async (req, res) => {
         let metadata = await redisCache.getTokenData(
           order.orders.tokens_id,
           order.orders.categories.categoriesaddresses[0].ethereum_address,
-          "80001"
+          constants.MATIC_CHAIN_ID
         );
         favList.push({ ...order, ...metadata });
       }

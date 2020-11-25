@@ -1,9 +1,12 @@
+let config = require('./config')
+
 module.exports = {
   PAGINATION_MAX_LIMIT: 50,
   PAGINATION_DEFAULT_LIMIT: 20,
   PAGINATION_DEFAULT_OFFSET: 0,
   JWT_EXPIRY: "24h",
-  MATIC_CHAIN_ID: "80001",
+  MATIC_CHAIN_ID: config.MATIC_CHAIN_ID,
+  ETHEREUM_CHAIN_ID: config.ETHEREUM_CHAIN_ID,
   RESPONSE_STATUS: {
     SUCCESS: "success",
     FAILURE: "failure",
@@ -37,8 +40,9 @@ module.exports = {
   ZERO_EX: {
     GAS_PRICE: 10000000000,
     BASE_DERIVATION_PATH: `44'/60'/0'/0`,
-    RPC_URL: "https://rpc-mumbai.matic.today",
+    RPC_URL: config.MATIC_RPC,
   },
+  PRICE_API: "https://api.nomics.com/v1/prices?key=2ec68c7702ef56e8fa293bd7a023000f",
   ASSET_TRANSFER: {
     DEPOSIT: "DEPOSIT",
     WITHDRAW: "WITHDRAW",

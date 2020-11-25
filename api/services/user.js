@@ -81,7 +81,7 @@ class UserService {
               categories: {
                 include: {
                   categoriesaddresses: {
-                    where: { chain_id: "80001" },
+                    where: { chain_id: constants.MATIC_CHAIN_ID },
                     select: { address: true, ethereum_address: true },
                   },
                 },
@@ -89,7 +89,7 @@ class UserService {
               erc20tokens: {
                 include: {
                   erc20tokensaddresses: {
-                    where: { chain_id: "80001" },
+                    where: { chain_id: constants.MATIC_CHAIN_ID },
                     select: { address: true },
                   },
                 },
@@ -135,7 +135,7 @@ class UserService {
               categories: {
                 include: {
                   categoriesaddresses: {
-                    where: { chain_id: "80001" },
+                    where: { chain_id: constants.MATIC_CHAIN_ID },
                     select: { address: true, ethereum_address: true },
                   },
                 },
@@ -143,7 +143,7 @@ class UserService {
               erc20tokens: {
                 include: {
                   erc20tokensaddresses: {
-                    where: { chain_id: "80001" },
+                    where: { chain_id: constants.MATIC_CHAIN_ID },
                     select: { address: true },
                   },
                 },
@@ -186,7 +186,7 @@ class UserService {
               categories: {
                 include: {
                   categoriesaddresses: {
-                    where: { chain_id: "80001" },
+                    where: { chain_id: constants.MATIC_CHAIN_ID },
                     select: { address: true, ethereum_address: true },
                   },
                 },
@@ -194,7 +194,7 @@ class UserService {
               erc20tokens: {
                 include: {
                   erc20tokensaddresses: {
-                    where: { chain_id: "80001" },
+                    where: { chain_id: constants.MATIC_CHAIN_ID },
                     select: { address: true },
                   },
                 },
@@ -272,7 +272,7 @@ class UserService {
                   categories: {
                     include: {
                       categoriesaddresses: {
-                        where: { chain_id: "80001" },
+                        where: { chain_id: constants.MATIC_CHAIN_ID },
                         select: { address: true, ethereum_address: true },
                       },
                     },
@@ -280,7 +280,7 @@ class UserService {
                   erc20tokens: {
                     include: {
                       erc20tokensaddresses: {
-                        where: { chain_id: "80001" },
+                        where: { chain_id: constants.MATIC_CHAIN_ID },
                         select: { address: true },
                       },
                     },

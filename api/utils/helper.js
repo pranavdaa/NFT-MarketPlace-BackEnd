@@ -1,19 +1,14 @@
 let Web3 = require("web3");
+let config = require("../../config/config");
 let artifacts = require("./artifacts.json");
-const provider = new Web3.providers.HttpProvider(
-  "https://rpc-mumbai.matic.today"
-);
+const provider = new Web3.providers.HttpProvider(config.MATIC_RPC);
 let { exchangeDataEncoder } = require("@0x/contracts-exchange");
 const web3 = new Web3(provider);
-const root_provider = new Web3.providers.HttpProvider(
-  "https://goerli.infura.io/v3/7ff035fb434149dd8a9b1dc106b6905a"
-);
+const root_provider = new Web3.providers.HttpProvider(config.ETHEREUM_RPC);
 let { BigNumber, providerUtils } = require("@0x/utils");
 const root_web3 = new Web3(root_provider);
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-let config = require("../../config/config");
-var coinMarketCapKey = config.coinmarket_apikey;
 let redisCache = require("../utils/redis-cache");
 const rp = require("request-promise");
 let constants = require("../../config/constants");
@@ -59,9 +54,7 @@ async function notify({ userId, message, order_id, type }) {
 
 var getRate = async function (symbol) {
   try {
-    let response = await fetch(
-      "https://api.nomics.com/v1/prices?key=2ec68c7702ef56e8fa293bd7a023000f"
-    );
+    let response = await fetch(constants.PRICE_API);
     let data = await response.json();
     data = data.filter((token) => {
       return token.currency === symbol;
@@ -87,7 +80,7 @@ async function checkOwnerShip(userAddress, tokenId, contractAddress) {
       return false;
     }
   } catch (err) {
-    return false
+    return false;
   }
 }
 
@@ -96,20 +89,25 @@ async function checkTokenBalance(userAddress, amount, contractAddress) {
     artifacts.pos_ChildERC721,
     contractAddress
   );
-    let balance = await childContractInstance.methods.balanceOf(userAddress).call();
+  let balance = await childContractInstance.methods
+    .balanceOf(userAddress)
+    .call();
 
-    if (balance >= amount) {
-      return true;
-    } else {
-      return false;
-    }
+  if (balance >= amount) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 async function ethereum_balance(
   owner,
   rootContractAddress,
   ethereumAddress,
-  userId
+  userId,
+  isOpenseaCompatible,
+  tokenURI,
+  description
 ) {
   const orderService = require("../services/order");
   let orderServiceInstance = new orderService();
@@ -132,7 +130,13 @@ async function ethereum_balance(
   tokenId_array = await Promise.all(tokenId_array);
 
   for (data of tokenId_array) {
-    let metadata = await redisCache.getTokenData(data, ethereumAddress);
+    let metadata = await redisCache.getTokenData(
+      data,
+      ethereumAddress,
+      isOpenseaCompatible,
+      tokenURI,
+      description
+    );
 
     token_array.push({
       contract: rootContractAddress,
@@ -155,7 +159,10 @@ async function matic_balance(
   owner,
   childContractAddress,
   ethereumAddress,
-  userId
+  userId,
+  isOpenseaCompatible,
+  tokenURI,
+  description
 ) {
   const orderService = require("../services/order");
   let orderServiceInstance = new orderService();
@@ -179,7 +186,13 @@ async function matic_balance(
   tokenId_array = await Promise.all(tokenId_array);
 
   for (data of tokenId_array) {
-    let metadata = await redisCache.getTokenData(data, ethereumAddress);
+    let metadata = await redisCache.getTokenData(
+      data,
+      ethereumAddress,
+      isOpenseaCompatible,
+      tokenURI,
+      description
+    );
 
     token_array.push({
       contract: childContractAddress,
@@ -214,9 +227,9 @@ function getSignatureParameters(signature) {
 }
 
 /**
- * extracts r,s,v params from the given signature, constructs a function call to `executeMetaTransaction` function on the smart contract and executes it. The execution happens on Mumbai (80001) chain
+ * extracts r,s,v params from the given signature, constructs a function call to `executeMetaTransaction` function on the smart contract and executes it. The execution happens on Matic chain
  * txDetails = { intent, fnSig, from, contractAddress }
- * @param {object} txDetails transaction object that will be executed on 80001 chain
+ * @param {object} txDetails transaction object that will be executed on Matic chain
  */
 async function executeMetaTransaction(txDetails) {
   const { r, s, v } = getSignatureParameters(txDetails.intent);
@@ -303,5 +316,5 @@ module.exports = {
   providerEngine,
   encodeExchangeData,
   checkOwnerShip,
-  checkTokenBalance
+  checkTokenBalance,
 };
