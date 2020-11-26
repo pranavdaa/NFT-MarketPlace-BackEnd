@@ -61,10 +61,7 @@ class CategoryService {
   async getCategoryList({ chainId }) {
     try {
       let categories = await prisma.categories.findMany({
-        where: {
-          categoriesaddresses: { some: { chain_id: chainId } },
-        },
-        select: { categoriesaddresses: {select: {address:true,ethereum_address:true}},tokenURI: true, description: true,isOpenseaCompatible: true },
+        select: { categoriesaddresses: {where:{chain_id: chainId}, select: {address:true,ethereum_address:true}},tokenURI: true, description: true,isOpenseaCompatible: true },
       });
 
       return categories;
