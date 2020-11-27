@@ -240,9 +240,13 @@ router.get(
 
       if (orders) {
         for (order of orders.order) {
+
           let metadata = await redisCache.getTokenData(
             order.tokens_id,
-            order.categories.categoriesaddresses[0].ethereum_address
+            order.categories.categoriesaddresses[0].ethereum_address,
+            order.categories.isOpenseaCompatible,
+            order.categories.tokenURI,
+            order.categories.description
           );
           ordersList.push({ ...order, ...metadata });
         }
@@ -910,8 +914,8 @@ router.post(
         contractAddress
       );
 
-      if(!valid){
-        await orderServiceInstance.expireOrder({orderId})
+      if (!valid) {
+        await orderServiceInstance.expireOrder({ orderId });
       }
 
       return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
