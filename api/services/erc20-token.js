@@ -117,7 +117,7 @@ class ERC20TokenService {
           name: params.name ? params.name : current.name,
           decimal: params.decimal ? parseInt(params.decimal) : current.decimal,
           market_price: params.market_price
-            ? parseFloat(params.market_price)
+            ? (params.market_price)
             : current.market_price,
         },
       });
