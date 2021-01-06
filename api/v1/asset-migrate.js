@@ -82,12 +82,7 @@ router.get(
   "/",
   [
     check("user_id", "A valid id is required").exists(),
-    check("type", "A valid type is required")
-      .exists()
-      .isIn([
-        constants.ASSET_TRANSFER.WITHDRAW,
-        constants.ASSET_TRANSFER.DEPOSIT,
-      ]),
+    check("type", "A valid type is required").exists(),
     check("status", "A valid status type is required").exists(),
   ],
   async (req, res) => {

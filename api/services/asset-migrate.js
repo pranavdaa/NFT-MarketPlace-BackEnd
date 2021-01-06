@@ -31,7 +31,7 @@ class AssetMigrateService {
   async getAssetMigrations({ status, type, userId, limit, offset, orderBy }) {
     try {
       let where = {
-        type: type,
+        type: { in: JSON.parse(type) },
         users_id: parseInt(userId),
         status: { in: JSON.parse(status) },
       };
@@ -39,6 +39,9 @@ class AssetMigrateService {
       let count = await prisma.assetmigrate.count({ where });
       let assetMigrations = await prisma.assetmigrate.findMany({
         where,
+        include: {
+          categories: { select: { img_url: true } },
+        },
         orderBy,
         take: limit,
         skip: offset,
