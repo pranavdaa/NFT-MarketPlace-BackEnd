@@ -18,35 +18,14 @@ class OrderService {
           categories: { connect: { id: parseInt(params.maker_token) } },
           maker_address: params.maker_address,
           tokens_id: params.maker_token_id,
-          price: parseFloat(params.price),
-          min_price: parseFloat(params.price),
-          taker_amount: parseFloat(params.price),
-          maker_amount: 1,
+          price: (params.price),
+          min_price: (params.price),
+          taker_amount: (params.price),
+          maker_amount: "1",
           signature: params.signature,
           erc20tokens: { connect: { id: parseInt(params.taker_token) } },
           type: params.type,
           chain_id: params.chain_id,
-        },
-      });
-      return order;
-    } catch (err) {
-      console.log(err);
-      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  async placeDummyOrder(params) {
-    try {
-      let order = await prisma.orders.create({
-        data: {
-          categories: { connect: { id: parseInt(params.categoryId) } },
-          tokens_id: "",
-          price: 0,
-          min_price: 0,
-          status: 3,
-          erc20tokens: { connect: { id: parseInt(params.erc20TokenId) } },
-          type: "DUMMY",
-          chain_id: constants.MATIC_CHAIN_ID,
         },
       });
       return order;
@@ -64,9 +43,9 @@ class OrderService {
           categories: { connect: { id: parseInt(params.taker_token) } },
           taker_address: params.taker_address,
           tokens_id: params.taker_token_id,
-          min_price: parseFloat(params.min_price),
-          price: parseFloat(params.price),
-          taker_amount: 1,
+          min_price: (params.min_price),
+          price: (params.price),
+          taker_amount: "1",
           erc20tokens: { connect: { id: parseInt(params.maker_token) } },
           type: params.type,
           chain_id: params.chain_id,
@@ -88,9 +67,9 @@ class OrderService {
           taker_address: params.taker_address,
           categories: { connect: { id: parseInt(params.taker_token) } },
           tokens_id: params.taker_token_id,
-          min_price: parseFloat(params.min_price),
-          taker_amount: 1,
-          price: parseFloat(params.min_price),
+          min_price: (params.min_price),
+          taker_amount: "1",
+          price: (params.min_price),
           erc20tokens: { connect: { id: parseInt(params.maker_token) } },
           type: params.type,
           chain_id: params.chain_id,
@@ -313,7 +292,7 @@ class OrderService {
         bids: {
           create: [
             {
-              price: parseFloat(params.bid),
+              price: (params.bid),
               signature: params.signature,
               users: { connect: { id: parseInt(params.maker_address) } },
             },
@@ -441,14 +420,27 @@ class OrderService {
       let order = await prisma.bids.findMany({
         where: {
           orders_id: parseInt(orderId),
-          status: 0
+          status: 0,
         },
         orderBy: {
           price: constants.SORT_DIRECTION.DESC,
         },
         take: limit,
         skip: offset,
-        include: { users: true, orders: { select: { erc20tokens: { select: {erc20tokensaddresses: {where: {chain_id: constants.MATIC_CHAIN_ID}}}}}} },
+        include: {
+          users: true,
+          orders: {
+            select: {
+              erc20tokens: {
+                select: {
+                  erc20tokensaddresses: {
+                    where: { chain_id: constants.MATIC_CHAIN_ID },
+                  },
+                },
+              },
+            },
+          },
+        },
       });
       return {
         order,

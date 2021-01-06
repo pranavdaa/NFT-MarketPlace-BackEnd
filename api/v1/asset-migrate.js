@@ -5,11 +5,7 @@ const assetMigrateService = require("../services/asset-migrate");
 let assetMigrateServiceInstance = new assetMigrateService();
 const categoryService = require("../services/category");
 let categoryServiceInstance = new categoryService();
-const orderService = require("../services/order");
-let orderServiceInstance = new orderService();
-const erc20TokenService = require("../services/erc20-token");
-let erc20TokenServiceInstance = new erc20TokenService();
-const helper = require("../utils/helper");
+const validate = require("../utils/helper");
 const verifyToken = require("../middlewares/verify-token");
 let requestUtil = require("../utils/request-utils");
 let constants = require("../../config/constants");
@@ -49,40 +45,17 @@ router.post(
         categoryId: category_id,
       });
 
-      let erc20Token = await erc20TokenServiceInstance.getERC20TokenList();
-
       if (!categoryExists) {
         return res
           .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
           .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
 
-      let order = await orderServiceInstance.placeDummyOrder({
-        categoryId: category_id,
-        erc20TokenId: erc20Token[0].id,
-      });
-
       let assetMigrate = await assetMigrateServiceInstance.createAssetMigrate({
         ...req.body,
         ...{ userId: userId },
-        ...{ orderId: order.id },
       });
-
       if (assetMigrate) {
-        helper.notify({
-          userId: userId,
-          message:
-            "You initiated a " +
-            req.body.type +
-            " of " +
-            req.body.token_array.length +
-            " " +
-            categoryExists.name +
-            " tokens",
-          type: req.body.type,
-          order_id: order.id,
-        });
-
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
           data: assetMigrate,
@@ -227,29 +200,10 @@ router.put(
       }
 
       let assetMigration = await assetMigrateServiceInstance.updateAssetMigration(
-        params
+        params,
+        req.file
       );
-
-      let categoryExists = await categoryServiceInstance.getCategory({
-        categoryId: assetMigration.categories_id,
-      });
-
       if (assetMigration) {
-        if ((assetMigration.status === 2)) {
-          helper.notify({
-            userId: req.userId,
-            message:
-              "You completed the " +
-              assetMigration.type +
-              " of " +
-              assetMigration.token_array.length +
-              " " +
-              categoryExists.name +
-              " tokens",
-            type: assetMigration.type,
-            order_id: assetMigration.order_id,
-          });
-        }
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
           data: assetMigration,

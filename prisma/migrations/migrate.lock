@@ -27,3 +27,5 @@
 20201124042004-added-order-to-assetmigrate
 20201125210100-token-uri-field-added
 20201203212944-metatx-enabled
+20210106095723-asset-migrate-update
+20210106103818-price-float-to-string

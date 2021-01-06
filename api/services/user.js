@@ -403,7 +403,7 @@ class UserService {
         where: {
           usersId: parseInt(userId),
         },
-        select:{
+        select: {
           read: true,
           id: true,
           active: true,
@@ -413,7 +413,9 @@ class UserService {
           usersId: true,
           order_id: true,
           type: true,
-          orders: { select: {categories: {select: {img_url: true}}}}
+          orders: {
+            select: { txhash: true, categories: { select: { img_url: true } } },
+          },
         },
         orderBy: { created: constants.SORT_DIRECTION.DESC },
         take: limit,
