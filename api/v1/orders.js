@@ -409,6 +409,7 @@ router.patch(
                 " " +
                 erc20Token.symbol,
               order_id: orderAdd.id,
+              type: "SWAP"
             });
             helper.notify({
               userId: orderAdd.maker_address,
@@ -420,6 +421,7 @@ router.patch(
                 " " +
                 erc20Token.symbol,
               order_id: orderAdd.id,
+              type: "SWAP"
             });
           }
           break;
@@ -564,6 +566,7 @@ router.patch(
             category.name +
             " token",
           order_id: cancel.id,
+          type: "CANCELLED"
         });
         return res
           .status(constants.RESPONSE_STATUS_CODES.OK)
@@ -739,6 +742,7 @@ router.patch(
             " " +
             erc20Token.symbol,
           order_id: orderExecute.id,
+          type: "SWAP"
         });
         helper.notify({
           userId: orderExecute.taker_address,
@@ -750,6 +754,7 @@ router.patch(
             " " +
             erc20Token.symbol,
           order_id: orderExecute.id,
+          type: "SWAP"
         });
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,

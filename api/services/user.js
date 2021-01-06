@@ -414,7 +414,7 @@ class UserService {
           order_id: true,
           type: true,
           orders: {
-            select: { txhash: true, categories: { select: { img_url: true } } },
+            select: { type:true, txhash: true, categories: { select: { img_url: true } } },
           },
         },
         orderBy: { created: constants.SORT_DIRECTION.DESC },
