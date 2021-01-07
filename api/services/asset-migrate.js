@@ -69,7 +69,7 @@ class AssetMigrateService {
         include: {
           categories: { select: { img_url: true } },
         },
-        orderBy,
+        orderBy: { created: constants.SORT_DIRECTION.DESC },
         take: limit,
         skip: offset,
       });
