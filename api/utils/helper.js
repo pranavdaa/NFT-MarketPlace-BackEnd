@@ -150,6 +150,7 @@ async function ethereum_balance(
       description: metadata.description,
       attributes: metadata.attributes,
       image: metadata.image,
+      external_link: metadata.external_link
     });
   }
   return token_array;
@@ -206,6 +207,7 @@ async function matic_balance(
       description: metadata.description,
       attributes: metadata.attributes,
       image: metadata.image,
+      external_link: metadata.external_link
     });
   }
 

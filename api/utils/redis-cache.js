@@ -45,6 +45,7 @@ async function getTokenData(
                   description: details["assets"][0].description,
                   image: details["assets"][0].image_url,
                   attributes: details["assets"][0].traits,
+                  external_link: details["assets"][0].external_link,
                 };
               }
             }else{

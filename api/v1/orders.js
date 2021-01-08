@@ -28,6 +28,7 @@ let constants = require("../../config/constants");
  *  @params min_price type: String
  *  @params expiry type: Integer
  *  @params chainw_id type: String
+ *  @params usd_price type: String
  */
 
 router.post(
@@ -60,6 +61,7 @@ router.post(
         maker_token_id,
         taker_token_id,
         price: price,
+        usd_price: usd_price,
         signature,
         taker_token,
         type,
@@ -122,6 +124,7 @@ router.post(
             maker_token,
             maker_token_id,
             price,
+            usd_price,
             signature,
             taker_token,
             type,
@@ -140,6 +143,7 @@ router.post(
             taker_token,
             taker_token_id,
             price,
+            usd_price,
             min_price,
             maker_token,
             type,
