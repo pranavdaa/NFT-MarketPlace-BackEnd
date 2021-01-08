@@ -1,5 +1,6 @@
 let signUtil = require("eth-sig-util");
 var ethUtil = require("ethereumjs-util");
+let config = require('../../config/config')
 
 function getSignTypedData({ owner }) {
   return {
@@ -18,7 +19,7 @@ function getSignTypedData({ owner }) {
       host: "",
       version: "1",
       verifyingContract: "0x0",
-      chainId: 5,
+      chainId: config.ETHEREUM_CHAIN_ID,
     },
     primaryType: "Test",
     message: { owner },

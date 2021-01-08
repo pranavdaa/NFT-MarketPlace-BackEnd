@@ -1,6 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-let { hasNextPage } = require("../utils/helper.js");
+let { hasNextPage } = require("../utils/request-utils");
 let constants = require("../../config/constants");
 
 /**
@@ -41,7 +41,10 @@ class CategoryService {
         orderBy,
         take: limit,
         skip: offset,
-        include: { categoriesaddresses: true },
+        include: {
+          categoriesaddresses: true,
+          orders: { select: { id: true }, where: { status: 0 } },
+        },
       });
       return {
         categories,
@@ -57,14 +60,8 @@ class CategoryService {
 
   async getCategoryList({ chainId }) {
     try {
-      let where = {
-        active: true,
-        chain_id: chainId,
-      };
-
-      let categories = await prisma.categoriesaddresses.findMany({
-        where,
-        select: { address: true },
+      let categories = await prisma.categories.findMany({
+        select: { categoriesaddresses: {where:{chain_id: chainId}, select: {address:true,ethereum_address:true}},tokenURI: true, description: true,isOpenseaCompatible: true },
       });
 
       return categories;
@@ -75,6 +72,7 @@ class CategoryService {
   }
 
   async getCategoryByAddress({ categoryAddress }) {
+    // console.log(categoryAddress);
     try {
       let category = await prisma.categoriesaddresses.findMany({
         where: {

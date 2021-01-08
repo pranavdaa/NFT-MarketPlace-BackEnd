@@ -21,3 +21,13 @@
 20200722200442-added-market-price
 20200921092236-asset-migrate-table
 20200922154628-asset-schema-update
+20200928144126-added-blocknumber
+20201117005433-added-ethereum-address-field
+20201120164733-notification_type
+20201124042004-added-order-to-assetmigrate
+20201125210100-token-uri-field-added
+20201203212944-metatx-enabled
+20210106095723-asset-migrate-update
+20210106103818-price-float-to-string
+20210106141635-added-message-to-assetmigrate
+20210107210441-added-usd-price

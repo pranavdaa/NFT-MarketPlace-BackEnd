@@ -29,7 +29,7 @@ function getSortBy(options, defaultArg) {
   if (sort.startsWith("-")) {
     orderBy[sort.substring(1)] = SORT_DIRECTION.DESC;
   } else if (sort.startsWith(" ") || sort.startsWith("+")) {
-    orderBy["updated"] = SORT_DIRECTION.DESC;
+    orderBy[sort.substring(1)] = SORT_DIRECTION.ASC;
   } else {
     orderBy[sort] = SORT_DIRECTION.DESC;
   }
@@ -54,9 +54,18 @@ function getSearchObj(options) {
   return where;
 }
 
+function hasNextPage({ limit, offset, count }) {
+  // accepts options with keys limit, offset, count
+  if (offset + limit >= count) {
+    return false;
+  }
+  return true;
+}
+
 module.exports = {
   getLimit,
   getOffset,
   getSortBy,
   getSearchObj,
+  hasNextPage
 };

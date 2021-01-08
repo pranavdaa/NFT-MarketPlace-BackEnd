@@ -1,7 +1,9 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-let { hasNextPage } = require("../utils/helper.js");
+let { hasNextPage } = require("../utils/request-utils");
 let constants = require("../../config/constants");
+const categoryService = require("../services/category");
+let categoryServiceInstance = new categoryService();
 
 /**
  * Includes all the Asset Migration services that controls
@@ -11,6 +13,30 @@ let constants = require("../../config/constants");
 class AssetMigrateService {
   async createAssetMigrate(params) {
     try {
+      let category = await categoryServiceInstance.getCategory({
+        categoryId: params.category_id,
+      });
+
+      console.log(category);
+
+      let message;
+
+      if (params.type === "DEPOSIT") {
+        message =
+          "You initiated a deposit of " +
+          params.token_array.length +
+          " " +
+          category.name +
+          " tokens";
+      }
+      if (params.type === "WITHDRAW") {
+        message =
+          "You initiated a withdraw of " +
+          params.token_array.length +
+          " " +
+          category.name +
+          " tokens";
+      }
       let assetMigrate = await prisma.assetmigrate.create({
         data: {
           type: params.type,
@@ -18,6 +44,8 @@ class AssetMigrateService {
           categories: { connect: { id: parseInt(params.category_id) } },
           users: { connect: { id: parseInt(params.userId) } },
           token_array: { set: params.token_array },
+          block_number: params.block_number,
+          message,
         },
       });
       return assetMigrate;
@@ -27,17 +55,21 @@ class AssetMigrateService {
     }
   }
 
-  async getAssetMigrations({ type, userId, limit, offset, orderBy }) {
+  async getAssetMigrations({ status, type, userId, limit, offset, orderBy }) {
     try {
       let where = {
-        type: type,
+        type: { in: JSON.parse(type) },
         users_id: parseInt(userId),
+        status: { in: JSON.parse(status) },
       };
 
       let count = await prisma.assetmigrate.count({ where });
       let assetMigrations = await prisma.assetmigrate.findMany({
         where,
-        orderBy,
+        include: {
+          categories: { select: { img_url: true } },
+        },
+        orderBy: { created: constants.SORT_DIRECTION.DESC },
         take: limit,
         skip: offset,
       });
@@ -68,9 +100,25 @@ class AssetMigrateService {
   async updateAssetMigration(params) {
     try {
       let current = await this.getAssetMigration(params);
+
+      let category = await categoryServiceInstance.getCategory({
+        categoryId: current.categories_id,
+      });
+
+      let message;
+
+      if (current.type === "WITHDRAW") {
+        message =
+          "You finished a withdraw of " +
+          current.token_array.length +
+          " " +
+          category.name +
+          " tokens";
+      }
       let assetMigration = await prisma.assetmigrate.update({
         where: { id: parseInt(params.assetMigrationId) },
         data: {
+          message,
           status: params.status ? parseInt(params.status) : current.status,
           exit_txhash: params.exit_txhash
             ? params.exit_txhash

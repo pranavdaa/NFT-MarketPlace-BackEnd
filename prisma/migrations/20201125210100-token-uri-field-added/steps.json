@@ -1,0 +1,44 @@
+{
+  "version": "0.3.14-fixed",
+  "steps": [
+    {
+      "tag": "CreateField",
+      "model": "categories",
+      "field": "tokenURI",
+      "type": "String",
+      "arity": "Optional"
+    },
+    {
+      "tag": "CreateField",
+      "model": "categories",
+      "field": "isOpenseaCompatible",
+      "type": "Boolean",
+      "arity": "Optional"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "categories",
+          "field": "isOpenseaCompatible"
+        },
+        "directive": "default"
+      }
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "categories",
+          "field": "isOpenseaCompatible"
+        },
+        "directive": "default"
+      },
+      "argument": "",
+      "value": "true"
+    }
+  ]
+}

@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = "***"
 }
 
 model bids {
@@ -12,7 +12,7 @@ model bids {
   created   DateTime @default(now())
   id        Int      @default(autoincrement()) @id
   orders_id Int
-  price     String
+  price     Float
   signature String
   status    Int?     @default(0)
   updated   DateTime @default(now())
@@ -30,24 +30,20 @@ model categories {
   name                String                @unique
   updated             DateTime              @default(now())
   url                 String?
-  tokenURI            String?
-  isOpenseaCompatible Boolean?              @default(true)
-  isMetaTx            Boolean?              @default(true)
   categoriesaddresses categoriesaddresses[]
   orders              orders[]
   assetmigrate        assetmigrate[]
 }
 
 model categoriesaddresses {
-  active           Boolean?   @default(true)
-  address          String     @unique
-  ethereum_address String
-  categories_id    Int
-  chain_id         String
-  created          DateTime   @default(now())
-  id               Int        @default(autoincrement()) @id
-  updated          DateTime   @default(now())
-  categories       categories @relation(fields: [categories_id], references: [id])
+  active        Boolean?   @default(true)
+  address       String     @unique
+  categories_id Int
+  chain_id      String
+  created       DateTime   @default(now())
+  id            Int        @default(autoincrement()) @id
+  updated       DateTime   @default(now())
+  categories    categories @relation(fields: [categories_id], references: [id])
 }
 
 model erc20tokens {
@@ -60,7 +56,7 @@ model erc20tokens {
   updated              DateTime               @default(now())
   erc20tokensaddresses erc20tokensaddresses[]
   orders               orders[]
-  market_price         String?
+  market_price         Float?
 }
 
 model erc20tokensaddresses {
@@ -93,14 +89,13 @@ model orders {
   expiry_date    DateTime?
   id             Int             @default(autoincrement()) @id
   maker_address  Int?
-  min_price      String
-  price          String
-  usd_price      String?
+  min_price      Float
+  price          Float
   signature      String?
   status         Int?            @default(0)
   taker_address  Int?
-  taker_amount   String?
-  maker_amount   String?
+  taker_amount   Float?
+  maker_amount   Float?
   tokens_id      String
   txhash         String?
   type           String
@@ -146,7 +141,6 @@ model notifications {
   created  DateTime @default(now())
   id       Int      @default(autoincrement()) @id
   message  String
-  type     String   @default("ORDER")
   updated  DateTime @default(now())
   order_id Int
   orders   orders   @relation(fields: [order_id], references: [id])
@@ -162,7 +156,6 @@ model assetmigrate {
   txhash        String     @unique
   exit_txhash   String?    @unique
   block_number  String?
-  message       String?
   token_array   String[]
   users_id      Int
   categories_id Int

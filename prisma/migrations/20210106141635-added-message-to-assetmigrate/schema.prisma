@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = "***"
 }
 
 model bids {
@@ -95,7 +95,6 @@ model orders {
   maker_address  Int?
   min_price      String
   price          String
-  usd_price      String?
   signature      String?
   status         Int?            @default(0)
   taker_address  Int?

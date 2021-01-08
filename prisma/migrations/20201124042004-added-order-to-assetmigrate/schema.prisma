@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = "***"
 }
 
 model bids {
@@ -12,7 +12,7 @@ model bids {
   created   DateTime @default(now())
   id        Int      @default(autoincrement()) @id
   orders_id Int
-  price     String
+  price     Float
   signature String
   status    Int?     @default(0)
   updated   DateTime @default(now())
@@ -30,9 +30,6 @@ model categories {
   name                String                @unique
   updated             DateTime              @default(now())
   url                 String?
-  tokenURI            String?
-  isOpenseaCompatible Boolean?              @default(true)
-  isMetaTx            Boolean?              @default(true)
   categoriesaddresses categoriesaddresses[]
   orders              orders[]
   assetmigrate        assetmigrate[]
@@ -60,7 +57,7 @@ model erc20tokens {
   updated              DateTime               @default(now())
   erc20tokensaddresses erc20tokensaddresses[]
   orders               orders[]
-  market_price         String?
+  market_price         Float?
 }
 
 model erc20tokensaddresses {
@@ -93,14 +90,13 @@ model orders {
   expiry_date    DateTime?
   id             Int             @default(autoincrement()) @id
   maker_address  Int?
-  min_price      String
-  price          String
-  usd_price      String?
+  min_price      Float
+  price          Float
   signature      String?
   status         Int?            @default(0)
   taker_address  Int?
-  taker_amount   String?
-  maker_amount   String?
+  taker_amount   Float?
+  maker_amount   Float?
   tokens_id      String
   txhash         String?
   type           String
@@ -162,11 +158,12 @@ model assetmigrate {
   txhash        String     @unique
   exit_txhash   String?    @unique
   block_number  String?
-  message       String?
   token_array   String[]
   users_id      Int
   categories_id Int
+  order_id      Int
   status        Int?       @default(0)
+  orders        orders     @relation(fields: [order_id], references: [id])
   users         users      @relation(fields: [users_id], references: [id])
   categories    categories @relation(fields: [categories_id], references: [id])
 }

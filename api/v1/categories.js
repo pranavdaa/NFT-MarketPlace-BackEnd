@@ -97,9 +97,20 @@ router.get("/", async (req, res) => {
       orderBy,
     });
     if (categories) {
+      /**
+       * re-form categories array to include count of orders in each object
+       */
+      let categoriesArray = categories.categories;
+
+      categoriesArray.map((categoryDetail) => {
+        return (categoryDetail.orders = categoryDetail.orders.length);
+      });
+
       return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
         message: constants.RESPONSE_STATUS.SUCCESS,
-        data: categories,
+        data: {
+          categories: categoriesArray,
+        },
       });
     } else {
       return res

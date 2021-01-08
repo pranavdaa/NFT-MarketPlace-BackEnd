@@ -28,6 +28,7 @@ let constants = require("../../config/constants");
  *  @params min_price type: String
  *  @params expiry type: Integer
  *  @params chainw_id type: String
+ *  @params usd_price type: String
  */
 
 router.post(
@@ -60,6 +61,7 @@ router.post(
         maker_token_id,
         taker_token_id,
         price: price,
+        usd_price: usd_price,
         signature,
         taker_token,
         type,
@@ -122,6 +124,7 @@ router.post(
             maker_token,
             maker_token_id,
             price,
+            usd_price,
             signature,
             taker_token,
             type,
@@ -140,6 +143,7 @@ router.post(
             taker_token,
             taker_token_id,
             price,
+            usd_price,
             min_price,
             maker_token,
             type,
@@ -240,10 +244,13 @@ router.get(
 
       if (orders) {
         for (order of orders.order) {
+
           let metadata = await redisCache.getTokenData(
             order.tokens_id,
-            order.categories.categoriesaddresses[0].address,
-            "80001"
+            order.categories.categoriesaddresses[0].ethereum_address,
+            order.categories.isOpenseaCompatible,
+            order.categories.tokenURI,
+            order.categories.description
           );
           ordersList.push({ ...order, ...metadata });
         }
@@ -284,8 +291,7 @@ router.get(
       if (order) {
         let metadata = await redisCache.getTokenData(
           order.tokens_id,
-          order.categories.categoriesaddresses[0].address,
-          "80001"
+          order.categories.categoriesaddresses[0].ethereum_address
         );
 
         let limit = requestUtil.getLimit(req.query);
@@ -375,6 +381,10 @@ router.patch(
         categoryId: order.categories_id,
       });
 
+      let erc20Token = await erc20TokenServiceInstance.getERC20Token({
+        id: order.erc20tokens_id,
+      });
+
       if (!order || order.status !== 0) {
         return res
           .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
@@ -391,6 +401,7 @@ router.patch(
             signature: order.signature,
             takerSign: taker_signature,
           });
+
           if (orderAdd) {
             helper.notify({
               userId: req.userId,
@@ -398,8 +409,11 @@ router.patch(
                 "You bought a " +
                 category.name +
                 " token for " +
-                orderAdd.taker_amount,
+                orderAdd.taker_amount +
+                " " +
+                erc20Token.symbol,
               order_id: orderAdd.id,
+              type: "SWAP"
             });
             helper.notify({
               userId: orderAdd.maker_address,
@@ -407,14 +421,23 @@ router.patch(
                 "Your " +
                 category.name +
                 " token has been bought for " +
-                orderAdd.taker_amount,
+                orderAdd.taker_amount +
+                " " +
+                erc20Token.symbol,
               order_id: orderAdd.id,
+              type: "SWAP"
             });
           }
           break;
         }
         case constants.ORDER_TYPES.NEGOTIATION: {
           if (!bid || !signature) {
+            return res
+              .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+              .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+          }
+
+          if (bid > order.price) {
             return res
               .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
               .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
@@ -431,6 +454,8 @@ router.patch(
               message:
                 "You made an offer of " +
                 bid +
+                " " +
+                erc20Token.symbol +
                 " on " +
                 category.name +
                 " token",
@@ -441,6 +466,8 @@ router.patch(
               message:
                 "An offer of " +
                 bid +
+                " " +
+                erc20Token.symbol +
                 " has been made on your " +
                 category.name +
                 " token",
@@ -543,6 +570,7 @@ router.patch(
             category.name +
             " token",
           order_id: cancel.id,
+          type: "CANCELLED"
         });
         return res
           .status(constants.RESPONSE_STATUS_CODES.OK)
@@ -665,9 +693,13 @@ router.patch(
         categoryId: order.categories.id,
       });
 
+      let erc20Token = await erc20TokenServiceInstance.getERC20Token({
+        id: order.erc20tokens.id,
+      });
+
       let params = {
         orderId: order.id,
-        maker_address: req.userId,
+        maker_address: bid.users_id,
         maker_amount: bid.price,
         signature: bid.signature,
         takerSign: req.body.taker_signature,
@@ -710,8 +742,11 @@ router.patch(
             "You bought a " +
             category.name +
             " token for " +
-            orderExecute.maker_amount,
+            orderExecute.maker_amount +
+            " " +
+            erc20Token.symbol,
           order_id: orderExecute.id,
+          type: "SWAP"
         });
         helper.notify({
           userId: orderExecute.taker_address,
@@ -719,8 +754,11 @@ router.patch(
             "Your " +
             category.name +
             " token has been bought for " +
-            orderExecute.maker_amount,
+            orderExecute.maker_amount +
+            " " +
+            erc20Token.symbol,
           order_id: orderExecute.id,
+          type: "SWAP"
         });
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
@@ -761,7 +799,7 @@ router.get(
         offset,
         orderBy,
       });
-      if (bids.order.length > 0) {
+      if (bids.order) {
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
           data: bids,
@@ -844,6 +882,105 @@ router.get(
       return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
         message: constants.RESPONSE_STATUS.SUCCESS,
         data: encodedData,
+      });
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+  }
+);
+
+/**
+ *  Validate order
+ *  @params orderId type: int
+ */
+
+router.post(
+  "/validate",
+  [check("orderId", "A valid id is required").exists()],
+  verifyToken,
+  async (req, res) => {
+    try {
+      let { orderId } = req.body;
+
+      let order = await orderServiceInstance.getOrder({ orderId });
+
+      if (!order || order.status !== 0) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
+
+      let userAddress = order.seller_users.address;
+      let tokenId = order.tokens_id;
+      let contractAddress = order.categories.categoriesaddresses[0].address;
+
+      let valid = await helper.checkOwnerShip(
+        userAddress,
+        tokenId,
+        contractAddress
+      );
+
+      if (!valid) {
+        await orderServiceInstance.expireOrder({ orderId });
+      }
+
+      return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+        message: constants.RESPONSE_STATUS.SUCCESS,
+        data: valid,
+      });
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+  }
+);
+
+/**
+ *  Validate bids
+ *  @params orderId type: int
+ */
+
+router.post(
+  "/validate/bids",
+  [check("orderId", "A valid id is required").exists()],
+  verifyToken,
+  async (req, res) => {
+    try {
+      let { orderId } = req.body;
+
+      let order = await orderServiceInstance.getOrder({ orderId });
+
+      if (!order || order.status !== 0) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+      }
+
+      let bids = await orderServiceInstance.getBids({
+        orderId,
+      });
+
+      for (data of bids.order) {
+        let signedOrder = JSON.parse(data.signature);
+        if (
+          !(await helper.checkTokenBalance(
+            signedOrder.makerAddress,
+            signedOrder.makerAssetAmount,
+            data.orders.erc20tokens.erc20tokensaddresses[0].address
+          ))
+        ) {
+          await orderServiceInstance.clearBids({ bidId: data.id });
+        }
+      }
+
+      return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+        message: constants.RESPONSE_STATUS.SUCCESS,
+        data: bids,
       });
     } catch (err) {
       console.log(err);

@@ -1,6 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-let { hasNextPage } = require("../utils/helper.js");
+let { hasNextPage } = require("../utils/request-utils");
 let constants = require("../../config/constants");
 
 /**
@@ -117,7 +117,7 @@ class ERC20TokenService {
           name: params.name ? params.name : current.name,
           decimal: params.decimal ? parseInt(params.decimal) : current.decimal,
           market_price: params.market_price
-            ? parseFloat(params.market_price)
+            ? (params.market_price)
             : current.market_price,
         },
       });

@@ -7,10 +7,6 @@ const userService = require("../services/user");
 let userServiceInstance = new userService();
 const categoryService = require("../services/category");
 let categoryServiceInstance = new categoryService();
-const orderService = require("../services/order");
-let orderServiceInstance = new orderService();
-let redisCache = require("../utils/redis-cache");
-let helper = require("../utils/helper");
 let constants = require("../../config/constants");
 
 /**
@@ -48,51 +44,16 @@ router.get(
       let tokens = await tokenServiceInstance.getTokens({
         chainId,
         owner: user.address.toLowerCase(),
+        userId
       });
 
-      let tokensOwned = [];
-
-      if (tokens.length > 0) {
-        for (token of tokens) {
-          let metadata = await redisCache.getTokenData(
-            token.token_id,
-            token.contract,
-            chainId
-          );
-          let active = {
-            active_order: await orderServiceInstance.checkValidOrder({
-              userId,
-              tokenId: token.token_id,
-            }),
-          };
-
-          token.token_id = token.token_id;
-
-          tokensOwned.push({ ...token, ...metadata, ...active });
-        }
-
-        let tokensOwnedPerCategory = {};
-        for (tokenDetail of tokensOwned) {
-          let singleCategory = (
-            await categoryServiceInstance.getCategoryByAddress(
-              tokenDetail.contract
-            )
-          ).filter((res) => {
-            return res.chain_id === chainId;
-          });
-
-          if (tokensOwnedPerCategory[singleCategory[0].id]) {
-            tokensOwnedPerCategory[singleCategory[0].id].push(tokenDetail);
-          } else {
-            temp_array = [];
-            temp_array.push(tokenDetail);
-            tokensOwnedPerCategory[singleCategory[0].id] = temp_array;
-          }
-        }
+      if (tokens.nft_array.length > 0) {
 
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
-          data: tokensOwnedPerCategory,
+          data: tokens.nft_array,
+          balances: tokens.balances,
+          count: tokens.nft_array.length,
         });
       } else {
         return res.status(constants.RESPONSE_STATUS_CODES.NOT_FOUND).json({

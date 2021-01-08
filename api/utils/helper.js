@@ -1,19 +1,15 @@
 let Web3 = require("web3");
+let config = require("../../config/config");
 let artifacts = require("./artifacts.json");
-const provider = new Web3.providers.HttpProvider(
-  "https://rpc-mumbai.matic.today"
-);
+const provider = new Web3.providers.HttpProvider(config.MATIC_RPC);
 let { exchangeDataEncoder } = require("@0x/contracts-exchange");
 const web3 = new Web3(provider);
-const root_provider = new Web3.providers.HttpProvider(
-  "https://goerli.infura.io/v3/7ff035fb434149dd8a9b1dc106b6905a"
-);
+const root_provider = new Web3.providers.HttpProvider(config.ETHEREUM_RPC);
 let { BigNumber, providerUtils } = require("@0x/utils");
 const root_web3 = new Web3(root_provider);
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-let config = require("../../config/config");
-var coinMarketCapKey = config.coinmarket_apikey;
+let redisCache = require("../utils/redis-cache");
 const rp = require("request-promise");
 let constants = require("../../config/constants");
 let {
@@ -38,21 +34,14 @@ function toHex(value) {
   return web3.utils.numberToHex(value);
 }
 
-function hasNextPage({ limit, offset, count }) {
-  // accepts options with keys limit, offset, count
-  if (offset + limit >= count) {
-    return false;
-  }
-  return true;
-}
-
-async function notify({ userId, message, order_id }) {
+async function notify({ userId, message, order_id, type }) {
   try {
     let notification = await prisma.notifications.create({
       data: {
         users: { connect: { id: parseInt(userId) } },
         message,
         orders: { connect: { id: parseInt(order_id) } },
+        type,
       },
     });
 
@@ -65,39 +54,64 @@ async function notify({ userId, message, order_id }) {
 
 var getRate = async function (symbol) {
   try {
-    const requestOptions = {
-      method: "GET",
-      uri:
-        "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest",
-      qs: {
-        start: "1",
-        limit: "1000",
-        convert: "USD",
-      },
-      headers: {
-        "X-CMC_PRO_API_KEY": coinMarketCapKey,
-      },
-      json: true,
-      gzip: true,
-    };
-
-    var response = await rp(requestOptions);
-    var detailsArray = response.data;
-    let result;
-
-    for (detail of detailsArray) {
-      if (detail.symbol === symbol) {
-        result = detail.quote["USD"].price;
-      }
-    }
-
-    return result;
+    let response = await fetch(constants.PRICE_API);
+    let data = await response.json();
+    data = data.filter((token) => {
+      return token.currency === symbol;
+    });
+    return data[0].price;
   } catch (err) {
     console.log(err.message);
   }
 };
 
-async function ethereum_balance(owner, rootContractAddress) {
+async function checkOwnerShip(userAddress, tokenId, contractAddress) {
+  const childContractInstance = new web3.eth.Contract(
+    artifacts.pos_ChildERC721,
+    contractAddress
+  );
+
+  try {
+    let owner = await childContractInstance.methods.ownerOf(tokenId).call();
+
+    if (toChecksumAddress(owner) === toChecksumAddress(userAddress)) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (err) {
+    return false;
+  }
+}
+
+async function checkTokenBalance(userAddress, amount, contractAddress) {
+  const childContractInstance = new web3.eth.Contract(
+    artifacts.pos_ChildERC721,
+    contractAddress
+  );
+  let balance = await childContractInstance.methods
+    .balanceOf(userAddress)
+    .call();
+
+  if (balance >= amount) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+async function ethereum_balance(
+  owner,
+  rootContractAddress,
+  ethereumAddress,
+  userId,
+  isOpenseaCompatible,
+  tokenURI,
+  description
+) {
+  const orderService = require("../services/order");
+  let orderServiceInstance = new orderService();
+
   const rootContractInstance = new root_web3.eth.Contract(
     artifacts.pos_RootERC721,
     rootContractAddress
@@ -105,25 +119,55 @@ async function ethereum_balance(owner, rootContractAddress) {
   let balance = await rootContractInstance.methods.balanceOf(owner).call();
 
   let token_array = [];
+  let tokenId_array = [];
 
   for (i = 0; i < balance; i++) {
-    let tokenId = await rootContractInstance.methods
-      .tokenOfOwnerByIndex(owner, i)
-      .call();
+    tokenId_array.push(
+      rootContractInstance.methods.tokenOfOwnerByIndex(owner, i).call()
+    );
+  }
 
-    let uri = await rootContractInstance.methods.tokenURI(tokenId).call();
+  tokenId_array = await Promise.all(tokenId_array);
+
+  for (data of tokenId_array) {
+    let metadata = await redisCache.getTokenData(
+      data,
+      ethereumAddress,
+      isOpenseaCompatible,
+      tokenURI,
+      description
+    );
 
     token_array.push({
       contract: rootContractAddress,
-      token_id: tokenId,
+      token_id: data,
       owner: owner,
-      uri: uri,
+      active_order: await orderServiceInstance.checkValidOrder({
+        userId,
+        tokenId: data,
+      }),
+      name: metadata.name,
+      description: metadata.description,
+      attributes: metadata.attributes,
+      image: metadata.image,
+      external_link: metadata.external_link
     });
   }
-  return { token_array, balance };
+  return token_array;
 }
 
-async function matic_balance(owner, childContractAddress) {
+async function matic_balance(
+  owner,
+  childContractAddress,
+  ethereumAddress,
+  userId,
+  isOpenseaCompatible,
+  tokenURI,
+  description
+) {
+  const orderService = require("../services/order");
+  let orderServiceInstance = new orderService();
+
   const childContractInstance = new web3.eth.Contract(
     artifacts.pos_ChildERC721,
     childContractAddress
@@ -132,63 +176,45 @@ async function matic_balance(owner, childContractAddress) {
   let balance = await childContractInstance.methods.balanceOf(owner).call();
 
   let token_array = [];
+  let tokenId_array = [];
 
   for (i = 0; i < balance; i++) {
-    let tokenId = await childContractInstance.methods
-      .tokenOfOwnerByIndex(owner, i)
-      .call();
+    tokenId_array.push(
+      childContractInstance.methods.tokenOfOwnerByIndex(owner, i).call()
+    );
+  }
 
-    let uri = await childContractInstance.methods.tokenURI(tokenId).call();
+  tokenId_array = await Promise.all(tokenId_array);
+
+  for (data of tokenId_array) {
+    let metadata = await redisCache.getTokenData(
+      data,
+      ethereumAddress,
+      isOpenseaCompatible,
+      tokenURI,
+      description
+    );
 
     token_array.push({
       contract: childContractAddress,
-      token_id: tokenId,
+      token_id: data,
       owner: owner,
-      uri: uri,
+      active_order: await orderServiceInstance.checkValidOrder({
+        userId,
+        tokenId: data,
+      }),
+      name: metadata.name,
+      description: metadata.description,
+      attributes: metadata.attributes,
+      image: metadata.image,
+      external_link: metadata.external_link
     });
   }
+
   return token_array;
 }
 
-async function matic_nft_detail(tokenId, childContractAddress) {
-  const childContractInstance = new web3.eth.Contract(
-    artifacts.pos_ChildERC721,
-    childContractAddress
-  );
-
-  let owner = await childContractInstance.methods.ownerOf(tokenId).call();
-  let uri = await childContractInstance.methods.tokenURI(tokenId).call();
-
-  token_detail = {
-    contract: childContractAddress,
-    token_id: tokenId,
-    owner: owner,
-    uri: uri,
-  };
-
-  return token_detail;
-}
-
-async function ethereum_nft_detail(tokenId, rootContractAddress) {
-  const rootContractInstance = new root_web3.eth.Contract(
-    artifacts.pos_RootERC721,
-    rootContractAddress
-  );
-
-  let owner = await rootContractInstance.methods.ownerOf(tokenId).call();
-  let uri = await rootContractInstance.methods.tokenURI(tokenId).call();
-
-  token_detail = {
-    contract: rootContractAddress,
-    token_id: tokenId,
-    owner: owner,
-    uri: uri,
-  };
-
-  return token_detail;
-}
-
-function getSignatureParameters (signature) {
+function getSignatureParameters(signature) {
   if (!web3.utils.isHexStrict(signature)) {
     throw new Error(
       'Given value "'.concat(signature, '" is not a valid hex string.')
@@ -199,43 +225,56 @@ function getSignatureParameters (signature) {
   var v = "0x".concat(signature.slice(130, 132));
   v = web3.utils.hexToNumber(v);
   if (![27, 28].includes(v)) v += 27;
-  return { r, s, v }
+  return { r, s, v };
 }
 
 /**
- * extracts r,s,v params from the given signature, constructs a function call to `executeMetaTransaction` function on the smart contract and executes it. The execution happens on Mumbai (80001) chain
+ * extracts r,s,v params from the given signature, constructs a function call to `executeMetaTransaction` function on the smart contract and executes it. The execution happens on Matic chain
  * txDetails = { intent, fnSig, from, contractAddress }
- * @param {object} txDetails transaction object that will be executed on 80001 chain
+ * @param {object} txDetails transaction object that will be executed on Matic chain
  */
-async function executeMetaTransaction (txDetails) {
-  const { r, s, v } = getSignatureParameters(txDetails.intent)
-  const inputs = [{ "name": "userAddress", "type": "address" }, { "name": "functionSignature", "type": "bytes" }, { "name": "sigR", "type": "bytes32" }, { "name": "sigS", "type": "bytes32" }, { "name": "sigV", "type": "uint8" }]
+async function executeMetaTransaction(txDetails) {
+  const { r, s, v } = getSignatureParameters(txDetails.intent);
+  const inputs = [
+    { name: "userAddress", type: "address" },
+    { name: "functionSignature", type: "bytes" },
+    { name: "sigR", type: "bytes32" },
+    { name: "sigS", type: "bytes32" },
+    { name: "sigV", type: "uint8" },
+  ];
 
   if (!isValidEthereumAddress(txDetails.from)) {
-    console.log('`from` not valid account address');
+    console.log("`from` not valid account address");
     throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
   }
 
-  const data = web3.eth.abi.encodeFunctionCall({
-    name: 'executeMetaTransaction', 
-    type: 'function', 
-    inputs
-  }, [txDetails.from, txDetails.fnSig, r, s, v])
+  const data = web3.eth.abi.encodeFunctionCall(
+    {
+      name: "executeMetaTransaction",
+      type: "function",
+      inputs,
+    },
+    [txDetails.from, txDetails.fnSig, r, s, v]
+  );
   // add private key
-  web3.eth.accounts.wallet.add(config.admin_private_key)
-  let execution
-  try {
-    execution = await web3.eth.sendTransaction ({
-      from: web3.eth.accounts.wallet[0].address, 
-      data, 
+  web3.eth.accounts.wallet.add(config.admin_private_key);
+  let execution,
+    txObj = {
+      from: web3.eth.accounts.wallet[0].address,
+      data,
       to: txDetails.contractAddress,
-      gas: 80000
-    })
+    };
+  try {
+    gas = await web3.eth.estimateGas(txObj);
+    execution = await web3.eth.sendTransaction({
+      ...txObj,
+      gas,
+    });
   } catch (err) {
     console.log(err);
     throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
   }
-  return execution
+  return execution;
 }
 
 const calculateProtocolFee = (
@@ -266,7 +305,6 @@ const encodeExchangeData = (signedOrder, functionName) => {
 };
 
 module.exports = {
-  hasNextPage,
   isValidEthereumAddress,
   notify,
   getRate,
@@ -275,10 +313,10 @@ module.exports = {
   toHex,
   matic_balance,
   ethereum_balance,
-  matic_nft_detail,
-  ethereum_nft_detail,
   executeMetaTransaction,
   calculateProtocolFee,
   providerEngine,
-  encodeExchangeData
+  encodeExchangeData,
+  checkOwnerShip,
+  checkTokenBalance,
 };

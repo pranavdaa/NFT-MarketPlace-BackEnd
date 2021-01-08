@@ -118,7 +118,7 @@ router.get("/", async (req, res) => {
         .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: data });
     } else {
       return res
-        .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+        .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
         .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
     }
   } catch (err) {
@@ -166,7 +166,7 @@ router.get(
           .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: users });
       } else {
         return res
-          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
           .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
@@ -205,8 +205,8 @@ router.get(
         for (order of orders.orders[0].seller_orders) {
           let metadata = await redisCache.getTokenData(
             order.tokens_id,
-            order.categories.categoriesaddresses[0].address,
-            "80001"
+            order.categories.categoriesaddresses[0].ethereum_address,
+            constants.MATIC_CHAIN_ID
           );
 
           ordersList.push({ ...order, ...metadata });
@@ -217,7 +217,7 @@ router.get(
         });
       } else {
         return res
-          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
           .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
@@ -255,8 +255,7 @@ router.get(
         for (order of orders.orders[0].seller_orders) {
           let metadata = await redisCache.getTokenData(
             order.tokens_id,
-            order.categories.categoriesaddresses[0].address,
-            "80001"
+            order.categories.categoriesaddresses[0].ethereum_address,
           );
 
           ordersList.push({ ...order, ...metadata });
@@ -267,7 +266,7 @@ router.get(
         });
       } else {
         return res
-          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
           .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
@@ -307,8 +306,8 @@ router.get(
         for (order of orders.orders[0].buyer_orders) {
           let metadata = await redisCache.getTokenData(
             order.tokens_id,
-            order.categories.categoriesaddresses[0].address,
-            "80001"
+            order.categories.categoriesaddresses[0].ethereum_address,
+            constants.MATIC_CHAIN_ID
           );
 
           ordersList.push({ ...order, ...metadata });
@@ -319,7 +318,7 @@ router.get(
         });
       } else {
         return res
-          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
           .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
@@ -358,7 +357,7 @@ router.get(
           .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: bids });
       } else {
         return res
-          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
           .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
       }
     } catch (err) {
@@ -421,7 +420,7 @@ router.post(
         });
       } else {
         return res
-          .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
           .json({ message: constants.RESPONSE_STATUS.FAILURE });
       }
     } catch (err) {
@@ -456,8 +455,8 @@ router.get("/:userId/favourites", async (req, res) => {
       for (order of favourites.favourites) {
         let metadata = await redisCache.getTokenData(
           order.orders.tokens_id,
-          order.orders.categories.categoriesaddresses[0].address,
-          "80001"
+          order.orders.categories.categoriesaddresses[0].ethereum_address,
+          constants.MATIC_CHAIN_ID
         );
         favList.push({ ...order, ...metadata });
       }
@@ -491,7 +490,7 @@ router.delete("/favourites/:favouriteId", verifyToken, async (req, res) => {
 
     if (!favourite || favourite.users_id !== userId) {
       return res
-        .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+        .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
         .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
     }
 
@@ -539,10 +538,11 @@ router.get("/notification/:userId", async (req, res) => {
       return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
         message: constants.RESPONSE_STATUS.SUCCESS,
         data: notifications,
+        unread_count: notifications.unread_count,
       });
     } else {
       return res
-        .status(RESPONSE_STATUS_CODES.NOT_FOUND)
+        .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
         .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
     }
   } catch (err) {
@@ -552,5 +552,40 @@ router.get("/notification/:userId", async (req, res) => {
       .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
   }
 });
+
+/**
+ *  Read user notifications
+ */
+
+router.put(
+  "/notification/mark-read/:userId",
+  [check("userId", "A valid user id is required").exists()],
+  verifyToken,
+  async (req, res) => {
+    try {
+      let userId = req.params.userId;
+
+      let notifications = await userServiceInstance.readUserNotification({
+        userId,
+      });
+
+      if (notifications.length > 0) {
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
+          data: notifications,
+        });
+      } else {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
+      }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+  }
+);
 
 module.exports = router;
