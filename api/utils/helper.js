@@ -1,6 +1,7 @@
 let Web3 = require("web3");
 let config = require("../../config/config");
 let artifacts = require("./artifacts.json");
+const fetch = require("node-fetch");
 const provider = new Web3.providers.HttpProvider(config.MATIC_RPC);
 let { exchangeDataEncoder } = require("@0x/contracts-exchange");
 const web3 = new Web3(provider);
@@ -109,29 +110,27 @@ async function ethereum_balance(
   tokenURI,
   description
 ) {
+
   const orderService = require("../services/order");
   let orderServiceInstance = new orderService();
 
-  const rootContractInstance = new root_web3.eth.Contract(
-    artifacts.pos_RootERC721,
-    rootContractAddress
-  );
-  let balance = await rootContractInstance.methods.balanceOf(owner).call();
-
   let token_array = [];
-  let tokenId_array = [];
 
-  for (i = 0; i < balance; i++) {
-    tokenId_array.push(
-      rootContractInstance.methods.tokenOfOwnerByIndex(owner, i).call()
-    );
-  }
+  url =
+    "https://api.opensea.io/api/v1/assets/?owner=" +
+    owner +
+    "&asset_contract_address=" +
+    rootContractAddress +
+    "&order_direction=desc&offset=0&limit=1000";
 
-  tokenId_array = await Promise.all(tokenId_array);
+  let response = await fetch(url);
+  let tokenId_array = (await response.json()).assets
 
   for (data of tokenId_array) {
+
+    console.log(data.token_id)
     let metadata = await redisCache.getTokenData(
-      data,
+      data.token_id,
       ethereumAddress,
       isOpenseaCompatible,
       tokenURI,
@@ -140,17 +139,17 @@ async function ethereum_balance(
 
     token_array.push({
       contract: rootContractAddress,
-      token_id: data,
+      token_id: data.token_id,
       owner: owner,
       active_order: await orderServiceInstance.checkValidOrder({
         userId,
-        tokenId: data,
+        tokenId: data.token_id,
       }),
       name: metadata.name,
       description: metadata.description,
       attributes: metadata.attributes,
       image: metadata.image,
-      external_link: metadata.external_link
+      external_link: metadata.external_link,
     });
   }
   return token_array;
@@ -207,7 +206,7 @@ async function matic_balance(
       description: metadata.description,
       attributes: metadata.attributes,
       image: metadata.image,
-      external_link: metadata.external_link
+      external_link: metadata.external_link,
     });
   }
 
