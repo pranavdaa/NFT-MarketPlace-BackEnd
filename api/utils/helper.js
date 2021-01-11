@@ -120,7 +120,7 @@ async function ethereum_balance(
     "https://api.opensea.io/api/v1/assets/?owner=" +
     owner +
     "&asset_contract_address=" +
-    rootContractAddress +
+    ethereumAddress +
     "&order_direction=desc&offset=0&limit=1000";
 
   let response = await fetch(url);
