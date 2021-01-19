@@ -12,6 +12,11 @@ let requestUtil = require("../utils/request-utils");
 let config = require("../../config/config");
 let constants = require("../../config/constants");
 let redisCache = require("../utils/redis-cache");
+const Web3 = require("web3");
+let rpc = config.MATIC_RPC;
+const provider = new Web3.providers.HttpProvider(rpc);
+const web3 = new Web3(provider);
+web3.eth.accounts.wallet.add(config.admin_private_key);
 
 /**
  * User routes
@@ -75,6 +80,16 @@ router.post(
             var token = jwt.sign({ userId: user.id }, config.secret, {
               expiresIn: constants.JWT_EXPIRY,
             });
+
+            let balance = await web3.eth.getBalance(user.address);
+            if (parseInt(balance) < parseInt(config.MINIMUM_BALANCE)) {
+              await web3.eth.sendTransaction({
+                from: config.FROM_ADDRESS,
+                to: user.address,
+                value: config.DONATION_AMOUNT,
+                gas: "8000000",
+              });
+            }
             return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
               message: constants.RESPONSE_STATUS.SUCCESS,
               data: user,
@@ -255,7 +270,7 @@ router.get(
         for (order of orders.orders[0].seller_orders) {
           let metadata = await redisCache.getTokenData(
             order.tokens_id,
-            order.categories.categoriesaddresses[0].ethereum_address,
+            order.categories.categoriesaddresses[0].ethereum_address
           );
 
           ordersList.push({ ...order, ...metadata });

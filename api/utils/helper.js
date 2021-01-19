@@ -110,7 +110,6 @@ async function ethereum_balance(
   tokenURI,
   description
 ) {
-
   const orderService = require("../services/order");
   let orderServiceInstance = new orderService();
 
@@ -124,11 +123,10 @@ async function ethereum_balance(
     "&order_direction=desc&offset=0&limit=1000";
 
   let response = await fetch(url);
-  let tokenId_array = (await response.json()).assets
+  let tokenId_array = (await response.json()).assets;
 
   for (data of tokenId_array) {
-
-    console.log(data.token_id)
+    console.log(data.token_id);
     let metadata = await redisCache.getTokenData(
       data.token_id,
       ethereumAddress,
@@ -162,7 +160,9 @@ async function matic_balance(
   userId,
   isOpenseaCompatible,
   tokenURI,
-  description
+  description,
+  name,
+  img_url
 ) {
   const orderService = require("../services/order");
   let orderServiceInstance = new orderService();
@@ -202,10 +202,10 @@ async function matic_balance(
         userId,
         tokenId: data,
       }),
-      name: metadata.name,
+      name: metadata.name ? metadata.name : name,
       description: metadata.description,
       attributes: metadata.attributes,
-      image: metadata.image,
+      image: metadata.image ? metadata.image : img_url,
       external_link: metadata.external_link,
     });
   }
