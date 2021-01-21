@@ -30,7 +30,9 @@ class TokenService {
               params.userId,
               data.isOpenseaCompatible,
               data.tokenURI,
-              data.description
+              data.description,
+              data.name,
+              data.img_url
             );
           }
         }

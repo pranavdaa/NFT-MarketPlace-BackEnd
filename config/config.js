@@ -33,4 +33,7 @@ module.exports = {
   ETHEREUM_CHAIN_ID: process.env.ETHEREUM_CHAIN_ID,
   MATIC_RPC: process.env.MATIC_RPC,
   ETHEREUM_RPC: process.env.ETHEREUM_RPC,
+  FROM_ADDRESS: process.env.FROM_ADDRESS,
+  DONATION_AMOUNT: process.env.DONATION_AMOUNT,
+  MINIMUM_BALANCE: process.env.MINIMUM_BALANCE
 };

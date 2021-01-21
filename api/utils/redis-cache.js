@@ -48,12 +48,11 @@ async function getTokenData(
                   external_link: details["assets"][0].external_link,
                 };
               }
-            }else{
-
+            } else {
               metadata = {
-                name: details.name,
+                name: details.name ? details.name : undefined,
                 description: description,
-                image: details.image,
+                image: details.image ? details.image : undefined
               };
             }
 
