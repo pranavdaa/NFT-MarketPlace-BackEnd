@@ -113,22 +113,26 @@ async function ethereum_balance(
   const orderService = require("../services/order");
   let orderServiceInstance = new orderService();
 
+  const rootContractInstance = new root_web3.eth.Contract(
+    artifacts.pos_RootERC721,
+    rootContractAddress
+  );
+  let balance = await rootContractInstance.methods.balanceOf(owner).call();
+
   let token_array = [];
+  let tokenId_array = [];
 
-  url =
-    "https://api.opensea.io/api/v1/assets/?owner=" +
-    owner +
-    "&asset_contract_address=" +
-    ethereumAddress +
-    "&order_direction=desc&offset=0&limit=1000";
+  for (i = 0; i < balance; i++) {
+    tokenId_array.push(
+      rootContractInstance.methods.tokenOfOwnerByIndex(owner, i).call()
+    );
+  }
 
-  let response = await fetch(url);
-  let tokenId_array = (await response.json()).assets;
+  tokenId_array = await Promise.all(tokenId_array);
 
   for (data of tokenId_array) {
-    console.log(data.token_id);
     let metadata = await redisCache.getTokenData(
-      data.token_id,
+      data,
       ethereumAddress,
       isOpenseaCompatible,
       tokenURI,
@@ -137,11 +141,11 @@ async function ethereum_balance(
 
     token_array.push({
       contract: rootContractAddress,
-      token_id: data.token_id,
+      token_id: data,
       owner: owner,
       active_order: await orderServiceInstance.checkValidOrder({
         userId,
-        tokenId: data.token_id,
+        tokenId: data,
       }),
       name: metadata.name,
       description: metadata.description,
