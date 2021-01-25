@@ -276,6 +276,7 @@ class OrderService {
   }
 
   async checkValidOrder(params) {
+
     try {
       let order = await prisma.orders.findMany({
         where: {
