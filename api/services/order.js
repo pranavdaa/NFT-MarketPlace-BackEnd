@@ -167,7 +167,6 @@ class OrderService {
         where,
         select: {
           id: true,
-          usd_price: true,
           price: true,
           erc20tokens: {
             select: {

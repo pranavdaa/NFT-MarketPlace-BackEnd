@@ -42,7 +42,7 @@ module.exports = {
     BASE_DERIVATION_PATH: `44'/60'/0'/0`,
     RPC_URL: config.MATIC_RPC,
   },
-  PRICE_API: "https://api.nomics.com/v1/prices?key=2ec68c7702ef56e8fa293bd7a023000f",
+  PRICE_API: "https://api.coingecko.com/api/v3/simple/price?ids=",
   ASSET_TRANSFER: {
     DEPOSIT: "DEPOSIT",
     WITHDRAW: "WITHDRAW",

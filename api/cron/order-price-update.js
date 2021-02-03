@@ -10,7 +10,7 @@ cron.schedule("*/5 * * * * *", async function () {
     let price = await helper.getRate(order.erc20tokens.symbol);
     await orderServiceInstance.updateOrderPrice({
       orderId: order.id,
-      usdPrice: price * order.usd_price,
+      usdPrice: price * order.price,
     });
   }
 });
