@@ -169,14 +169,10 @@ class OrderService {
           id: true,
           usd_price: true,
           price: true,
-          status: true,
           erc20tokens: {
-            include: {
-              erc20tokensaddresses: {
-                where: { chain_id: constants.MATIC_CHAIN_ID },
-                select: { address: true },
-              },
-            },
+            select: {
+              symbol: true,
+            }
           },
         },
       });
@@ -312,6 +308,22 @@ class OrderService {
           status: 2,
           updated: new Date(),
         },
+      });
+      return order;
+    } catch (err) {
+      console.log(err);
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async updateOrderPrice(params) {
+    try {
+      
+      let order = await prisma.orders.update({
+        where: { id: parseInt(params.orderId) },
+        data: {
+          usd_price: params.usdPrice
+        }
       });
       return order;
     } catch (err) {
