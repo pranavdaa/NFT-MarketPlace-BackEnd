@@ -1,0 +1,51 @@
+{
+  "version": "0.3.14-fixed",
+  "steps": [
+    {
+      "tag": "CreateField",
+      "model": "categories",
+      "field": "type",
+      "type": "String",
+      "arity": "Optional"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "categories",
+          "field": "type"
+        },
+        "directive": "default"
+      }
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "categories",
+          "field": "type"
+        },
+        "directive": "default"
+      },
+      "argument": "",
+      "value": "\"ERC721\""
+    },
+    {
+      "tag": "CreateField",
+      "model": "orders",
+      "field": "price_per_unit",
+      "type": "String",
+      "arity": "Optional"
+    },
+    {
+      "tag": "CreateField",
+      "model": "orders",
+      "field": "quantity",
+      "type": "String",
+      "arity": "Optional"
+    }
+  ]
+}
