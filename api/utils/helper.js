@@ -106,9 +106,7 @@ async function ethereum_balance(
   rootContractAddress,
   ethereumAddress,
   userId,
-  isOpenseaCompatible,
-  tokenURI,
-  description
+  type
 ) {
   const orderService = require("../services/order");
   let orderServiceInstance = new orderService();
@@ -134,9 +132,8 @@ async function ethereum_balance(
     let metadata = await redisCache.getTokenData(
       data,
       ethereumAddress,
-      isOpenseaCompatible,
-      tokenURI,
-      description
+      true,
+      null,
     );
 
     token_array.push({
@@ -152,6 +149,7 @@ async function ethereum_balance(
       attributes: metadata.attributes,
       image: metadata.image,
       external_link: metadata.external_link,
+      type
     });
   }
   return token_array;
@@ -160,57 +158,47 @@ async function ethereum_balance(
 async function matic_balance(
   owner,
   childContractAddress,
-  ethereumAddress,
   userId,
-  isOpenseaCompatible,
-  tokenURI,
-  description,
-  name,
-  img_url
+  type
 ) {
   const orderService = require("../services/order");
   let orderServiceInstance = new orderService();
 
-  const childContractInstance = new web3.eth.Contract(
-    artifacts.pos_ChildERC721,
-    childContractAddress
-  );
-
-  let balance = await childContractInstance.methods.balanceOf(owner).call();
-
   let token_array = [];
   let tokenId_array = [];
 
-  for (i = 0; i < balance; i++) {
-    tokenId_array.push(
-      childContractInstance.methods.tokenOfOwnerByIndex(owner, i).call()
-    );
-  }
+  url =
+    config.BALANCE_URL +
+    owner +
+    "&contract=" +
+    childContractAddress;
 
-  tokenId_array = await Promise.all(tokenId_array);
+  let response = await fetch(url);
+  tokenId_array = (await response.json()).data.tokens;
 
   for (data of tokenId_array) {
     let metadata = await redisCache.getTokenData(
-      data,
-      ethereumAddress,
-      isOpenseaCompatible,
-      tokenURI,
-      description
+      data.id,
+      childContractAddress,
+      false,
+      data.token_uri,
     );
 
     token_array.push({
       contract: childContractAddress,
-      token_id: data,
+      token_id: data.id,
       owner: owner,
       active_order: await orderServiceInstance.checkValidOrder({
         userId,
-        tokenId: data,
+        tokenId: data.id,
       }),
-      name: metadata.name ? metadata.name : name,
+      name: metadata.name,
       description: metadata.description,
       attributes: metadata.attributes,
-      image: metadata.image ? metadata.image : img_url,
+      image: metadata.image,
       external_link: metadata.external_link,
+      amount: data.amount,
+      type
     });
   }
 

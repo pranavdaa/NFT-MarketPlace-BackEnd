@@ -5,9 +5,8 @@ const client = redis.createClient(6379);
 async function getTokenData(
   tokenId,
   contractAddress,
-  isOpenseaCompatible,
+  existsOnEthereum,
   tokenURI,
-  description
 ) {
   const redisKey = "metadata:" + contractAddress + ":" + tokenId;
 
@@ -21,14 +20,14 @@ async function getTokenData(
         resolve(JSON.parse(details));
       } else {
         let url;
-        if (isOpenseaCompatible) {
+        if (existsOnEthereum) {
           url =
             "https://api.opensea.io/api/v1/assets?&token_ids=" +
             tokenId +
             "&asset_contract_address=" +
             contractAddress;
         } else {
-          url = tokenURI + tokenId;
+          url = tokenURI;
         }
 
         fetch(url)
@@ -38,7 +37,7 @@ async function getTokenData(
           .then((details) => {
             let metadata = {};
 
-            if (isOpenseaCompatible) {
+            if (existsOnEthereum) {
               if (details.assets.length > 0) {
                 metadata = {
                   name: details["assets"][0].name,
@@ -50,9 +49,11 @@ async function getTokenData(
               }
             } else {
               metadata = {
-                name: details.name ? details.name : undefined,
-                description: description,
-                image: details.image ? details.image : undefined
+                name: details.name,
+                description: details.description,
+                image: details.image,
+                external_link: details.external_url,
+                attributes: details.attributes
               };
             }
 

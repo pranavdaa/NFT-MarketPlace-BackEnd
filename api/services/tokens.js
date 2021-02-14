@@ -26,13 +26,8 @@ class TokenService {
             balance_list = await helper.matic_balance(
               params.owner,
               data.categoriesaddresses[0].address,
-              data.categoriesaddresses[0].ethereum_address,
               params.userId,
-              data.isOpenseaCompatible,
-              data.tokenURI,
-              data.description,
-              data.name,
-              data.img_url
+              data.type
             );
           }
         }
@@ -43,9 +38,7 @@ class TokenService {
               data.categoriesaddresses[0].address,
               data.categoriesaddresses[0].ethereum_address,
               params.userId,
-              data.isOpenseaCompatible,
-              data.tokenURI,
-              data.description
+              data.type
             );
           }
         }

@@ -44,6 +44,9 @@ router.post(
         constants.ORDER_TYPES.NEGOTIATION,
         constants.ORDER_TYPES.AUCTION,
       ]),
+    check("token_type", "A valid token type is required")
+      .exists()
+      .isIn([constants.TOKEN_TYPES.ERC1155, constants.TOKEN_TYPES.ERC721]),
   ],
   verifyToken,
   async (req, res) => {
@@ -68,6 +71,9 @@ router.post(
         chain_id,
         min_price,
         expiry_date,
+        token_type,
+        price_per_unit,
+        quantity,
       } = req.body;
 
       let categoryType =
@@ -110,6 +116,14 @@ router.post(
         });
       }
 
+      if (token_type === "ERC1155") {
+        if (!price_per_unit || !quantity) {
+          return res
+            .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+            .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+        }
+      }
+
       let orderAdd;
 
       switch (type) {
@@ -129,6 +143,9 @@ router.post(
             taker_token,
             type,
             chain_id,
+            price_per_unit,
+            token_type,
+            quantity
           });
           break;
         }
@@ -148,6 +165,9 @@ router.post(
             maker_token,
             type,
             chain_id,
+            price_per_unit,
+            token_type,
+            quantity
           });
           break;
         }
@@ -244,7 +264,6 @@ router.get(
 
       if (orders) {
         for (order of orders.order) {
-
           let metadata = await redisCache.getTokenData(
             order.tokens_id,
             order.categories.categoriesaddresses[0].ethereum_address,
@@ -413,7 +432,7 @@ router.patch(
                 " " +
                 erc20Token.symbol,
               order_id: orderAdd.id,
-              type: "SWAP"
+              type: "SWAP",
             });
             helper.notify({
               userId: orderAdd.maker_address,
@@ -425,7 +444,7 @@ router.patch(
                 " " +
                 erc20Token.symbol,
               order_id: orderAdd.id,
-              type: "SWAP"
+              type: "SWAP",
             });
           }
           break;
@@ -570,7 +589,7 @@ router.patch(
             category.name +
             " token",
           order_id: cancel.id,
-          type: "CANCELLED"
+          type: "CANCELLED",
         });
         return res
           .status(constants.RESPONSE_STATUS_CODES.OK)
@@ -746,7 +765,7 @@ router.patch(
             " " +
             erc20Token.symbol,
           order_id: orderExecute.id,
-          type: "SWAP"
+          type: "SWAP",
         });
         helper.notify({
           userId: orderExecute.taker_address,
@@ -758,7 +777,7 @@ router.patch(
             " " +
             erc20Token.symbol,
           order_id: orderExecute.id,
-          type: "SWAP"
+          type: "SWAP",
         });
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,

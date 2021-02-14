@@ -47,4 +47,8 @@ module.exports = {
     DEPOSIT: "DEPOSIT",
     WITHDRAW: "WITHDRAW",
   },
+  TOKEN_TYPES: {
+    ERC1155: "ERC1155",
+    ERC721: "ERC721"
+  }
 };
