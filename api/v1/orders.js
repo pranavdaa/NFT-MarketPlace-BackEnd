@@ -74,6 +74,7 @@ router.post(
         token_type,
         price_per_unit,
         quantity,
+        min_price_per_unit,
       } = req.body;
 
       let categoryType =
@@ -128,6 +129,15 @@ router.post(
 
       switch (type) {
         case constants.ORDER_TYPES.FIXED: {
+
+          if (token_type === "ERC1155") {
+            if (!price_per_unit || !quantity) {
+              return res
+                .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+                .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+            }
+          }
+
           if (!price || !signature || !maker_token_id) {
             return res
               .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
@@ -145,11 +155,20 @@ router.post(
             chain_id,
             price_per_unit,
             token_type,
-            quantity
+            quantity,
           });
           break;
         }
         case constants.ORDER_TYPES.NEGOTIATION: {
+
+          if (token_type === "ERC1155") {
+            if (!price_per_unit || !quantity || !min_price_per_unit ) {
+              return res
+                .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+                .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
+            }
+          }
+
           if (!min_price || !price || !taker_token_id) {
             return res
               .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
@@ -167,7 +186,8 @@ router.post(
             chain_id,
             price_per_unit,
             token_type,
-            quantity
+            quantity,
+            min_price_per_unit,
           });
           break;
         }
