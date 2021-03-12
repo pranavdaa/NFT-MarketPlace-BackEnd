@@ -55,12 +55,9 @@ async function notify({ userId, message, order_id, type }) {
 
 var getRate = async function (symbol) {
   try {
-    let response = await fetch(constants.PRICE_API);
+    let response = await fetch(`${constants.PRICE_API}${symbol.toLowerCase()}&vs_currencies=usd`);
     let data = await response.json();
-    data = data.filter((token) => {
-      return token.currency === symbol;
-    });
-    return data[0].price;
+    return (data[symbol.toLowerCase()].usd).toString();
   } catch (err) {
     console.log(err.message);
   }
