@@ -37,7 +37,7 @@ async function getTokenData(
           .then((details) => {
             let metadata = {};
 
-            if (existsOnEthereum) {
+            if (existsOnEthereum && !tokenURI) {
               if (details.assets.length > 0) {
                 metadata = {
                   name: details["assets"][0].name,
