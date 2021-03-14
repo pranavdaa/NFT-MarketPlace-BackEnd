@@ -57,7 +57,7 @@ async function getTokenData(
               };
             }
 
-            client.setex(redisKey, 86400, JSON.stringify(metadata));
+            client.setex(redisKey, 86400 * 365, JSON.stringify(metadata));
             resolve(metadata);
           })
           .catch((err) => {
