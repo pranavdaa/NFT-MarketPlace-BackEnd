@@ -20,7 +20,7 @@ async function getTokenData(
         resolve(JSON.parse(details));
       } else {
         let url;
-        if (existsOnEthereum) {
+        if (existsOnEthereum && !tokenURI) {
           url =
             "https://api.opensea.io/api/v1/assets?&token_ids=" +
             tokenId +
