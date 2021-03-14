@@ -286,10 +286,9 @@ router.get(
         for (order of orders.order) {
           let metadata = await redisCache.getTokenData(
             order.tokens_id,
-            order.categories.categoriesaddresses[0].ethereum_address,
+            order.categories.categoriesaddresses[0].address,
             order.categories.isOpenseaCompatible,
-            order.categories.tokenURI,
-            order.categories.description
+            order.categories.tokenURI + order.tokens_id,
           );
           ordersList.push({ ...order, ...metadata });
         }
@@ -330,7 +329,9 @@ router.get(
       if (order) {
         let metadata = await redisCache.getTokenData(
           order.tokens_id,
-          order.categories.categoriesaddresses[0].ethereum_address
+          order.categories.categoriesaddresses[0].address,
+          order.categories.isOpenseaCompatible,
+          order.categories.tokenURI + order.tokens_id,
         );
 
         let limit = requestUtil.getLimit(req.query);
