@@ -956,7 +956,7 @@ router.post(
 
       let order = await orderServiceInstance.getOrder({ orderId });
 
-      if (!order || order.status !== 0) {
+      if (!order) {
         return res
           .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
           .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });

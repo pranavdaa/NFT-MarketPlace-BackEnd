@@ -396,7 +396,7 @@ class OrderService {
       let order = await prisma.orders.update({
         where: { id: parseInt(params.orderId) },
         data: {
-          status: 4,
+          status: 3,
           signature: "",
           updated: new Date(),
         },
