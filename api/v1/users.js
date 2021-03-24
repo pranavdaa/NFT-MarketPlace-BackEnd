@@ -270,7 +270,9 @@ router.get(
         for (order of orders.orders[0].seller_orders) {
           let metadata = await redisCache.getTokenData(
             order.tokens_id,
-            order.categories.categoriesaddresses[0].ethereum_address
+            order.categories.categoriesaddresses[0].address,
+            order.categories.isOpenseaCompatible,
+            order.categories.tokenURI + order.tokens_id,
           );
 
           ordersList.push({ ...order, ...metadata });

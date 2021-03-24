@@ -13,6 +13,7 @@ module.exports = {
     ERROR: "error",
     AUTH_ERROR: "auth_error",
     NOT_FOUND: "not found",
+    ORDER_EXPIRED: "order expired"
   },
   RESPONSE_STATUS_CODES: {
     OK: 200,
@@ -20,6 +21,7 @@ module.exports = {
     UNAUTHORIZED: 401,
     NOT_FOUND: 404,
     INTERNAL_SERVER_ERROR: 500,
+    ORDER_EXPIRED: 409
   },
   SORT_DIRECTION: {
     ASC: "asc",
@@ -31,6 +33,7 @@ module.exports = {
     LOGIN_SUCCESS: "Login Success",
     UNAUTHORIZED: "Unauthorized access",
     INPUT_VALIDATION_ERROR: "Input Validation Error",
+    INVALID_REQUEST: "Invalid Request"
   },
   ORDER_TYPES: {
     FIXED: "FIXED",

@@ -129,7 +129,6 @@ router.post(
 
       switch (type) {
         case constants.ORDER_TYPES.FIXED: {
-
           if (token_type === "ERC1155") {
             if (!price_per_unit || !quantity) {
               return res
@@ -160,9 +159,8 @@ router.post(
           break;
         }
         case constants.ORDER_TYPES.NEGOTIATION: {
-
           if (token_type === "ERC1155") {
-            if (!price_per_unit || !quantity || !min_price_per_unit ) {
+            if (!price_per_unit || !quantity || !min_price_per_unit) {
               return res
                 .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
                 .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
@@ -288,7 +286,7 @@ router.get(
             order.tokens_id,
             order.categories.categoriesaddresses[0].address,
             order.categories.isOpenseaCompatible,
-            order.categories.tokenURI + order.tokens_id,
+            order.categories.tokenURI + order.tokens_id
           );
           ordersList.push({ ...order, ...metadata });
         }
@@ -327,11 +325,22 @@ router.get(
     try {
       let order = await orderServiceInstance.getOrder(req.params);
       if (order) {
+        let checkOwnerShip = await helper.checkOwnerShip(
+          order.seller_users.address,
+          order.tokens_id,
+          order.categories.categoriesaddresses[0].address
+        );
+
+        if(!checkOwnerShip){
+          return res
+          .status(constants.RESPONSE_STATUS_CODES.ORDER_EXPIRED)
+          .json({ message: constants.RESPONSE_STATUS.ORDER_EXPIRED });
+        }
         let metadata = await redisCache.getTokenData(
           order.tokens_id,
           order.categories.categoriesaddresses[0].address,
           order.categories.isOpenseaCompatible,
-          order.categories.tokenURI + order.tokens_id,
+          order.categories.tokenURI + order.tokens_id
         );
 
         let limit = requestUtil.getLimit(req.query);
@@ -477,7 +486,7 @@ router.patch(
               .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
           }
 
-          if (bid > order.price) {
+          if (parseFloat(bid) > parseFloat(order.price)) {
             return res
               .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
               .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
