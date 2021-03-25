@@ -286,7 +286,7 @@ router.get(
             order.tokens_id,
             order.categories.categoriesaddresses[0].address,
             order.categories.isOpenseaCompatible,
-            order.categories.tokenURI + order.tokens_id
+            order.categories.tokenURI?order.categories.tokenURI + order.tokens_id:order.categories.tokenURI
           );
           ordersList.push({ ...order, ...metadata });
         }
@@ -335,7 +335,7 @@ router.get(
           order.tokens_id,
           order.categories.categoriesaddresses[0].address,
           order.categories.isOpenseaCompatible,
-          order.categories.tokenURI + order.tokens_id
+          order.categories.tokenURI?order.categories.tokenURI + order.tokens_id:order.categories.tokenURI
         );
 
         let limit = requestUtil.getLimit(req.query);
