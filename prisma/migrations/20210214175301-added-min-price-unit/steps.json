@@ -1,0 +1,12 @@
+{
+  "version": "0.3.14-fixed",
+  "steps": [
+    {
+      "tag": "CreateField",
+      "model": "orders",
+      "field": "min_price_per_unit",
+      "type": "String",
+      "arity": "Optional"
+    }
+  ]
+}

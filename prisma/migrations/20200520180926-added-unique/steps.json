@@ -1,0 +1,50 @@
+{
+  "version": "0.3.14-fixed",
+  "steps": [
+    {
+      "tag": "UpdateField",
+      "model": "categories",
+      "field": "name",
+      "arity": "Required"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "categories",
+          "field": "name"
+        },
+        "directive": "unique"
+      }
+    },
+    {
+      "tag": "DeleteField",
+      "model": "erc20tokens",
+      "field": "icon"
+    },
+    {
+      "tag": "UpdateField",
+      "model": "erc20tokens",
+      "field": "name",
+      "arity": "Required"
+    },
+    {
+      "tag": "UpdateField",
+      "model": "erc20tokens",
+      "field": "symbol",
+      "arity": "Required"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "erc20tokens",
+          "field": "symbol"
+        },
+        "directive": "unique"
+      }
+    }
+  ]
+}

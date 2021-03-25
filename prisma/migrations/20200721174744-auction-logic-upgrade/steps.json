@@ -1,0 +1,36 @@
+{
+  "version": "0.3.14-fixed",
+  "steps": [
+    {
+      "tag": "UpdateField",
+      "model": "bids",
+      "field": "price",
+      "type": "Float"
+    },
+    {
+      "tag": "CreateField",
+      "model": "orders",
+      "field": "maker_amount",
+      "type": "Float",
+      "arity": "Optional"
+    },
+    {
+      "tag": "UpdateField",
+      "model": "orders",
+      "field": "min_price",
+      "type": "Float"
+    },
+    {
+      "tag": "UpdateField",
+      "model": "orders",
+      "field": "price",
+      "type": "Float"
+    },
+    {
+      "tag": "UpdateField",
+      "model": "orders",
+      "field": "taker_amount",
+      "type": "Float"
+    }
+  ]
+}
