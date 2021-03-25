@@ -1,12 +1,13 @@
 const fetch = require("node-fetch");
 const redis = require("redis");
+const config = require("../../config/config");
 const client = redis.createClient(6379);
 
 async function getTokenData(
   tokenId,
   contractAddress,
   existsOnEthereum,
-  tokenURI,
+  tokenURI
 ) {
   const redisKey = "metadata:" + contractAddress + ":" + tokenId;
 
@@ -30,41 +31,73 @@ async function getTokenData(
           url = tokenURI;
         }
 
-        if(url)
-        fetch(url)
-          .then((response) => {
-            return response.json();
-          })
-          .then((details) => {
-            let metadata = {};
+        if (!url || url.length === 0) {
+          let tokenDetailURL =
+            config.BALANCE_URL + contractAddress + "&id=" + tokenId;
+          fetch(tokenDetailURL)
+            .then((details) => {
+              return details.json();
+            })
+            .then((detailResponse) => {
+              return fetch(detailResponse.data.token_uri);
+            })
+            .then((response) => {
+              return response.json();
+            })
+            .then((details) => {
+              let metadata = {};
 
-            if (existsOnEthereum && !tokenURI) {
-              if (details.assets.length > 0) {
-                metadata = {
-                  name: details["assets"][0].name,
-                  description: details["assets"][0].description,
-                  image: details["assets"][0].image_url,
-                  attributes: details["assets"][0].traits,
-                  external_link: details["assets"][0].external_link,
-                };
-              }
-            } else {
               metadata = {
                 name: details.name,
                 description: details.description,
                 image: details.image,
                 external_link: details.external_url,
-                attributes: details.attributes
+                attributes: details.attributes,
               };
-            }
 
-            client.setex(redisKey, 43200, JSON.stringify(metadata));
-            resolve(metadata);
-          })
-          .catch((err) => {
-            client.setex(redisKey, 43200, JSON.stringify({}));
-            resolve({})
-          });
+              client.setex(redisKey, 43200, JSON.stringify(metadata));
+              resolve(metadata);
+            })
+            .catch((err) => {
+              client.setex(redisKey, 43200, JSON.stringify({}));
+              resolve({});
+            });
+        } else {
+          fetch(url)
+            .then((response) => {
+              return response.json();
+            })
+            .then((details) => {
+              let metadata = {};
+
+              if (existsOnEthereum && !tokenURI) {
+                if (details.assets.length > 0) {
+                  metadata = {
+                    name: details["assets"][0].name,
+                    description: details["assets"][0].description,
+                    image: details["assets"][0].image_url,
+                    attributes: details["assets"][0].traits,
+                    external_link: details["assets"][0].external_link,
+                  };
+                }
+              } else {
+                metadata = {
+                  name: details.name,
+                  description: details.description,
+                  image: details.image,
+                  external_link: details.external_url,
+                  attributes: details.attributes,
+                };
+              }
+
+              client.setex(redisKey, 43200, JSON.stringify(metadata));
+              resolve(metadata);
+            })
+            .catch((err) => {
+              client.setex(redisKey, 43200, JSON.stringify({}));
+              resolve({});
+            });
+        }
       }
     });
   });
