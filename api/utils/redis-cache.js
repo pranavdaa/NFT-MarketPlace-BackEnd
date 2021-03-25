@@ -30,6 +30,7 @@ async function getTokenData(
           url = tokenURI;
         }
 
+        if(url)
         fetch(url)
           .then((response) => {
             return response.json();
@@ -57,11 +58,12 @@ async function getTokenData(
               };
             }
 
-            client.setex(redisKey, 10800 * 365, JSON.stringify(metadata));
+            client.setex(redisKey, 43200, JSON.stringify(metadata));
             resolve(metadata);
           })
           .catch((err) => {
-            reject(err);
+            client.setex(redisKey, 43200, JSON.stringify({}));
+            resolve({})
           });
       }
     });

@@ -361,7 +361,7 @@ router.get(
         }
 
         let orderData = { ...order, ...metadata };
-        if (!checkOwnerShip) {
+        if (!checkOwnerShip && order.token_type!== "ERC1155") {
           return res
             .status(constants.RESPONSE_STATUS_CODES.ORDER_EXPIRED)
             .json({
