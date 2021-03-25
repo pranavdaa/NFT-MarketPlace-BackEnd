@@ -331,11 +331,6 @@ router.get(
           order.categories.categoriesaddresses[0].address
         );
 
-        if(!checkOwnerShip){
-          return res
-          .status(constants.RESPONSE_STATUS_CODES.ORDER_EXPIRED)
-          .json({ message: constants.RESPONSE_STATUS.ORDER_EXPIRED });
-        }
         let metadata = await redisCache.getTokenData(
           order.tokens_id,
           order.categories.categoriesaddresses[0].address,
@@ -366,10 +361,19 @@ router.get(
         }
 
         let orderData = { ...order, ...metadata };
-        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
-          message: constants.RESPONSE_STATUS.SUCCESS,
-          data: orderData,
-        });
+        if (!checkOwnerShip) {
+          return res
+            .status(constants.RESPONSE_STATUS_CODES.ORDER_EXPIRED)
+            .json({
+              message: constants.RESPONSE_STATUS.ORDER_EXPIRED,
+              data: orderData,
+            });
+        } else {
+          return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+            message: constants.RESPONSE_STATUS.SUCCESS,
+            data: orderData,
+          });
+        }
       } else {
         return res
           .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
