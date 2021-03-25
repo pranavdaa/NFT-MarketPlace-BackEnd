@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model bids {
+  active    Boolean? @default(true)
+  created   DateTime @default(now())
+  id        Int      @default(autoincrement()) @id
+  orders_id Int
+  price     Float
+  status    Int?     @default(0)
+  updated   DateTime @default(now())
+  users_id  Int
+  orders    orders   @relation(fields: [orders_id], references: [id])
+  users     users    @relation(fields: [users_id], references: [id])
+}
+
+model categories {
+  active              Boolean?              @default(true)
+  created             DateTime              @default(now())
+  description         String?
+  id                  Int                   @default(autoincrement()) @id
+  img_url             String?
+  name                String                @unique
+  updated             DateTime              @default(now())
+  url                 String?
+  categoriesaddresses categoriesaddresses[]
+  orders              orders[]
+  tokens              tokens[]
+}
+
+model categoriesaddresses {
+  active        Boolean?   @default(true)
+  address       String
+  categories_id Int
+  chain_id      String
+  created       DateTime   @default(now())
+  id            Int        @default(autoincrement()) @id
+  updated       DateTime   @default(now())
+  categories    categories @relation(fields: [categories_id], references: [id])
+}
+
+model erc20tokens {
+  active               Boolean?               @default(true)
+  created              DateTime               @default(now())
+  decimal              Int
+  id                   Int                    @default(autoincrement()) @id
+  name                 String
+  symbol               String                 @unique
+  updated              DateTime               @default(now())
+  erc20tokensaddresses erc20tokensaddresses[]
+  orders               orders[]
+}
+
+model erc20tokensaddresses {
+  active      Boolean?    @default(true)
+  address     String
+  chain_id    String
+  created     DateTime    @default(now())
+  id          Int         @default(autoincrement()) @id
+  token_id    Int
+  updated     DateTime    @default(now())
+  erc20tokens erc20tokens @relation(fields: [token_id], references: [id])
+}
+
+model favorites {
+  created   DateTime @default(now())
+  id        Int      @default(autoincrement()) @id
+  tokens_id Int
+  updated   DateTime @default(now())
+  users_id  Int
+  tokens    tokens   @relation(fields: [tokens_id], references: [id])
+  users     users    @relation(fields: [users_id], references: [id])
+}
+
+model orders {
+  active         Boolean?    @default(true)
+  categories_id  Int
+  created        DateTime    @default(now())
+  erc20tokens_id Int
+  expiry_date    DateTime?
+  id             Int         @default(autoincrement()) @id
+  maker_address  Int
+  min_price      Float
+  price          Float
+  signature      String?
+  status         Int?        @default(0)
+  taker_address  Int?
+  taker_amount   Float?
+  tokens_id      Int
+  txhash         String?
+  type           String
+  updated        DateTime    @default(now())
+  views          Int?        @default(0)
+  categories     categories  @relation(fields: [categories_id], references: [id])
+  erc20tokens    erc20tokens @relation(fields: [erc20tokens_id], references: [id])
+  maker_users    users       @relation("maker_orders", fields: [maker_address], references: [id])
+  taker_users    users?      @relation("taker_orders", fields: [taker_address], references: [id])
+  tokens         tokens      @relation(fields: [tokens_id], references: [id])
+  bids           bids[]
+}
+
+model tokens {
+  active        Boolean?    @default(true)
+  categories_id Int
+  created       DateTime    @default(now())
+  description   String?
+  id            Int         @default(autoincrement()) @unique
+  img_url       String?
+  metadata      Json?
+  token_id      String
+  name          String
+  updated       DateTime    @default(now())
+  users_id      Int
+  categories    categories  @relation(fields: [categories_id], references: [id])
+  users         users       @relation(fields: [users_id], references: [id])
+  favorites     favorites[]
+  orders        orders[]
+
+  @@id([token_id, categories_id])
+}
+
+model users {
+  active       Boolean?    @default(true)
+  address      String      @unique
+  created      DateTime    @default(now())
+  id           Int         @default(autoincrement()) @id
+  updated      DateTime    @default(now())
+  bids         bids[]
+  favorites    favorites[]
+  maker_orders orders[]    @relation("maker_orders")
+  taker_orders orders[]    @relation("taker_orders")
+  tokens       tokens[]
+}

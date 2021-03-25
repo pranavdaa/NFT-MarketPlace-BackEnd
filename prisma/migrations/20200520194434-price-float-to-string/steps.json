@@ -1,0 +1,23 @@
+{
+  "version": "0.3.14-fixed",
+  "steps": [
+    {
+      "tag": "UpdateField",
+      "model": "orders",
+      "field": "min_price",
+      "type": "String"
+    },
+    {
+      "tag": "UpdateField",
+      "model": "orders",
+      "field": "price",
+      "type": "String"
+    },
+    {
+      "tag": "UpdateField",
+      "model": "orders",
+      "field": "taker_amount",
+      "type": "String"
+    }
+  ]
+}

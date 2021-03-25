@@ -1,0 +1,47 @@
+{
+  "version": "0.3.14-fixed",
+  "steps": [
+    {
+      "tag": "DeleteField",
+      "model": "users",
+      "field": "maker_notifications"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "users",
+      "field": "taker_notifications"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "notifications",
+      "field": "buyer_id"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "notifications",
+      "field": "buyers"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "notifications",
+      "field": "seller_id"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "notifications",
+      "field": "sellers"
+    },
+    {
+      "tag": "UpdateField",
+      "model": "notifications",
+      "field": "users",
+      "arity": "Required"
+    },
+    {
+      "tag": "UpdateField",
+      "model": "notifications",
+      "field": "usersId",
+      "arity": "Required"
+    }
+  ]
+}
