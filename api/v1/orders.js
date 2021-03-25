@@ -286,7 +286,9 @@ router.get(
             order.tokens_id,
             order.categories.categoriesaddresses[0].address,
             order.categories.isOpenseaCompatible,
-            order.categories.tokenURI?order.categories.tokenURI + order.tokens_id:order.categories.tokenURI
+            order.categories.tokenURI
+              ? order.categories.tokenURI + order.tokens_id
+              : order.categories.tokenURI
           );
           ordersList.push({ ...order, ...metadata });
         }
@@ -335,7 +337,9 @@ router.get(
           order.tokens_id,
           order.categories.categoriesaddresses[0].address,
           order.categories.isOpenseaCompatible,
-          order.categories.tokenURI?order.categories.tokenURI + order.tokens_id:order.categories.tokenURI
+          order.categories.tokenURI
+            ? order.categories.tokenURI + order.tokens_id
+            : order.categories.tokenURI
         );
 
         let limit = requestUtil.getLimit(req.query);
@@ -361,7 +365,7 @@ router.get(
         }
 
         let orderData = { ...order, ...metadata };
-        if (!checkOwnerShip && order.token_type!== "ERC1155") {
+        if (!checkOwnerShip && order.token_type !== "ERC1155") {
           return res
             .status(constants.RESPONSE_STATUS_CODES.ORDER_EXPIRED)
             .json({

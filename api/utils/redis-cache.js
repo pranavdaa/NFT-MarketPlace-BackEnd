@@ -33,7 +33,7 @@ async function getTokenData(
 
         if (!url || url.length === 0) {
           let tokenDetailURL =
-            config.BALANCE_URL + contractAddress + "&id=" + tokenId;
+            config.TOKEN_DETAILS_URL + contractAddress + "&id=" + tokenId;
           fetch(tokenDetailURL)
             .then((details) => {
               return details.json();

@@ -36,5 +36,6 @@ module.exports = {
   FROM_ADDRESS: process.env.FROM_ADDRESS,
   DONATION_AMOUNT: process.env.DONATION_AMOUNT,
   MINIMUM_BALANCE: process.env.MINIMUM_BALANCE,
-  BALANCE_URL: process.env.BALANCE_URL
+  BALANCE_URL: process.env.BALANCE_URL,
+  TOKEN_DETAILS_URL: process.env.TOKEN_DETAILS_URL
 };
