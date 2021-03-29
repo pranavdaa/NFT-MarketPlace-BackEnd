@@ -168,7 +168,7 @@ async function matic_balance(
     config.BALANCE_URL +
     owner +
     "&contract=" +
-    childContractAddress;
+    childContractAddress + '&limit=500&offset=0';
 
   let response = await fetch(url);
   tokenId_array = (await response.json()).data.tokens;
