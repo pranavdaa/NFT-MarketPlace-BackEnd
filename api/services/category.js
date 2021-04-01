@@ -40,8 +40,6 @@ class CategoryService {
       let categories = await prisma.categories.findMany({
         where,
         orderBy,
-        take: limit,
-        skip: offset,
         include: {
           categoriesaddresses: true,
           orders: { select: { id: true }, where: { status: 0 } },
