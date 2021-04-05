@@ -106,6 +106,10 @@ router.get("/", async (req, res) => {
         return (categoryDetail.orders = categoryDetail.orders.length);
       });
 
+      categoriesArray.sort((a, b) => {
+        return b.orders - a.orders;
+      });
+
       return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
         message: constants.RESPONSE_STATUS.SUCCESS,
         data: {
