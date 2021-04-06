@@ -20,7 +20,8 @@ class CategoryService {
           categoriesaddresses: {
             create: JSON.parse(params.address),
           },
-          type: params.type
+          type: params.type,
+          tokenURI: params.tokenURI
         },
       });
       return category;
