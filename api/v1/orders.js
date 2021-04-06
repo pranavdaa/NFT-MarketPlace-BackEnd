@@ -12,6 +12,7 @@ let requestUtil = require("../utils/request-utils");
 let helper = require("../utils/helper");
 let redisCache = require("../utils/redis-cache");
 let constants = require("../../config/constants");
+let { ContractWrappers, OrderStatus } = require("@0x/contract-wrappers");
 
 /**
  * Order routes
@@ -980,7 +981,22 @@ router.post(
         contractAddress
       );
 
-      if (!valid) {
+      let signedOrder = JSON.parse(order.signature);
+      const contractWrappers = new ContractWrappers(helper.providerEngine(), {
+        chainId: parseInt(constants.MATIC_CHAIN_ID),
+      });
+
+      const [
+        { orderStatus, orderHash },
+        remainingFillableAmount,
+        isValidSignature,
+      ] = await contractWrappers.devUtils
+        .getOrderRelevantState(signedOrder, signedOrder.signature)
+        .callAsync();
+
+      if (!valid || !(orderStatus === OrderStatus.Fillable &&
+        remainingFillableAmount.isGreaterThan(0) &&
+        isValidSignature)) {
         await orderServiceInstance.expireOrder({ orderId });
       }
 
