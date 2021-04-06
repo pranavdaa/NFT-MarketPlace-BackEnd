@@ -19,7 +19,7 @@ function getSignTypedData({ owner }) {
       host: "",
       version: "1",
       verifyingContract: "0x0",
-      chainId: config.ETHEREUM_CHAIN_ID,
+      chainId: "",
     },
     primaryType: "Test",
     message: { owner },
