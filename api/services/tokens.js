@@ -18,6 +18,7 @@ class TokenService {
 
       let nft_array = [];
       let balances = {};
+      let disabled = {};
 
       for (let data of categories) {
         let balance_list;
@@ -46,10 +47,11 @@ class TokenService {
         if (balance_list) {
           nft_array.push(...balance_list);
           balances[data.categoriesaddresses[0].address] = balance_list.length;
+          disabled[data.categoriesaddresses[0].address] = data.disabled
         }
       }
 
-      return { nft_array, balances };
+      return { nft_array, balances, disabled };
     } catch (err) {
       console.log(err);
       throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);

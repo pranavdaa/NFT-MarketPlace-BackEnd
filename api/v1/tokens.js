@@ -53,6 +53,7 @@ router.get(
           message: constants.RESPONSE_STATUS.SUCCESS,
           data: tokens.nft_array,
           balances: tokens.balances,
+          disabled: tokens.disabled,
           count: tokens.nft_array.length,
         });
       } else {
