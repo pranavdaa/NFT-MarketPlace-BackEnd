@@ -47,7 +47,7 @@ class TokenService {
         if (balance_list) {
           nft_array.push(...balance_list);
           balances[data.categoriesaddresses[0].address] = balance_list.length;
-          disabled[data.categoriesaddresses[0].address] = data.disabled
+          disabled[data.categoriesaddresses[0].address] = data.disabled;
         }
       }
 
