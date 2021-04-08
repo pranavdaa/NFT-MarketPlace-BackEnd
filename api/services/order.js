@@ -95,7 +95,7 @@ class OrderService {
   async getOrders({ categoryArray, limit, offset, orderBy }) {
     try {
       let where;
-      if (JSON.parse(categoryArray).length !== 0) {
+      if (categoryArray && JSON.parse(categoryArray).length !== 0) {
         where = {
           AND: [
             { active: true },
