@@ -12,6 +12,8 @@ let requestUtil = require("../utils/request-utils");
 let helper = require("../utils/helper");
 let redisCache = require("../utils/redis-cache");
 let constants = require("../../config/constants");
+let config = require("../../config/config")
+let { BigNumber } = require("@0x/utils");
 let { ContractWrappers, OrderStatus } = require("@0x/contract-wrappers");
 
 /**
@@ -647,38 +649,58 @@ router.patch(
   }
 );
 
-
 /**
  *  swap token
  */
 
- router.post(
-  "/swap-token",
-  async (req, res) => {
-    try {
+router.post("/swap-token", async (req, res) => {
+  try {
+    let signedOrder = req.body.signedOrder;
 
-      let tx = await orderServiceInstance.swapToken({
-        signedOrder: req.body.signedOrder,
-      });
+    const contractWrappers = new ContractWrappers(helper.providerEngine(), {
+      chainId: parseInt(constants.MATIC_CHAIN_ID),
+    });
 
-      if (tx) {
-        
-        return res
-          .status(constants.RESPONSE_STATUS_CODES.OK)
-          .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: tx });
-      } else {
-        return res
-          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
-          .json({ message: constants.RESPONSE_STATUS.FAILURE });
-      }
-    } catch (err) {
-      console.log(err);
+    const makerAssetData = await contractWrappers.devUtils
+      .encodeERC20AssetData(config.WETH_ADDRESS)
+      .callAsync();
+
+    if (
+      !new BigNumber(signedOrder.takerAssetAmount).eq(
+        new BigNumber(signedOrder.makerAssetAmount)
+      )
+    ) {
       return res
-        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
+        .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+        .json({ message: constants.RESPONSE_STATUS.FAILURE });
     }
+
+    if(!(makerAssetData.toLowerCase() === signedOrder.makerAssetData.toLowerCase())){
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+        .json({ message: constants.RESPONSE_STATUS.FAILURE });
+    }
+
+    let tx = await orderServiceInstance.swapToken({
+      signedOrder,
+    });
+
+    if (tx) {
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.OK)
+        .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: tx });
+    } else {
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+        .json({ message: constants.RESPONSE_STATUS.FAILURE });
+    }
+  } catch (err) {
+    console.log(err);
+    return res
+      .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
   }
-);
+});
 
 /**
  *  cancel bid
@@ -1027,9 +1049,14 @@ router.post(
         .getOrderRelevantState(signedOrder, signedOrder.signature)
         .callAsync();
 
-      if (!valid || !(orderStatus === OrderStatus.Fillable &&
-        remainingFillableAmount.isGreaterThan(0) &&
-        isValidSignature)) {
+      if (
+        !valid ||
+        !(
+          orderStatus === OrderStatus.Fillable &&
+          remainingFillableAmount.isGreaterThan(0) &&
+          isValidSignature
+        )
+      ) {
         await orderServiceInstance.expireOrder({ orderId });
       }
 
