@@ -647,6 +647,39 @@ router.patch(
   }
 );
 
+
+/**
+ *  swap token
+ */
+
+ router.post(
+  "/swap-token",
+  async (req, res) => {
+    try {
+
+      let tx = await orderServiceInstance.swapToken({
+        signedOrder: req.body.signedOrder,
+      });
+
+      if (tx) {
+        
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: tx });
+      } else {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ message: constants.RESPONSE_STATUS.FAILURE });
+      }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+  }
+);
+
 /**
  *  cancel bid
  */

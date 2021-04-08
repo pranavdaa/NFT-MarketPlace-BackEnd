@@ -183,7 +183,7 @@ class OrderService {
           erc20tokens: {
             select: {
               symbol: true,
-            }
+            },
           },
         },
       });
@@ -287,7 +287,6 @@ class OrderService {
   }
 
   async checkValidOrder(params) {
-
     try {
       let order = await prisma.orders.findMany({
         where: {
@@ -331,14 +330,23 @@ class OrderService {
     }
   }
 
+  async swapToken(params) {
+    try {
+      let tx = await zeroxUtil.executeSwap(params.signedOrder);
+      return tx;
+    } catch (err) {
+      console.log(err);
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   async updateOrderPrice(params) {
     try {
-      
       let order = await prisma.orders.update({
         where: { id: parseInt(params.orderId) },
         data: {
-          usd_price: params.usdPrice
-        }
+          usd_price: params.usdPrice,
+        },
       });
       return order;
     } catch (err) {
