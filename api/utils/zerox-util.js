@@ -2,6 +2,7 @@ let { ContractWrappers } = require("@0x/contract-wrappers");
 let constants = require("../../config/constants");
 let { Web3Wrapper } = require("@0x/web3-wrapper");
 let utils = require("../utils/helper");
+let { BigNumber } = require("@0x/utils");
 
 async function execute(signedOrder, takerSign) {
 
@@ -45,7 +46,7 @@ async function executeSwap(signedOrder) {
   ] = await web3Wrapper.getAvailableAddressesAsync();
 
   tx = await contractWrappers.exchange
-    .fillOrder(signedOrder, signedOrder.takerAssetAmount, signedOrder.signature)
+    .fillOrder(signedOrder, new BigNumber(signedOrder.takerAssetAmount), signedOrder.signature)
     .awaitTransactionSuccessAsync({
       from: from3,
       gas: 8000000,
