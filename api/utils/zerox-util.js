@@ -58,4 +58,5 @@ async function executeSwap(signedOrder) {
 
 module.exports = {
   execute,
+  executeSwap
 };
