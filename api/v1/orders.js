@@ -1067,7 +1067,7 @@ router.post(
       if (!valid || orderInvalid) {
         await orderServiceInstance.expireOrder({ orderId });
 
-        return res.status(constants.RESPONSE_STATUS_CODES.NOT_FOUND).json({
+        return res.status(constants.RESPONSE_STATUS_CODES.ORDER_EXPIRED).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
           data: valid,
         });
