@@ -1093,7 +1093,7 @@ router.post(
 
       return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
         message: constants.RESPONSE_STATUS.SUCCESS,
-        data: valid,
+        data: order,
       });
     } catch (err) {
       console.log(err);
