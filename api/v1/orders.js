@@ -1068,13 +1068,13 @@ router.post(
         await orderServiceInstance.expireOrder({ orderId });
 
         return res.status(constants.RESPONSE_STATUS_CODES.ORDER_EXPIRED).json({
-          message: constants.RESPONSE_STATUS.SUCCESS,
-          data: valid,
+          message: constants.RESPONSE_STATUS.ORDER_EXPIRED,
+          data: order,
         });
       } else {
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
-          data: valid,
+          data: order,
         });
       }
     } catch (err) {
