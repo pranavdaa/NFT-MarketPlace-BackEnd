@@ -1066,12 +1066,17 @@ router.post(
 
       if (!valid || orderInvalid) {
         await orderServiceInstance.expireOrder({ orderId });
-      }
 
-      return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
-        message: constants.RESPONSE_STATUS.SUCCESS,
-        data: valid,
-      });
+        return res.status(constants.RESPONSE_STATUS_CODES.NOT_FOUND).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
+          data: valid,
+        });
+      } else {
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
+          data: valid,
+        });
+      }
     } catch (err) {
       console.log(err);
       return res
