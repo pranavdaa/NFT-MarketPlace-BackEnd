@@ -336,6 +336,29 @@ router.get(
           order.categories.categoriesaddresses[0].address
         );
 
+        let orderInvalid = false;
+
+        if (order.signature) {
+          let signedOrder = JSON.parse(order.signature);
+          const contractWrappers = new ContractWrappers(helper.providerEngine(), {
+            chainId: parseInt(constants.MATIC_CHAIN_ID),
+          });
+  
+          const [
+            { orderStatus, orderHash },
+            remainingFillableAmount,
+            isValidSignature,
+          ] = await contractWrappers.devUtils
+            .getOrderRelevantState(signedOrder, signedOrder.signature)
+            .callAsync();
+  
+          orderInvalid = !(
+            orderStatus === OrderStatus.Fillable &&
+            remainingFillableAmount.isGreaterThan(0) &&
+            isValidSignature
+          );
+        }
+
         let metadata = await redisCache.getTokenData(
           order.tokens_id,
           order.categories.categoriesaddresses[0].address,
@@ -368,7 +391,7 @@ router.get(
         }
 
         let orderData = { ...order, ...metadata };
-        if (!checkOwnerShip && order.token_type !== "ERC1155") {
+        if ((!checkOwnerShip && order.token_type !== "ERC1155") || orderInvalid) {
           return res
             .status(constants.RESPONSE_STATUS_CODES.ORDER_EXPIRED)
             .json({
