@@ -55,11 +55,11 @@ async function getTokenData(
                 attributes: details.attributes,
               };
 
-              client.setex(redisKey, 43200, JSON.stringify(metadata));
+              client.setex(redisKey, 1800, JSON.stringify(metadata));
               resolve(metadata);
             })
             .catch((err) => {
-              client.setex(redisKey, 43200, JSON.stringify({}));
+              client.setex(redisKey, 1800, JSON.stringify({}));
               resolve({});
             });
         } else {
@@ -90,11 +90,11 @@ async function getTokenData(
                 };
               }
 
-              client.setex(redisKey, 43200, JSON.stringify(metadata));
+              client.setex(redisKey, 1800, JSON.stringify(metadata));
               resolve(metadata);
             })
             .catch((err) => {
-              client.setex(redisKey, 43200, JSON.stringify({}));
+              client.setex(redisKey, 1800, JSON.stringify({}));
               resolve({});
             });
         }

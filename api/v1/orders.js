@@ -12,7 +12,7 @@ let requestUtil = require("../utils/request-utils");
 let helper = require("../utils/helper");
 let redisCache = require("../utils/redis-cache");
 let constants = require("../../config/constants");
-let config = require("../../config/config")
+let config = require("../../config/config");
 let { BigNumber } = require("@0x/utils");
 let { ContractWrappers, OrderStatus } = require("@0x/contract-wrappers");
 
@@ -675,7 +675,12 @@ router.post("/swap-token", async (req, res) => {
         .json({ message: constants.RESPONSE_STATUS.FAILURE });
     }
 
-    if(!(makerAssetData.toLowerCase() === signedOrder.makerAssetData.toLowerCase())){
+    if (
+      !(
+        makerAssetData.toLowerCase() ===
+        signedOrder.makerAssetData.toLowerCase()
+      )
+    ) {
       return res
         .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
         .json({ message: constants.RESPONSE_STATUS.FAILURE });
@@ -1036,27 +1041,30 @@ router.post(
         contractAddress
       );
 
-      let signedOrder = JSON.parse(order.signature);
-      const contractWrappers = new ContractWrappers(helper.providerEngine(), {
-        chainId: parseInt(constants.MATIC_CHAIN_ID),
-      });
+      let orderInvalid = false;
 
-      const [
-        { orderStatus, orderHash },
-        remainingFillableAmount,
-        isValidSignature,
-      ] = await contractWrappers.devUtils
-        .getOrderRelevantState(signedOrder, signedOrder.signature)
-        .callAsync();
+      if (order.signature) {
+        let signedOrder = JSON.parse(order.signature);
+        const contractWrappers = new ContractWrappers(helper.providerEngine(), {
+          chainId: parseInt(constants.MATIC_CHAIN_ID),
+        });
 
-      if (
-        !valid ||
-        !(
+        const [
+          { orderStatus, orderHash },
+          remainingFillableAmount,
+          isValidSignature,
+        ] = await contractWrappers.devUtils
+          .getOrderRelevantState(signedOrder, signedOrder.signature)
+          .callAsync();
+
+        orderInvalid = !(
           orderStatus === OrderStatus.Fillable &&
           remainingFillableAmount.isGreaterThan(0) &&
           isValidSignature
-        )
-      ) {
+        );
+      }
+
+      if (!valid || orderInvalid) {
         await orderServiceInstance.expireOrder({ orderId });
       }
 
