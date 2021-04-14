@@ -171,6 +171,10 @@ async function matic_balance(owner, userId) {
     });
 
     if (categoryDetail) {
+      let category = await categoryServiceInstance.getCategory({
+        categoryId: categoryDetail.categories_id,
+      });
+
       let token_array = [];
       for (nft of tokenIdArray[data].tokens) {
         let metadata = await redisCache.getTokenData(
@@ -180,7 +184,7 @@ async function matic_balance(owner, userId) {
         );
 
         token_array.push({
-          contract: tokenIdArray[data].contract,
+          contract: toChecksumAddress(tokenIdArray[data].contract),
           token_id: nft.id,
           owner: owner,
           active_order: await orderServiceInstance.checkValidOrder({
@@ -193,12 +197,13 @@ async function matic_balance(owner, userId) {
           image: metadata.image,
           external_link: metadata.external_link,
           amount: data.amount,
+          type: category.type
         });
       }
 
       if (token_array) {
         nft_array.push(...token_array);
-        balances[tokenIdArray[data].contract] = token_array.length;
+        balances[toChecksumAddress(tokenIdArray[data].contract)] = token_array.length;
       }
     }
   }

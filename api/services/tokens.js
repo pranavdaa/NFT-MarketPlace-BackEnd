@@ -17,10 +17,7 @@ class TokenService {
         balance_list = await helper.matic_balance(params.owner, params.userId);
       }
       if (params.chainId === constants.ETHEREUM_CHAIN_ID) {
-        balance_list = await helper.ethereum_balance(
-          params.owner,
-          params.userId
-        );
+        balance_list = { nft_array: [], balances: {} };
       }
 
       let { nft_array, balances } = balance_list;

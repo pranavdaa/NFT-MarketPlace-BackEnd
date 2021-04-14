@@ -53,12 +53,11 @@ router.get(
           message: constants.RESPONSE_STATUS.SUCCESS,
           data: tokens.nft_array,
           balances: tokens.balances,
-          disabled: tokens.disabled,
           count: tokens.nft_array.length,
         });
       } else {
-        return res.status(constants.RESPONSE_STATUS_CODES.NOT_FOUND).json({
-          message: constants.RESPONSE_STATUS.NOT_FOUND,
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
         });
       }
     } catch (err) {
