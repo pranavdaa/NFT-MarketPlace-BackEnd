@@ -13,11 +13,17 @@ const prisma = new PrismaClient();
 let redisCache = require("../utils/redis-cache");
 const rp = require("request-promise");
 let constants = require("../../config/constants");
+const orderService = require("../services/order");
+let orderServiceInstance = new orderService();
+const categoryService = require("../services/category");
+let categoryServiceInstance = new categoryService();
+
 let {
   MnemonicWalletSubprovider,
   RPCSubprovider,
   Web3ProviderEngine,
 } = require("@0x/subproviders");
+const CategoryService = require("../services/category");
 
 function isValidEthereumAddress(address) {
   return web3.utils.isAddress(address);
@@ -55,9 +61,11 @@ async function notify({ userId, message, order_id, type }) {
 
 var getRate = async function (symbol) {
   try {
-    let response = await fetch(`${constants.PRICE_API}${symbol.toLowerCase()}&vs_currencies=usd`);
+    let response = await fetch(
+      `${constants.PRICE_API}${symbol.toLowerCase()}&vs_currencies=usd`
+    );
     let data = await response.json();
-    return (data[symbol.toLowerCase()].usd).toString();
+    return data[symbol.toLowerCase()].usd.toString();
   } catch (err) {
     console.log(err.message);
   }
@@ -105,9 +113,6 @@ async function ethereum_balance(
   userId,
   type
 ) {
-  const orderService = require("../services/order");
-  let orderServiceInstance = new orderService();
-
   const rootContractInstance = new root_web3.eth.Contract(
     artifacts.pos_RootERC721,
     rootContractAddress
@@ -130,7 +135,7 @@ async function ethereum_balance(
       data,
       ethereumAddress,
       true,
-      null,
+      null
     );
 
     token_array.push({
@@ -146,60 +151,58 @@ async function ethereum_balance(
       attributes: metadata.attributes,
       image: metadata.image,
       external_link: metadata.external_link,
-      type
+      type,
     });
   }
   return token_array;
 }
 
-async function matic_balance(
-  owner,
-  childContractAddress,
-  userId,
-  type
-) {
-  const orderService = require("../services/order");
-  let orderServiceInstance = new orderService();
+async function matic_balance(owner, userId) {
+  let nft_array = [];
+  let balances = {};
 
-  let token_array = [];
-  let tokenId_array = [];
-
-  url =
-    config.BALANCE_URL +
-    owner +
-    "&contract=" +
-    childContractAddress + '&limit=500&offset=0';
-
+  url = config.BALANCE_URL + owner;
   let response = await fetch(url);
-  tokenId_array = (await response.json()).data.tokens;
+  let tokenIdArray = (await response.json()).data.tokens;
 
-  for (data of tokenId_array) {
-    let metadata = await redisCache.getTokenData(
-      data.id,
-      childContractAddress,
-      false,
-      data.token_uri,
-    );
-
-    token_array.push({
-      contract: childContractAddress,
-      token_id: data.id,
-      owner: owner,
-      active_order: await orderServiceInstance.checkValidOrder({
-        userId,
-        tokenId: data.id,
-      }),
-      name: metadata.name,
-      description: metadata.description,
-      attributes: metadata.attributes,
-      image: metadata.image,
-      external_link: metadata.external_link,
-      amount: data.amount,
-      type
+  for (data in tokenIdArray) {
+    let categoryDetail = await categoryServiceInstance.getCategoryByAddress({
+      categoryAddress: toChecksumAddress(data),
     });
-  }
 
-  return token_array;
+    if (categoryDetail) {
+      let token_array = [];
+      for (nft of tokenIdArray[data].tokens) {
+        let metadata = await redisCache.getTokenData(
+          nft.id,
+          tokenIdArray[data].contract,
+          JSON.parse(nft.metadata)
+        );
+
+        token_array.push({
+          contract: tokenIdArray[data].contract,
+          token_id: nft.id,
+          owner: owner,
+          active_order: await orderServiceInstance.checkValidOrder({
+            userId,
+            tokenId: nft.id,
+          }),
+          name: metadata.name,
+          description: metadata.description,
+          attributes: metadata.attributes,
+          image: metadata.image,
+          external_link: metadata.external_link,
+          amount: data.amount,
+        });
+      }
+
+      if (token_array) {
+        nft_array.push(...token_array);
+        balances[tokenIdArray[data].contract] = token_array.length;
+      }
+    }
+  }
+  return { nft_array, balances };
 }
 
 function getSignatureParameters(signature) {

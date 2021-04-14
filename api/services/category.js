@@ -58,37 +58,14 @@ class CategoryService {
     }
   }
 
-  async getCategoryList({ chainId }) {
-    try {
-      let categories = await prisma.categories.findMany({
-        select: {
-          categoriesaddresses: {
-            where: { chain_id: chainId },
-            select: { address: true, ethereum_address: true },
-          },
-          tokenURI: true,
-          description: true,
-          isOpenseaCompatible: true,
-          name: true,
-          img_url: true,
-          type: true,
-          disabled: true,
-        },
-      });
-
-      return categories;
-    } catch (err) {
-      console.log(err);
-      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
-    }
-  }
-
   async getCategoryByAddress({ categoryAddress }) {
-    // console.log(categoryAddress);
     try {
-      let category = await prisma.categoriesaddresses.findMany({
+      let category = await prisma.categoriesaddresses.findOne({
         where: {
-          address: categoryAddress,
+          address_chain_id: {
+            address: categoryAddress,
+            chain_id : "137"
+          }
         },
       });
 
