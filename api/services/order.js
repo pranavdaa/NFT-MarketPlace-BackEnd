@@ -152,6 +152,7 @@ class OrderService {
           views: true,
           bids: true,
           updated: true,
+          tokens: true,
         },
         orderBy,
         take: limit,
@@ -260,6 +261,7 @@ class OrderService {
               address: true,
             },
           },
+          tokens: true,
           views: true,
           bids: { orderBy: { price: constants.SORT_DIRECTION.DESC } },
           updated: true,
@@ -287,6 +289,7 @@ class OrderService {
   }
 
   async checkValidOrder(params) {
+    console.log(params);
     try {
       let order = await prisma.orders.findMany({
         where: {

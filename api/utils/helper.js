@@ -11,19 +11,13 @@ const root_web3 = new Web3(root_provider);
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 let redisCache = require("../utils/redis-cache");
-const rp = require("request-promise");
 let constants = require("../../config/constants");
-const orderService = require("../services/order");
-let orderServiceInstance = new orderService();
-const categoryService = require("../services/category");
-let categoryServiceInstance = new categoryService();
 
 let {
   MnemonicWalletSubprovider,
   RPCSubprovider,
   Web3ProviderEngine,
 } = require("@0x/subproviders");
-const CategoryService = require("../services/category");
 
 function isValidEthereumAddress(address) {
   return web3.utils.isAddress(address);
@@ -142,10 +136,6 @@ async function ethereum_balance(
       contract: rootContractAddress,
       token_id: data,
       owner: owner,
-      active_order: await orderServiceInstance.checkValidOrder({
-        userId,
-        tokenId: data,
-      }),
       name: metadata.name,
       description: metadata.description,
       attributes: metadata.attributes,
@@ -157,57 +147,13 @@ async function ethereum_balance(
   return token_array;
 }
 
-async function matic_balance(owner, userId) {
-  let nft_array = [];
-  let balances = {};
+async function matic_balance(owner) {
 
   url = config.BALANCE_URL + owner;
   let response = await fetch(url);
   let tokenIdArray = (await response.json()).data.tokens;
 
-  for (data in tokenIdArray) {
-    let categoryDetail = await categoryServiceInstance.getCategoryByAddress({
-      categoryAddress: toChecksumAddress(data),
-    });
-
-    if (categoryDetail) {
-      let category = await categoryServiceInstance.getCategory({
-        categoryId: categoryDetail.categories_id,
-      });
-
-      let token_array = [];
-      for (nft of tokenIdArray[data].tokens) {
-        let metadata = await redisCache.getTokenData(
-          nft.id,
-          tokenIdArray[data].contract,
-          JSON.parse(nft.metadata)
-        );
-
-        token_array.push({
-          contract: toChecksumAddress(tokenIdArray[data].contract),
-          token_id: nft.id,
-          owner: owner,
-          active_order: await orderServiceInstance.checkValidOrder({
-            userId,
-            tokenId: nft.id,
-          }),
-          name: metadata.name,
-          description: metadata.description,
-          attributes: metadata.attributes,
-          image: metadata.image,
-          external_link: metadata.external_link,
-          amount: data.amount,
-          type: category.type
-        });
-      }
-
-      if (token_array) {
-        nft_array.push(...token_array);
-        balances[toChecksumAddress(tokenIdArray[data].contract)] = token_array.length;
-      }
-    }
-  }
-  return { nft_array, balances };
+  return tokenIdArray
 }
 
 function getSignatureParameters(signature) {

@@ -281,24 +281,13 @@ router.get(
         orderBy,
       });
 
-      let ordersList = [];
 
       if (orders) {
-        for (order of orders.order) {
-          let metadata = await redisCache.getTokenData(
-            order.tokens_id,
-            order.categories.categoriesaddresses[0].address,
-            order.categories.isOpenseaCompatible,
-            order.categories.tokenURI
-              ? order.categories.tokenURI + order.tokens_id
-              : order.categories.tokenURI
-          );
-          ordersList.push({ ...order, ...metadata });
-        }
+        
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
           data: {
-            order: ordersList,
+            order: orders.order,
             limit: orders.limit,
             offset: orders.offset,
             has_next_page: orders.has_next_page,
