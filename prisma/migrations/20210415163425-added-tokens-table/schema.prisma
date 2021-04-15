@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = "***"
 }
 
 model bids {
@@ -137,7 +137,6 @@ model orders {
   updated            DateTime        @default(now())
   views              Int?            @default(0)
   categories         categories      @relation(fields: [categories_id], references: [id])
-  tokens             tokens          @relation(fields: [tokens_id, categories_id], references: [token_id, categories_id])
   erc20tokens        erc20tokens     @relation(fields: [erc20tokens_id], references: [id])
   buyer_users        users?          @relation("buyer_orders", fields: [buyer], references: [id])
   seller_users       users?          @relation("seller_orders", fields: [seller], references: [id])
