@@ -64,7 +64,7 @@ class TokenService {
                   category_id: category.id,
                   name: metadata ? metadata.name : "",
                   description: metadata ? metadata.descriptionÎ : "",
-                  image_url: metadata ? metadata.image_url : "",
+                  image_url: metadata ? metadata.image : "",
                   external_url: metadata ? metadata.external_url : "",
                   attributes: metadata
                     ? JSON.stringify(metadata.attributes)
@@ -76,7 +76,7 @@ class TokenService {
                   category_id: category.id,
                   name: metadata ? metadata.name : "",
                   description: metadata ? metadata.descriptionÎ : "",
-                  image_url: metadata ? metadata.image_url : "",
+                  image_url: metadata ? metadata.image : "",
                   external_url: metadata ? metadata.external_url : "",
                   attributes: metadata
                     ? JSON.stringify(metadata.attributes)
