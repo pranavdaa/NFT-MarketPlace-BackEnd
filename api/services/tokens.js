@@ -63,7 +63,7 @@ class TokenService {
                   token_id: nft.id,
                   category_id: category.id,
                   name: metadata ? metadata.name : "",
-                  description: metadata ? metadata.descriptionÎ : "",
+                  description: metadata ? metadata.description : "",
                   image_url: metadata ? metadata.image : "",
                   external_url: metadata ? metadata.external_url : "",
                   attributes: metadata
@@ -75,7 +75,7 @@ class TokenService {
                   token_id: nft.id,
                   category_id: category.id,
                   name: metadata ? metadata.name : "",
-                  description: metadata ? metadata.descriptionÎ : "",
+                  description: metadata ? metadata.description : "",
                   image_url: metadata ? metadata.image : "",
                   external_url: metadata ? metadata.external_url : "",
                   attributes: metadata
