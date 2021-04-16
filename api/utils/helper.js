@@ -10,7 +10,6 @@ let { BigNumber, providerUtils } = require("@0x/utils");
 const root_web3 = new Web3(root_provider);
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-let redisCache = require("../utils/redis-cache");
 let constants = require("../../config/constants");
 
 let {
@@ -93,7 +92,8 @@ async function checkTokenBalance(userAddress, amount, contractAddress) {
     .balanceOf(userAddress)
     .call();
 
-  if (balance >= amount) {
+
+  if (parseInt(balance) >= parseInt(amount)) {
     return true;
   } else {
     return false;
@@ -125,22 +125,12 @@ async function ethereum_balance(
   tokenId_array = await Promise.all(tokenId_array);
 
   for (data of tokenId_array) {
-    let metadata = await redisCache.getTokenData(
-      data,
-      ethereumAddress,
-      true,
-      null
-    );
+    
 
     token_array.push({
       contract: rootContractAddress,
       token_id: data,
       owner: owner,
-      name: metadata.name,
-      description: metadata.description,
-      attributes: metadata.attributes,
-      image: metadata.image,
-      external_link: metadata.external_link,
       type,
     });
   }

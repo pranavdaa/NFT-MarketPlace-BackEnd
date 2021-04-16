@@ -44,46 +44,69 @@ class TokenService {
                 category_id: category.id,
               });
 
-              const metadata = JSON.parse(nft.metadata);
+              let metadata = JSON.parse(nft.metadata);
+
+              if (!metadata) {
+                if (category.tokenURI) {
+                  metadata = helper.fetchMetadataFromTokenURI(
+                    category.tokenURI
+                  );
+                } else {
+                  if (nft.token_uri) {
+                    metadata = helper.fetchMetadataFromTokenURI(nft.token_uri);
+                  }
+                }
+              }
 
               if (!token) {
                 token = await this.createToken({
                   token_id: nft.id,
                   category_id: category.id,
-                  name: metadata.name,
-                  description: metadata.description,
-                  image_url: metadata.image,
-                  external_url: metadata.external_url,
-                  attributes: JSON.stringify(metadata.attributes),
+                  name: metadata ? metadata.name : "",
+                  description: metadata ? metadata.descriptionÎ : "",
+                  image_url: metadata ? metadata.image_url : "",
+                  external_url: metadata ? metadata.external_url : "",
+                  attributes: metadata
+                    ? JSON.stringify(metadata.attributes)
+                    : "",
                 });
               } else {
                 token = await this.updateToken({
                   token_id: nft.id,
                   category_id: category.id,
-                  name: metadata.name,
-                  description: metadata.description,
-                  image_url: metadata.image,
-                  external_url: metadata.external_url,
-                  attributes: JSON.stringify(metadata.attributes),
+                  name: metadata ? metadata.name : "",
+                  description: metadata ? metadata.descriptionÎ : "",
+                  image_url: metadata ? metadata.image_url : "",
+                  external_url: metadata ? metadata.external_url : "",
+                  attributes: metadata
+                    ? JSON.stringify(metadata.attributes)
+                    : "",
                 });
               }
 
-              token_array.push({
-                contract: helper.toChecksumAddress(tokenIdArray[data].contract),
-                token_id: token.token_id,
-                owner: params.owner,
-                name: token.name,
-                description: token.description,
-                attributes: token.attributes,
-                image: token.image_url,
-                active_order: await orderServiceInstance.checkValidOrder({
-                  userId: params.userId,
-                  tokenId: nft.id,
-                }),
-                external_link: token.external_url,
-                amount: tokenIdArray[data].amount,
-                type: category.type,
+              let orderDetail = await orderServiceInstance.checkValidOrder({
+                userId: params.userId,
+                tokenId: nft.id,
+                categoryId: category.id
               });
+
+              token_array.push(
+                {
+                  contract: helper.toChecksumAddress(
+                    tokenIdArray[data].contract
+                  ),
+                  token_id: token.token_id,
+                  owner: params.owner,
+                  name: token.name,
+                  description: token.description,
+                  attributes: token.attributes,
+                  image: token.image_url,
+                  external_link: token.external_url,
+                  amount: nft.amount,
+                  type: category.type,
+                  ...orderDetail
+                },
+              );
             }
 
             if (token_array) {

@@ -12,12 +12,10 @@ const tokenServiceInstance = new TokenService();
 const verifyToken = require("../middlewares/verify-token");
 let requestUtil = require("../utils/request-utils");
 let helper = require("../utils/helper");
-let redisCache = require("../utils/redis-cache");
 let constants = require("../../config/constants");
 let config = require("../../config/config");
 let { BigNumber } = require("@0x/utils");
 let { ContractWrappers, OrderStatus } = require("@0x/contract-wrappers");
-const e = require("express");
 
 /**
  * Order routes
@@ -115,9 +113,10 @@ router.post(
       let validOrder = await orderServiceInstance.checkValidOrder({
         userId: req.userId,
         tokenId,
+        categoryId: category.id,
       });
 
-      if (validOrder) {
+      if (validOrder.active_order) {
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.MESSAGES.INPUT_VALIDATION_ERROR,
         });
