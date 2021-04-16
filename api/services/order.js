@@ -570,8 +570,9 @@ class OrderService {
         },
       });
       for (const data of bids) {
+        let orderInvalid = false;
+        let signedOrder = null
         if (data.signature) {
-          let orderInvalid = false;
           let signedOrder = JSON.parse(data.signature);
           const contractWrappers = new ContractWrappers(
             helper.providerEngine(),
