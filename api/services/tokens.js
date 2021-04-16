@@ -100,7 +100,7 @@ class TokenService {
                   name: token.name,
                   description: token.description,
                   attributes: token.attributes,
-                  image: token.image_url,
+                  image_url: token.image_url,
                   external_link: token.external_url,
                   amount: nft.amount,
                   type: category.type,
