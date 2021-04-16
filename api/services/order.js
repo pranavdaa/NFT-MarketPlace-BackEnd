@@ -223,7 +223,7 @@ class OrderService {
   async getFullOrderList() {
     try {
       let where = {
-        AND: [{ active: true }],
+        AND: [{ active: true }, { status: 0 }],
       };
 
       let order = await prisma.orders.findMany({

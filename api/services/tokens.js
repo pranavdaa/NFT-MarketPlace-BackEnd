@@ -193,7 +193,7 @@ class TokenService {
           attributes:
             params.attributes && params.attributes !== ""
               ? params.attributes
-              : current.external_url,
+              : current.attributes,
           name: params.name && params.name !== "" ? params.name : current.name,
         },
       });
