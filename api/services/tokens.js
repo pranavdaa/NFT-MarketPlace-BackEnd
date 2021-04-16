@@ -48,7 +48,7 @@ class TokenService {
               if (!metadata) {
                 if (category.tokenURI) {
                   metadata = helper.fetchMetadataFromTokenURI(
-                    category.tokenURI
+                    category.tokenURI + nft.id
                   );
                 } else {
                   if (nft.token_uri) {
