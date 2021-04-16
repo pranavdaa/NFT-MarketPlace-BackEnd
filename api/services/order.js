@@ -571,7 +571,6 @@ class OrderService {
       });
       for (const data of bids) {
         let orderInvalid = false;
-        let signedOrder = null
         if (data.signature) {
           let signedOrder = JSON.parse(data.signature);
           const contractWrappers = new ContractWrappers(
@@ -594,17 +593,18 @@ class OrderService {
             remainingFillableAmount.isGreaterThan(0) &&
             isValidSignature
           );
-        }
-        if (
-          !(
-            (await helper.checkTokenBalance(
-              signedOrder.makerAddress,
-              signedOrder.makerAssetAmount,
-              data.orders.erc20tokens.erc20tokensaddresses[0].address
-            )) || orderInvalid
-          )
-        ) {
-          await this.clearBids({ bidId: data.id });
+
+          if (
+            !(
+              (await helper.checkTokenBalance(
+                signedOrder.makerAddress,
+                signedOrder.makerAssetAmount,
+                data.orders.erc20tokens.erc20tokensaddresses[0].address
+              )) || orderInvalid
+            )
+          ) {
+            await this.clearBids({ bidId: data.id });
+          }
         }
       }
 
