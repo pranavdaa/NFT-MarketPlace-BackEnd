@@ -87,26 +87,22 @@ class TokenService {
               let orderDetail = await orderServiceInstance.checkValidOrder({
                 userId: params.userId,
                 tokenId: nft.id,
-                categoryId: category.id
+                categoryId: category.id,
               });
 
-              token_array.push(
-                {
-                  contract: helper.toChecksumAddress(
-                    tokenIdArray[data].contract
-                  ),
-                  token_id: token.token_id,
-                  owner: params.owner,
-                  name: token.name,
-                  description: token.description,
-                  attributes: token.attributes,
-                  image_url: token.image_url,
-                  external_link: token.external_url,
-                  amount: nft.amount,
-                  type: category.type,
-                  ...orderDetail
-                },
-              );
+              token_array.push({
+                contract: helper.toChecksumAddress(tokenIdArray[data].contract),
+                token_id: token.token_id,
+                owner: params.owner,
+                name: token.name,
+                description: token.description,
+                attributes: token.attributes,
+                image_url: token.image_url,
+                external_link: token.external_url,
+                amount: nft.amount,
+                type: category.type,
+                ...orderDetail,
+              });
             }
 
             if (token_array) {
@@ -178,22 +174,16 @@ class TokenService {
           },
         },
         data: {
-          description:
-            params.description && params.description !== ""
-              ? params.description
-              : current.description,
-          image_url:
-            params.image_url && params.image_url !== ""
-              ? params.image_url
-              : current.image_url,
-          external_url:
-            params.external_url && params.external_url !== ""
-              ? params.external_url
-              : current.external_url,
-          attributes:
-            params.attributes && params.attributes !== ""
-              ? params.attributes
-              : current.attributes,
+          description: params.description
+            ? params.description
+            : current.description,
+          image_url: params.image_url ? params.image_url : current.image_url,
+          external_url: params.external_url
+            ? params.external_url
+            : current.external_url,
+          attributes: params.attributes
+            ? params.attributes
+            : current.attributes,
           name: params.name && params.name !== "" ? params.name : current.name,
         },
       });
