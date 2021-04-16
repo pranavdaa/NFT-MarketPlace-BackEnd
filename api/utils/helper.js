@@ -8,8 +8,7 @@ const web3 = new Web3(provider);
 const root_provider = new Web3.providers.HttpProvider(config.ETHEREUM_RPC);
 let { BigNumber, providerUtils } = require("@0x/utils");
 const root_web3 = new Web3(root_provider);
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = require("../../prisma")
 let constants = require("../../config/constants");
 
 let {

@@ -1,8 +1,7 @@
 const { Client } = require("pg");
 let constants = require("../../config/constants");
 const helper = require("../utils/helper");
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = require("../../prisma")
 const orderService = require("../services/order");
 let orderServiceInstance = new orderService();
 const categoryService = require("../services/category");

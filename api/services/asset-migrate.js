@@ -1,5 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = require("../../prisma")
 let { hasNextPage } = require("../utils/request-utils");
 let constants = require("../../config/constants");
 const categoryService = require("../services/category");
