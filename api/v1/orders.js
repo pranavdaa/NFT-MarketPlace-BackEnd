@@ -7,6 +7,8 @@ const erc20TokenService = require("../services/erc20-token");
 let erc20TokenServiceInstance = new erc20TokenService();
 const categoryService = require("../services/category");
 let categoryServiceInstance = new categoryService();
+const TokenService = require("../services/tokens");
+const tokenServiceInstance = new TokenService();
 const verifyToken = require("../middlewares/verify-token");
 let requestUtil = require("../utils/request-utils");
 let helper = require("../utils/helper");
@@ -15,6 +17,7 @@ let constants = require("../../config/constants");
 let config = require("../../config/config");
 let { BigNumber } = require("@0x/utils");
 let { ContractWrappers, OrderStatus } = require("@0x/contract-wrappers");
+const e = require("express");
 
 /**
  * Order routes
@@ -281,9 +284,7 @@ router.get(
         orderBy,
       });
 
-
       if (orders) {
-        
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
           data: {
@@ -329,10 +330,13 @@ router.get(
 
         if (order.signature) {
           let signedOrder = JSON.parse(order.signature);
-          const contractWrappers = new ContractWrappers(helper.providerEngine(), {
-            chainId: parseInt(constants.MATIC_CHAIN_ID),
-          });
-  
+          const contractWrappers = new ContractWrappers(
+            helper.providerEngine(),
+            {
+              chainId: parseInt(constants.MATIC_CHAIN_ID),
+            }
+          );
+
           const [
             { orderStatus, orderHash },
             remainingFillableAmount,
@@ -340,7 +344,7 @@ router.get(
           ] = await contractWrappers.devUtils
             .getOrderRelevantState(signedOrder, signedOrder.signature)
             .callAsync();
-  
+
           orderInvalid = !(
             orderStatus === OrderStatus.Fillable &&
             remainingFillableAmount.isGreaterThan(0) &&
@@ -348,14 +352,56 @@ router.get(
           );
         }
 
-        let metadata = await redisCache.getTokenData(
-          order.tokens_id,
-          order.categories.categoriesaddresses[0].address,
-          order.categories.isOpenseaCompatible,
-          order.categories.tokenURI
-            ? order.categories.tokenURI + order.tokens_id
-            : order.categories.tokenURI
-        );
+        let token = await tokenServiceInstance.getToken({
+          token_id: order.tokens_id,
+          category_id: order.categories.id,
+        });
+
+        let metadata;
+        if (order.categories.tokenURI) {
+          metadata = await helper.fetchMetadataFromTokenURI(
+            order.categories.tokenURI + order.tokens_id
+          );
+        } else {
+          let tokenDetails = await helper.fetchMetadata(
+            order.categories.categoriesaddresses[0].address,
+            order.tokens_id
+          );
+
+          if (tokenDetails) {
+            if (!tokenDetails.metadata) {
+              if (tokenDetails.token_uri) {
+                metadata = await helper.fetchMetadataFromTokenURI(
+                  tokenDetails.token_uri
+                );
+              }
+            } else {
+              metadata = JSON.parse(tokenDetails.metadata);
+            }
+          }
+        }
+
+        if (!token) {
+          token = await tokenServiceInstance.createToken({
+            token_id: order.tokens_id,
+            category_id: order.categories.id,
+            name: metadata ? metadata.name : "",
+            description: metadata ? metadata.description : "",
+            image_url: metadata ? metadata.image : "",
+            external_url: metadata ? metadata.external_url : "",
+            attributes: metadata ? JSON.stringify(metadata.attributes) : "",
+          });
+        } else {
+          token = await tokenServiceInstance.updateToken({
+            token_id: order.tokens_id,
+            category_id: order.categories.id,
+            name: metadata ? metadata.name : "",
+            description: metadata ? metadata.description : "",
+            image_url: metadata ? metadata.image : "",
+            external_url: metadata ? metadata.external_url : "",
+            attributes: metadata ? JSON.stringify(metadata.attributes) : "",
+          });
+        }
 
         let limit = requestUtil.getLimit(req.query);
         let offset = requestUtil.getOffset(req.query);
@@ -379,8 +425,18 @@ router.get(
           }
         }
 
-        let orderData = { ...order, ...metadata };
-        if ((!checkOwnerShip && order.token_type !== "ERC1155") || orderInvalid) {
+        const formattedMetadata = {
+          name: metadata ? metadata.name : "",
+          description: metadata ? metadata.description : "",
+          image_url: metadata ? metadata.image : "",
+          external_url: metadata ? metadata.external_url : "",
+          attributes: metadata ? metadata.attributes : "",
+        };
+        let orderData = { ...order, ...{ tokens: formattedMetadata } };
+        if (
+          (!checkOwnerShip && order.token_type !== "ERC1155") ||
+          orderInvalid
+        ) {
           return res
             .status(constants.RESPONSE_STATUS_CODES.ORDER_EXPIRED)
             .json({

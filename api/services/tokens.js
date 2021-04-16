@@ -39,13 +39,12 @@ class TokenService {
 
             let token_array = [];
             for (const nft of tokenIdArray[data].tokens) {
-
               let token = await this.getToken({
                 token_id: nft.id,
                 category_id: category.id,
               });
 
-              const metadata = JSON.parse(nft.metadata)
+              const metadata = JSON.parse(nft.metadata);
 
               if (!token) {
                 token = await this.createToken({
@@ -76,9 +75,13 @@ class TokenService {
                 name: token.name,
                 description: token.description,
                 attributes: token.attributes,
-                image: token.image,
-                external_link: token.external_link,
-                amount: data.amount,
+                image: token.image_url,
+                active_order: await orderServiceInstance.checkValidOrder({
+                  userId: params.userId,
+                  tokenId: nft.id,
+                }),
+                external_link: token.external_url,
+                amount: tokenIdArray[data].amount,
                 type: category.type,
               });
             }
@@ -140,22 +143,8 @@ class TokenService {
     }
   }
 
-  // async getToken(params) {
-  //   try {
-  //     let token = await prisma.tokens.findOne({
-  //       where: {
-  //         category_id: parseInt(params.category_id),
-  //         token_id: params.token_id,
-  //       },
-  //     });
-  //     return token;
-  //   } catch (err) {
-  //     console.log(err);
-  //     throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
-  //   }
-  // }
-
   async updateToken(params) {
+    // console.log(params)
     try {
       let current = await this.getToken(params);
       let token = await prisma.tokens.update({
@@ -166,19 +155,26 @@ class TokenService {
           },
         },
         data: {
-          description: params.description
-            ? params.description
-            : current.description,
-          image_url: params.image_url ? params.image_url : current.image_url,
-          external_url: params.external_url
-            ? params.external_url
-            : current.external_url,
-          attributes: params.attributes
-            ? params.attributes
-            : current.external_url,
-          name: params.name ? params.name : current.name,
+          description:
+            params.description && params.description !== ""
+              ? params.description
+              : current.description,
+          image_url:
+            params.image_url && params.image_url !== ""
+              ? params.image_url
+              : current.image_url,
+          external_url:
+            params.external_url && params.external_url !== ""
+              ? params.external_url
+              : current.external_url,
+          attributes:
+            params.attributes && params.attributes !== ""
+              ? params.attributes
+              : current.external_url,
+          name: params.name && params.name !== "" ? params.name : current.name,
         },
       });
+
       return token;
     } catch (err) {
       console.log(err);

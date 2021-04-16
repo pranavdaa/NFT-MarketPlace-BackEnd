@@ -186,7 +186,52 @@ class OrderService {
               symbol: true,
             },
           },
+          categories: {
+            include: {
+              categoriesaddresses: {
+                where: { chain_id: constants.MATIC_CHAIN_ID },
+                select: { address: true, ethereum_address: true },
+              },
+            },
+          },
+          tokens_id: true
         },
+      });
+      return order;
+    } catch (err) {
+      console.log(err);
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+
+  async getFullOrderList() {
+    try {
+      let where = {
+        AND: [{ active: true }],
+      };
+
+      let order = await prisma.orders.findMany({
+        where,
+        select: {
+          id: true,
+          price: true,
+          erc20tokens: {
+            select: {
+              symbol: true,
+            },
+          },
+          categories: {
+            include: {
+              categoriesaddresses: {
+                where: { chain_id: constants.MATIC_CHAIN_ID },
+                select: { address: true, ethereum_address: true },
+              },
+            },
+          },
+          tokens_id: true,
+        },
+        orderBy: { id: constants.SORT_DIRECTION.DESC }
       });
       return order;
     } catch (err) {
@@ -289,7 +334,6 @@ class OrderService {
   }
 
   async checkValidOrder(params) {
-    console.log(params);
     try {
       let order = await prisma.orders.findMany({
         where: {

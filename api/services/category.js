@@ -11,6 +11,7 @@ let constants = require("../../config/constants");
 class CategoryService {
   async createCategory(params, file) {
     try {
+
       let category = await prisma.categories.create({
         data: {
           name: params.name,

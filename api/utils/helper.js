@@ -148,12 +148,25 @@ async function ethereum_balance(
 }
 
 async function matic_balance(owner) {
-
   url = config.BALANCE_URL + owner;
   let response = await fetch(url);
   let tokenIdArray = (await response.json()).data.tokens;
 
-  return tokenIdArray
+  return tokenIdArray;
+}
+
+async function fetchMetadata(contract, token_id) {
+  url = config.TOKEN_DETAILS_URL + contract + "&id=" + token_id;
+  let response = await fetch(url);
+  let tokenDetail = (await response.json()).data;
+
+  return tokenDetail;
+}
+
+async function fetchMetadataFromTokenURI(url) {
+  let response = await fetch(url);
+  let tokenDetail = (await response.json());
+  return tokenDetail;
 }
 
 function getSignatureParameters(signature) {
@@ -261,4 +274,6 @@ module.exports = {
   encodeExchangeData,
   checkOwnerShip,
   checkTokenBalance,
+  fetchMetadata,
+  fetchMetadataFromTokenURI
 };
