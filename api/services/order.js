@@ -1,4 +1,4 @@
-const prisma = require("../../prisma")
+const prisma = require("../../prisma");
 let { hasNextPage } = require("../utils/request-utils");
 let constants = require("../../config/constants");
 let zeroxUtil = require("../utils/zerox-util");
@@ -594,13 +594,12 @@ class OrderService {
           );
 
           if (
-            !(
-              (await helper.checkTokenBalance(
-                signedOrder.makerAddress,
-                signedOrder.makerAssetAmount,
-                data.orders.erc20tokens.erc20tokensaddresses[0].address
-              )) || orderInvalid
-            )
+            !(await helper.checkTokenBalance(
+              signedOrder.makerAddress,
+              signedOrder.makerAssetAmount,
+              data.orders.erc20tokens.erc20tokensaddresses[0].address
+            )) ||
+            orderInvalid
           ) {
             await this.clearBids({ bidId: data.id });
           }

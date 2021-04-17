@@ -91,7 +91,6 @@ async function checkTokenBalance(userAddress, amount, contractAddress) {
     .balanceOf(userAddress)
     .call();
 
-
   if (parseInt(balance) >= parseInt(amount)) {
     return true;
   } else {
