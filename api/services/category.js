@@ -1,4 +1,4 @@
-const prisma = require("../../prisma")
+const prisma = require("../../prisma");
 let { hasNextPage } = require("../utils/request-utils");
 let constants = require("../../config/constants");
 
@@ -10,7 +10,6 @@ let constants = require("../../config/constants");
 class CategoryService {
   async createCategory(params, file) {
     try {
-
       let category = await prisma.categories.create({
         data: {
           name: params.name,
@@ -58,14 +57,14 @@ class CategoryService {
     }
   }
 
-  async getCategoryByAddress({ categoryAddress }) {
+  async getCategoryByAddress({ categoryAddress, chainId }) {
     try {
       let category = await prisma.categoriesaddresses.findOne({
         where: {
           address_chain_id: {
             address: categoryAddress,
-            chain_id : "137"
-          }
+            chain_id: chainId,
+          },
         },
       });
 

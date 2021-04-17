@@ -8,7 +8,7 @@ const web3 = new Web3(provider);
 const root_provider = new Web3.providers.HttpProvider(config.ETHEREUM_RPC);
 let { BigNumber, providerUtils } = require("@0x/utils");
 const root_web3 = new Web3(root_provider);
-const prisma = require("../../prisma")
+const prisma = require("../../prisma");
 let constants = require("../../config/constants");
 
 let {
@@ -123,8 +123,6 @@ async function ethereum_balance(
   tokenId_array = await Promise.all(tokenId_array);
 
   for (data of tokenId_array) {
-    
-
     token_array.push({
       contract: rootContractAddress,
       token_id: data,
@@ -139,21 +137,25 @@ async function matic_balance(owner) {
   url = config.BALANCE_URL + owner;
   let response = await fetch(url);
   let tokenIdArray = (await response.json()).data.tokens;
-
   return tokenIdArray;
 }
 
 async function fetchMetadata(contract, token_id) {
+  let tokenDetail = null;
   url = config.TOKEN_DETAILS_URL + contract + "&id=" + token_id;
   let response = await fetch(url);
-  let tokenDetail = (await response.json()).data;
-
+  if (response) {
+    tokenDetail = (await response.json()).data;
+  }
   return tokenDetail;
 }
 
 async function fetchMetadataFromTokenURI(url) {
+  let tokenDetail = null;
   let response = await fetch(url);
-  let tokenDetail = (await response.json());
+  if (response) {
+    tokenDetail = await response.json();
+  }
   return tokenDetail;
 }
 
@@ -263,5 +265,5 @@ module.exports = {
   checkOwnerShip,
   checkTokenBalance,
   fetchMetadata,
-  fetchMetadataFromTokenURI
+  fetchMetadataFromTokenURI,
 };

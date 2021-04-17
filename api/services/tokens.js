@@ -1,7 +1,7 @@
 const { Client } = require("pg");
 let constants = require("../../config/constants");
 const helper = require("../utils/helper");
-const prisma = require("../../prisma")
+const prisma = require("../../prisma");
 const orderService = require("../services/order");
 let orderServiceInstance = new orderService();
 const categoryService = require("../services/category");
@@ -28,6 +28,7 @@ class TokenService {
           let categoryDetail = await categoryServiceInstance.getCategoryByAddress(
             {
               categoryAddress: helper.toChecksumAddress(data),
+              chainId: params.chainId,
             }
           );
 
@@ -38,6 +39,7 @@ class TokenService {
 
             let token_array = [];
             for (const nft of tokenIdArray[data].tokens) {
+
               let token = await this.getToken({
                 token_id: nft.id,
                 category_id: category.id,
@@ -47,12 +49,12 @@ class TokenService {
 
               if (!metadata) {
                 if (category.tokenURI) {
-                  metadata = helper.fetchMetadataFromTokenURI(
+                  metadata = await helper.fetchMetadataFromTokenURI(
                     category.tokenURI + nft.id
                   );
                 } else {
                   if (nft.token_uri) {
-                    metadata = helper.fetchMetadataFromTokenURI(nft.token_uri);
+                    metadata = await helper.fetchMetadataFromTokenURI(nft.token_uri);
                   }
                 }
               }
