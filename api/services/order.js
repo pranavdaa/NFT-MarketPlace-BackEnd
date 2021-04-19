@@ -107,7 +107,7 @@ class OrderService {
     }
   }
 
-  async getOrders({ categoryArray, limit, offset, orderBy }) {
+  async getOrders({ categoryArray, limit, offset, orderBy, searchString }) {
     try {
       let where;
       if (categoryArray && JSON.parse(categoryArray).length !== 0) {
@@ -116,11 +116,16 @@ class OrderService {
             { active: true },
             { status: 0 },
             { categories_id: { in: JSON.parse(categoryArray) } },
+            { tokens: { name: { contains: searchString } } },
           ],
         };
       } else {
         where = {
-          AND: [{ active: true }, { status: 0 }],
+          AND: [
+            { active: true },
+            { status: 0 },
+            { tokens: { name: { contains: searchString } } },
+          ],
         };
       }
 
