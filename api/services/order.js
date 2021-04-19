@@ -116,7 +116,7 @@ class OrderService {
             { active: true },
             { status: 0 },
             { categories_id: { in: JSON.parse(categoryArray) } },
-            { tokens: { name: { contains: searchString } } },
+            { tokens: { name_lowercase: { contains: searchString } } },
           ],
         };
       } else {
@@ -124,7 +124,7 @@ class OrderService {
           AND: [
             { active: true },
             { status: 0 },
-            { tokens: { name: { contains: searchString } } },
+            { tokens: { name_lowercase: { contains: searchString } } },
           ],
         };
       }

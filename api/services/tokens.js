@@ -39,7 +39,6 @@ class TokenService {
 
             let token_array = [];
             for (const nft of tokenIdArray[data].tokens) {
-
               let token = await this.getToken({
                 token_id: nft.id,
                 category_id: category.id,
@@ -54,7 +53,9 @@ class TokenService {
                   );
                 } else {
                   if (nft.token_uri) {
-                    metadata = await helper.fetchMetadataFromTokenURI(nft.token_uri);
+                    metadata = await helper.fetchMetadataFromTokenURI(
+                      nft.token_uri
+                    );
                   }
                 }
               }
@@ -136,6 +137,7 @@ class TokenService {
           external_url: params.external_url,
           attributes: params.attributes,
           name: params.name,
+          name_lowercase: params.name.toLoweCase(),
           categories: { connect: { id: parseInt(params.category_id) } },
         },
       });
@@ -186,6 +188,10 @@ class TokenService {
             ? params.attributes
             : current.attributes,
           name: params.name && params.name !== "" ? params.name : current.name,
+          name_lowercase:
+            params.name_lowercase && params.name_lowercase !== ""
+              ? params.name_lowercase
+              : current.name_lowercase,
         },
       });
 
