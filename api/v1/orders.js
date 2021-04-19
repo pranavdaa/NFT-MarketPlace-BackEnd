@@ -274,13 +274,18 @@ router.get(
       let offset = requestUtil.getOffset(req.query);
       let orderBy = requestUtil.getSortBy(req.query, "+id");
 
-      let { categoryArray } = req.query;
+      let { categoryArray, searchString } = req.query;
+
+      if (!searchString) {
+        searchString = "";
+      }
 
       let orders = await orderServiceInstance.getOrders({
         categoryArray,
         limit,
         offset,
         orderBy,
+        searchString,
       });
 
       if (orders) {
