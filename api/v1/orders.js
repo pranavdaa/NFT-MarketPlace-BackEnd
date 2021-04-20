@@ -285,7 +285,7 @@ router.get(
         limit,
         offset,
         orderBy,
-        searchString,
+        searchString: searchString.toLowerCase(),
       });
 
       if (orders) {
