@@ -22,6 +22,7 @@ class CategoryService {
           },
           type: type,
           tokenURI: tokenURI,
+          name_lowercase: name.toLowerCase()
         },
       });
       return category;
@@ -80,7 +81,7 @@ class CategoryService {
     try {
       let { name } = params;
       let categories = await prisma.categories.findOne({
-        where: { name: name },
+        where: { name_lowercase: name.toLowerCase() },
       });
       return categories;
     } catch (err) {
@@ -90,7 +91,7 @@ class CategoryService {
   }
 
   async categoryAddressExists(params) {
-    let { address } = params
+    let { address } = params;
     try {
       let categories = await prisma.categoriesaddresses.findOne({
         where: { address: address },
