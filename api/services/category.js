@@ -90,7 +90,12 @@ class CategoryService {
   async categoryAddressExists(params) {
     try {
       let categories = await prisma.categoriesaddresses.findOne({
-        where: { address: params.address },
+        where: {
+          address_chain_id: {
+            address: categoryAddress,
+            chain_id: params.chain_id,
+          },
+        },
       });
 
       categories;
