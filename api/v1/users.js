@@ -163,25 +163,6 @@ router.get("/details", verifyToken, async (req, res) => {
 });
 
 /**
- *  Gets user detail from auth token
- */
-
- router.get("/config", verifyToken, async (req, res) => {
-  try {
-    let userId = req.userId;
-    let users = await userServiceInstance.getUser({ userId });
-    return res
-      .status(constants.RESPONSE_STATUS_CODES.OK)
-      .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: users, isAuthenticated: true });
-  } catch (err) {
-    console.log(err);
-    return res
-      .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
-      .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
-  }
-});
-
-/**
  *  Gets single user detail
  */
 
