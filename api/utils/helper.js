@@ -63,6 +63,25 @@ var getRate = async function (symbol) {
   }
 };
 
+async function getOwner(tokenId, contractAddress) {
+  const childContractInstance = new web3.eth.Contract(
+    artifacts.pos_ChildERC721,
+    contractAddress
+  );
+
+  try {
+    let owner = await childContractInstance.methods.ownerOf(tokenId).call();
+
+    if (owner) {
+      return toChecksumAddress(owner);
+    } else {
+      return null;
+    }
+  } catch (err) {
+    return false;
+  }
+}
+
 async function checkOwnerShip(userAddress, tokenId, contractAddress) {
   const childContractInstance = new web3.eth.Contract(
     artifacts.pos_ChildERC721,

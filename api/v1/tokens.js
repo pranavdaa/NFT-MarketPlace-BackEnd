@@ -155,7 +155,6 @@ router.get(
   async (req, res) => {
     try {
       let query = req.query;
-      console.log('query '+ JSON.stringify(req.query));
 
       const errors = validationResult(req);
 
@@ -228,28 +227,9 @@ router.get(
           });
         }
 
-        let orderDetail = await orderServiceInstance.checkValidOrder({
-          userId: query.userId,
-          tokenId: query.token_id,
-          categoryId: category.id,
-        });
-        
-        let user = await userServiceInstance.getUser({ userId: query.userId });
-
-        if (!user) {
-          return res.status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST).json({
-            message: constants.MESSAGES.INPUT_VALIDATION_ERROR,
-          });
-        }
-
-        let owner = user.address.toLowerCase();
-
-        let tokenIdArray = await helper.matic_balance(owner);
-        console.log(tokenIdArray);
-        let tokenDetails = {
-          contract: helper.toChecksumAddress(tokenIdArray[data].contract),
+        let tokenDetail = {
+          contract: helper.toChecksumAddress(query.category_address),
           token_id: token.token_id,
-          owner: params.owner,
           name: token.name,
           description: token.description,
           attributes: token.attributes,
@@ -257,29 +237,15 @@ router.get(
           external_link: token.external_url,
           amount: tokenMetadata.amount,
           type: category.type,
-          ...orderDetail,
         };
-      }
 
-      let tokenDetail = await tokenServiceInstance.getToken(req.body);
-
-      if (!tokenDetail) {
-        let token = await tokenServiceInstance.createToken(req.body);
-        if (token) {
+        if (tokenDetail) {
           return res
             .status(constants.RESPONSE_STATUS_CODES.OK)
-            .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: token });
-        } else {
-          return res
-            .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
-            .json({ message: constants.RESPONSE_STATUS.FAILURE });
-        }
-      } else {
-        let token = await tokenServiceInstance.updateToken(req.body);
-        if (token) {
-          return res
-            .status(constants.RESPONSE_STATUS_CODES.OK)
-            .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: token });
+            .json({
+              message: constants.RESPONSE_STATUS.SUCCESS,
+              data: tokenDetail,
+            });
         } else {
           return res
             .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
