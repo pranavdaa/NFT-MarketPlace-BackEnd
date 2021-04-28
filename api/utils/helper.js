@@ -268,6 +268,43 @@ const encodeExchangeData = (signedOrder, functionName) => {
   return data;
 };
 
+const bidValidate = async (signature) => {
+  let orderInvalid = false;
+  if (signature) {
+    let signedOrder = JSON.parse(signature);
+    const contractWrappers = new ContractWrappers(helper.providerEngine(), {
+      chainId: parseInt(constants.MATIC_CHAIN_ID),
+    });
+
+    const [
+      { orderStatus },
+      remainingFillableAmount,
+      isValidSignature,
+    ] = await contractWrappers.devUtils
+      .getOrderRelevantState(signedOrder, signedOrder.signature)
+      .callAsync();
+
+    orderInvalid = !(
+      orderStatus === OrderStatus.Fillable &&
+      remainingFillableAmount.isGreaterThan(0) &&
+      isValidSignature
+    );
+
+    if (
+      !(await helper.checkTokenBalance(
+        signedOrder.makerAddress,
+        signedOrder.makerAssetAmount,
+        data.orders.erc20tokens.erc20tokensaddresses[0].address
+      )) ||
+      orderInvalid
+    ) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+};
+
 module.exports = {
   isValidEthereumAddress,
   notify,
@@ -285,4 +322,6 @@ module.exports = {
   checkTokenBalance,
   fetchMetadata,
   fetchMetadataFromTokenURI,
+  getOwner,
+  bidValidate
 };

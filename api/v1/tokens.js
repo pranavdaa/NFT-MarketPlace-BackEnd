@@ -230,6 +230,7 @@ router.get(
         let tokenDetail = {
           contract: helper.toChecksumAddress(query.category_address),
           token_id: token.token_id,
+          owner: await helper.getOwner(query.token_id,query.category_address),
           name: token.name,
           description: token.description,
           attributes: token.attributes,
