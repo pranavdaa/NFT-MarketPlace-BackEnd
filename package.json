@@ -8,7 +8,8 @@
     "migrate-save": "npx prisma migrate save --experimental",
     "migrate-up": "npx prisma migrate up --experimental && npx prisma generate",
     "dev": "nodemon server.js --quiet",
-    "postinstall": "npx patch-package"
+    "postinstall": "npx patch-package",
+    "lint": "eslint"
   },
   "repository": {
     "type": "git",
@@ -62,9 +63,10 @@
     "babel-eslint": "^9.0.0",
     "babel-loader": "^8.0.2",
     "babel-watch": "^7.0.0",
-    "eslint": "^5.0.0",
+    "eslint": "^7.25.0",
+    "eslint-config-airbnb-base": "^14.2.1",
     "eslint-config-standard": "^12.0.0-alpha.0",
-    "eslint-plugin-import": "^2.12.0",
+    "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-node": "^6.0.1",
     "eslint-plugin-promise": "^3.8.0",
     "eslint-plugin-standard": "^3.1.0",

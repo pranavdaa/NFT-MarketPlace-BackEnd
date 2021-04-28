@@ -331,7 +331,7 @@ router.get(
  *  Gets users bids on orders
  */
 
-router.get(
+router.get( 
   "/:userId/bids",
   [check("userId", "A valid id is required").exists()],
   async (req, res) => {

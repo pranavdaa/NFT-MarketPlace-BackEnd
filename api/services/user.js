@@ -10,9 +10,10 @@ let constants = require("../../config/constants");
 class UserService {
   async createUser(params) {
     try {
+      let { address } = params;
       let user = await prisma.users.create({
         data: {
-          address: params.address.toLowerCase(),
+          address: address.toLowerCase(),
         },
       });
       return user;
@@ -50,9 +51,10 @@ class UserService {
 
   async getUser(params) {
     try {
+      let { userId } = params;
       let user = await prisma.users.findOne({
         where: {
-          id: parseInt(params.userId),
+          id: parseInt(userId),
         },
       });
       return user;
@@ -305,16 +307,17 @@ class UserService {
 
   async createUsersFavourite(params) {
     try {
+      let { userId, orderId } = params;
       let favourites = await prisma.favourites.create({
         data: {
           users: {
             connect: {
-              id: parseInt(params.userId),
+              id: parseInt(userId),
             },
           },
           orders: {
             connect: {
-              id: parseInt(params.orderId),
+              id: parseInt(orderId),
             },
           },
           updated: new Date(),
@@ -329,8 +332,9 @@ class UserService {
 
   async deleteUsersFavourite(params) {
     try {
+      let { favouriteId } = params;
       let favourite = await prisma.favourites.delete({
-        where: { id: parseInt(params.favouriteId) },
+        where: { id: parseInt(favouriteId) },
       });
       return favourite;
     } catch (err) {
@@ -341,9 +345,10 @@ class UserService {
 
   async getFavourite(params) {
     try {
+      let { favouriteId } = params;
       let favourite = await prisma.favourites.findOne({
         where: {
-          id: parseInt(params.favouriteId),
+          id: parseInt(favouriteId),
         },
       });
       return favourite;
@@ -355,11 +360,12 @@ class UserService {
 
   async favouriteExists(params) {
     try {
+      let { userId, orderId } = params;
       let favourite = await prisma.favourites.findMany({
         where: {
           AND: [
-            { users_id: parseInt(params.userId) },
-            { order_id: parseInt(params.orderId) },
+            { users_id: parseInt(userId) },
+            { order_id: parseInt(orderId) },
           ],
         },
       });
@@ -372,9 +378,10 @@ class UserService {
 
   async userExists(params) {
     try {
+      let { address } = params;
       let users = await prisma.users.findOne({
         where: {
-          address: params.address.toLowerCase(),
+          address: address.toLowerCase(),
         },
       });
       return users;
@@ -413,7 +420,7 @@ class UserService {
           order_id: true,
           type: true,
           orders: {
-            select: { type:true, txhash: true, categories: { select: { img_url: true } } },
+            select: { type: true, txhash: true, categories: { select: { img_url: true } } },
           },
         },
         orderBy: { created: constants.SORT_DIRECTION.DESC },

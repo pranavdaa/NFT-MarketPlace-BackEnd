@@ -15,10 +15,11 @@ class TokenService {
   async getTokens(params) {
     try {
       let balance_list = {};
+      let { owner, userId, chainId } = params;
       if (params.chainId === constants.MATIC_CHAIN_ID) {
         const tokenIdArray = await helper.matic_balance(
-          params.owner,
-          params.userId
+          owner,
+          userId
         );
 
         let nft_array = [];
@@ -28,7 +29,7 @@ class TokenService {
           let categoryDetail = await categoryServiceInstance.getCategoryByAddress(
             {
               categoryAddress: helper.toChecksumAddress(data),
-              chainId: params.chainId,
+              chainId: chainId,
             }
           );
 
@@ -87,7 +88,7 @@ class TokenService {
               }
 
               let orderDetail = await orderServiceInstance.checkValidOrder({
-                userId: params.userId,
+                userId: userId,
                 tokenId: nft.id,
                 categoryId: category.id,
               });
@@ -129,16 +130,17 @@ class TokenService {
 
   async createToken(params) {
     try {
+      let { token_id, description, image_url, external_url, attributes, name, category_id } = params;
       let token = await prisma.tokens.create({
         data: {
-          token_id: params.token_id,
-          description: params.description,
-          image_url: params.image_url,
-          external_url: params.external_url,
-          attributes: params.attributes,
-          name: params.name,
-          name_lowercase: (params.name).toLowerCase(),
-          categories: { connect: { id: parseInt(params.category_id) } },
+          token_id: token_id,
+          description: description,
+          image_url: image_url,
+          external_url: external_url,
+          attributes: attributes,
+          name: name,
+          name_lowercase: (name).toLowerCase(),
+          categories: { connect: { id: parseInt(category_id) } },
         },
       });
       return token;
@@ -150,11 +152,12 @@ class TokenService {
 
   async getToken(params) {
     try {
+      let { token_id, category_id } = params;
       let token = await prisma.tokens.findOne({
         where: {
           token_id_categories_id: {
-            token_id: params.token_id,
-            categories_id: params.category_id,
+            token_id: token_id,
+            categories_id: category_id,
           },
         },
       });
@@ -169,29 +172,31 @@ class TokenService {
     // console.log(params)
     try {
       let current = await this.getToken(params);
+      let { description: params_description, external_url: params_external_url, attributes: params_attributes, name: params_name, image_url: params_image_url, name_lowercase: params_name_lowercase } = params;
+      let { description: current_description, external_url: current_external_url, attributes: current_attributes, token_id: current_token_id, categories_id: current_categories_id, image_url: current_image_url, name_lowercase: current_name_lowercase } = current;
       let token = await prisma.tokens.update({
         where: {
           token_id_categories_id: {
-            token_id: current.token_id,
-            categories_id: current.categories_id,
+            token_id: current_token_id,
+            categories_id: current_categories_id,
           },
         },
         data: {
-          description: params.description
-            ? params.description
-            : current.description,
-          image_url: params.image_url ? params.image_url : current.image_url,
+          description: params_description
+            ? params_description
+            : current_description,
+          image_url: params_image_url ? params_image_url : current_image_url,
           external_url: params.external_url
-            ? params.external_url
-            : current.external_url,
+            ? params_external_url
+            : current_external_url,
           attributes: params.attributes
             ? params.attributes
             : current.attributes,
-          name: params.name && params.name !== "" ? params.name : current.name,
+          name: params_name && params_name !== "" ? params_name : current_name,
           name_lowercase:
             params.name_lowercase && params.name_lowercase !== ""
-              ? params.name_lowercase
-              : current.name_lowercase,
+              ? params_name_lowercase
+              : current_name_lowercase,
         },
       });
 
