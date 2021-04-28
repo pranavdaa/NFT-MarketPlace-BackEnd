@@ -7,6 +7,8 @@ const userService = require("../services/user");
 let userServiceInstance = new userService();
 const categoryService = require("../services/category");
 let categoryServiceInstance = new categoryService();
+const OrderService = require("../services/order");
+let orderServiceInstance = new OrderService();
 let constants = require("../../config/constants");
 const helper = require("../utils/helper");
 
@@ -144,14 +146,17 @@ router.post(
  *  @params category_address type: Int
  *  @params chain_id type: String
  */
-
+//here
 router.get(
-  "/",
+  "/detail",
   check("token_id", "A valid id is required").exists(),
   check("category_address", "A valid id is required").exists(),
   check("chain_id", "A valid id is required").exists(),
   async (req, res) => {
     try {
+      let query = req.query;
+      console.log('query '+ JSON.stringify(req.query));
+
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
@@ -161,8 +166,8 @@ router.get(
       }
 
       let categoryDetail = await categoryServiceInstance.getCategoryByAddress({
-        categoryAddress: helper.toChecksumAddress(params.category_address),
-        chainId: params.chain_id,
+        categoryAddress: helper.toChecksumAddress(query.category_address),
+        chainId: query.chain_id,
       });
 
       if (!categoryDetail) {
@@ -174,14 +179,14 @@ router.get(
           categoryId: categoryDetail.categories_id,
         });
 
-        let token = await this.getToken({
-          token_id: params.token_id,
+        let token = await tokenServiceInstance.getToken({
+          token_id: query.token_id,
           category_id: category.id,
         });
 
         let tokenMetadata = await helper.fetchMetadata(
-          helper.toChecksumAddress(params.category_address),
-          params.token_id
+          helper.toChecksumAddress(query.category_address),
+          query.token_id
         );
 
         let metadata;
@@ -190,7 +195,7 @@ router.get(
         } else {
           if (category.tokenURI) {
             metadata = await helper.fetchMetadataFromTokenURI(
-              category.tokenURI + params.token_id
+              category.tokenURI + query.token_id
             );
           } else {
             if (tokenMetadata.token_uri) {
@@ -202,8 +207,8 @@ router.get(
         }
 
         if (!token) {
-          token = await this.createToken({
-            token_id: params.token_id,
+          token = await tokenServiceInstance.createToken({
+            token_id: query.token_id,
             category_id: category.id,
             name: metadata ? metadata.name : "",
             description: metadata ? metadata.description : "",
@@ -212,8 +217,8 @@ router.get(
             attributes: metadata ? JSON.stringify(metadata.attributes) : "",
           });
         } else {
-          token = await this.updateToken({
-            token_id: params.token_id,
+          token = await tokenServiceInstance.updateToken({
+            token_id: query.token_id,
             category_id: category.id,
             name: metadata ? metadata.name : "",
             description: metadata ? metadata.description : "",
@@ -224,11 +229,23 @@ router.get(
         }
 
         let orderDetail = await orderServiceInstance.checkValidOrder({
-          userId: params.userId,
-          tokenId: params.token_id,
+          userId: query.userId,
+          tokenId: query.token_id,
           categoryId: category.id,
         });
+        
+        let user = await userServiceInstance.getUser({ userId: query.userId });
 
+        if (!user) {
+          return res.status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST).json({
+            message: constants.MESSAGES.INPUT_VALIDATION_ERROR,
+          });
+        }
+
+        let owner = user.address.toLowerCase();
+
+        let tokenIdArray = await helper.matic_balance(owner);
+        console.log(tokenIdArray);
         let tokenDetails = {
           contract: helper.toChecksumAddress(tokenIdArray[data].contract),
           token_id: token.token_id,

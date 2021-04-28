@@ -568,63 +568,65 @@ class OrderService {
         AND: [{ active: true }, { status: 0 }],
       };
 
-      let bids = await prisma.bids.findMany({
-        where: {
-          orders_id: parseInt(orderId),
-          status: 0,
-        },
-        include: {
-          users: true,
-          orders: {
-            select: {
-              erc20tokens: {
-                select: {
-                  erc20tokensaddresses: {
-                    where: { chain_id: constants.MATIC_CHAIN_ID },
-                  },
-                },
-              },
-            },
-          },
-        },
-      });
-      for (const data of bids) {
-        let orderInvalid = false;
-        if (data.signature) {
-          let signedOrder = JSON.parse(data.signature);
-          const contractWrappers = new ContractWrappers(
-            helper.providerEngine(),
-            {
-              chainId: parseInt(constants.MATIC_CHAIN_ID),
-            }
-          );
+      // let bids = await prisma.bids.findMany({
+      //   where: {
+      //     orders_id: parseInt(orderId),
+      //     status: 0,
+      //   },
+      //   include: {
+      //     users: true,
+      //     orders: {
+      //       select: {
+      //         erc20tokens: {
+      //           select: {
+      //             erc20tokensaddresses: {
+      //               where: { chain_id: constants.MATIC_CHAIN_ID },
+      //             },
+      //           },
+      //         },
+      //       },
+      //     },
+      //   },
+      // });
+      // // here
+      // for (const data of bids) {
+      //   let orderInvalid = false;
+      //   if (data.signature) {
+      //     let signedOrder = JSON.parse(data.signature);
+      //     const contractWrappers = new ContractWrappers(
+      //       helper.providerEngine(),
+      //       {
+      //         chainId: parseInt(constants.MATIC_CHAIN_ID),
+      //       }
+      //     );
 
-          const [
-            { orderStatus, orderHash },
-            remainingFillableAmount,
-            isValidSignature,
-          ] = await contractWrappers.devUtils
-            .getOrderRelevantState(signedOrder, signedOrder.signature)
-            .callAsync();
+      //     const [
+      //       { orderStatus, orderHash },
+      //       remainingFillableAmount,
+      //       isValidSignature,
+      //     ] = await contractWrappers.devUtils
+      //       .getOrderRelevantState(signedOrder, signedOrder.signature)
+      //       .callAsync();
 
-          orderInvalid = !(
-            orderStatus === OrderStatus.Fillable &&
-            remainingFillableAmount.isGreaterThan(0) &&
-            isValidSignature
-          );
+      //     orderInvalid = !(
+      //       orderStatus === OrderStatus.Fillable &&
+      //       remainingFillableAmount.isGreaterThan(0) &&
+      //       isValidSignature
+      //     );
 
-          if (
-            !(await helper.checkTokenBalance(
-              signedOrder.makerAddress,
-              signedOrder.makerAssetAmount,
-              data.orders.erc20tokens.erc20tokensaddresses[0].address
-            )) ||
-            orderInvalid
-          ) {
-            await this.clearBids({ bidId: data.id });
-          }
-        }
-      }
+      //     if (
+      //       !(await helper.checkTokenBalance(
+      //         signedOrder.makerAddress,
+      //         signedOrder.makerAssetAmount,
+      //         data.orders.erc20tokens.erc20tokensaddresses[0].address
+      //       )) ||
+      //       orderInvalid
+      //     ) {
+      //       await this.clearBids({ bidId: data.id });
+      //     }
+      //   }
+      // }
+      //here
 
       let count = await prisma.bids.count({ where });
       let order = await prisma.bids.findMany({
