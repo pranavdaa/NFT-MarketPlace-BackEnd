@@ -10,6 +10,8 @@ let { BigNumber, providerUtils } = require("@0x/utils");
 const root_web3 = new Web3(root_provider);
 const prisma = require("../../prisma");
 let constants = require("../../config/constants");
+let { ContractWrappers, OrderStatus } = require("@0x/contract-wrappers");
+
 
 let {
   MnemonicWalletSubprovider,
@@ -78,7 +80,7 @@ async function getOwner(tokenId, contractAddress) {
       return null;
     }
   } catch (err) {
-    return false;
+    return null;
   }
 }
 
@@ -268,11 +270,11 @@ const encodeExchangeData = (signedOrder, functionName) => {
   return data;
 };
 
-const bidValidate = async (signature) => {
+const orderValidate = async (signature) => {
   let orderInvalid = false;
   if (signature) {
     let signedOrder = JSON.parse(signature);
-    const contractWrappers = new ContractWrappers(helper.providerEngine(), {
+    const contractWrappers = new ContractWrappers(providerEngine(), {
       chainId: parseInt(constants.MATIC_CHAIN_ID),
     });
 
@@ -290,18 +292,7 @@ const bidValidate = async (signature) => {
       isValidSignature
     );
 
-    if (
-      !(await helper.checkTokenBalance(
-        signedOrder.makerAddress,
-        signedOrder.makerAssetAmount,
-        data.orders.erc20tokens.erc20tokensaddresses[0].address
-      )) ||
-      orderInvalid
-    ) {
-      return false;
-    } else {
-      return true;
-    }
+    return orderInvalid
   }
 };
 
@@ -323,5 +314,5 @@ module.exports = {
   fetchMetadata,
   fetchMetadataFromTokenURI,
   getOwner,
-  bidValidate
+  orderValidate
 };

@@ -64,6 +64,21 @@ class UserService {
     }
   }
 
+  async getUserByAddress(params) {
+    try {
+      let { address } = params;
+      let user = await prisma.users.findOne({
+        where: {
+          address: address.toLowerCase()
+        },
+      });
+      return user;
+    } catch (err) {
+      console.log(err);
+      throw new Error(constants.MESSAGES.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   async getUsersMakerOrders({ userId, limit, offset, orderBy }) {
     try {
       let count = await prisma.orders.count({

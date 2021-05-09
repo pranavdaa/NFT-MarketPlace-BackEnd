@@ -2,8 +2,6 @@ const prisma = require("../../prisma");
 let { hasNextPage } = require("../utils/request-utils");
 let constants = require("../../config/constants");
 let zeroxUtil = require("../utils/zerox-util");
-const helper = require("../utils/helper");
-let { ContractWrappers, OrderStatus } = require("@0x/contract-wrappers");
 
 /**
  * Includes all the Order services that controls
@@ -13,7 +11,20 @@ let { ContractWrappers, OrderStatus } = require("@0x/contract-wrappers");
 class OrderService {
   async placeFixedOrder(params) {
     try {
-      let { maker_address, maker_token, maker_token_id, usd_price, price, token_type, price_per_unit, quantity, signature, taker_token, type, chain_id } = params;
+      let {
+        maker_address,
+        maker_token,
+        maker_token_id,
+        usd_price,
+        price,
+        token_type,
+        price_per_unit,
+        quantity,
+        signature,
+        taker_token,
+        type,
+        chain_id,
+      } = params;
       let order = await prisma.orders.create({
         data: {
           seller_users: { connect: { id: parseInt(maker_address) } },
@@ -51,7 +62,21 @@ class OrderService {
 
   async placeNegotiationOrder(params) {
     try {
-      let { taker_address, taker_token, taker_token_id, min_price, price, token_type, price_per_unit, min_price_per_unit, quantity, usd_price, maker_token, type, chain_id } = params
+      let {
+        taker_address,
+        taker_token,
+        taker_token_id,
+        min_price,
+        price,
+        token_type,
+        price_per_unit,
+        min_price_per_unit,
+        quantity,
+        usd_price,
+        maker_token,
+        type,
+        chain_id,
+      } = params;
       let order = await prisma.orders.create({
         data: {
           seller_users: { connect: { id: parseInt(taker_address) } },
@@ -87,7 +112,15 @@ class OrderService {
 
   async placeAuctionOrder(params) {
     try {
-      let { expiry_date, taker_address, taker_token, maker_token, min_price, chain_id, taker_token_id } = params
+      let {
+        expiry_date,
+        taker_address,
+        taker_token,
+        maker_token,
+        min_price,
+        chain_id,
+        taker_token_id,
+      } = params;
       let order = await prisma.orders.create({
         data: {
           expiry_date: new Date(parseInt(expiry_date)),
@@ -281,7 +314,7 @@ class OrderService {
 
   async getOrder(params) {
     try {
-      let { orderId } = params
+      let { orderId } = params;
       let order = await prisma.orders.findOne({
         where: {
           id: parseInt(orderId),
@@ -331,7 +364,10 @@ class OrderService {
           },
           tokens: true,
           views: true,
-          bids: { orderBy: { price: constants.SORT_DIRECTION.DESC } },
+          bids: {
+            where: { status: 0 },
+            orderBy: { price: constants.SORT_DIRECTION.DESC },
+          },
           updated: true,
         },
       });
@@ -344,7 +380,7 @@ class OrderService {
 
   async orderExists(params) {
     try {
-      let { orderId } = params
+      let { orderId } = params;
       let order = await prisma.orders.findOne({
         where: {
           id: parseInt(orderId),
@@ -359,18 +395,21 @@ class OrderService {
 
   async checkValidOrder(params) {
     try {
-      let { tokenId, categoriesId, userId } = params;
+      let { tokenId, categoriesId } = params;
       let order = await prisma.orders.findMany({
         where: {
           tokens_id: tokenId,
           categories_id: categoriesId,
-          seller: parseInt(userId),
           status: 0,
         },
       });
 
       if (order.length > 0) {
-        return { order_id: order[0].id, active_order: true };
+        return {
+          order_id: order[0].id,
+          active_order: true,
+          seller: order[0].seller,
+        };
       } else {
         return { order_id: null, active_order: false };
       }
@@ -511,7 +550,7 @@ class OrderService {
   }
 
   async clearBids(params) {
-    let { bidId } = params
+    let { bidId } = params;
     const order = await prisma.bids.update({
       where: { id: parseInt(bidId) },
       data: {

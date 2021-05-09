@@ -72,76 +72,7 @@ router.get(
 );
 
 /**
- *  Adds a new token or updates existing token
- *  @params token_id type: String
- *  @params category_id type: Int
- *  @params description type: String
- *  @params image_url type: String
- *  @params external_url type: String
- *  @params name type: String
- *  @params attributes type: String
- */
-
-router.post(
-  "/",
-  check("token_id", "A valid id is required").exists(),
-  check("category_id", "A valid id is required").exists(),
-  async (req, res) => {
-    try {
-      const errors = validationResult(req);
-
-      if (!errors.isEmpty()) {
-        return res
-          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
-          .json({ error: errors.array() });
-      }
-
-      let category = await categoryServiceInstance.getCategory({
-        categoryId: category_id,
-      });
-
-      if (!category) {
-        return res
-          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
-          .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
-      }
-
-      let tokenDetail = await tokenServiceInstance.getToken(req.body);
-
-      if (!tokenDetail) {
-        let token = await tokenServiceInstance.createToken(req.body);
-        if (token) {
-          return res
-            .status(constants.RESPONSE_STATUS_CODES.OK)
-            .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: token });
-        } else {
-          return res
-            .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
-            .json({ message: constants.RESPONSE_STATUS.FAILURE });
-        }
-      } else {
-        let token = await tokenServiceInstance.updateToken(req.body);
-        if (token) {
-          return res
-            .status(constants.RESPONSE_STATUS_CODES.OK)
-            .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: token });
-        } else {
-          return res
-            .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
-            .json({ message: constants.RESPONSE_STATUS.FAILURE });
-        }
-      }
-    } catch (err) {
-      console.log(err);
-      return res
-        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
-    }
-  }
-);
-
-/**
- *  Adds a new token or updates existing token
+ *
  *  @params token_id type: String
  *  @params category_address type: Int
  *  @params chain_id type: String
@@ -189,7 +120,7 @@ router.get(
         );
 
         let metadata;
-        if (tokenMetadata && tokenMetadata.metadata) {
+        if (tokenMetadata && tokenMetadata.metadata && tokenMetadata.metadata !== "{}") {
           metadata = JSON.parse(tokenMetadata.metadata);
         } else {
           if (category.tokenURI) {
@@ -227,10 +158,23 @@ router.get(
           });
         }
 
+        let order = await orderServiceInstance.checkValidOrder({
+          tokenId: req.query.token_id,
+          categoriesId: categoryDetail.categories_id,
+        });
+
+        let owner;
+        if (order.seller) {
+          user = await userServiceInstance.getUser({ userId: order.seller });
+          if (user) {
+            owner = user.address;
+          }
+        }
+
         let tokenDetail = {
           contract: helper.toChecksumAddress(query.category_address),
           token_id: token.token_id,
-          owner: await helper.getOwner(query.token_id,query.category_address),
+          owner: owner,
           name: token.name,
           description: token.description,
           attributes: token.attributes,
@@ -238,15 +182,14 @@ router.get(
           external_link: token.external_url,
           amount: tokenMetadata.amount,
           type: category.type,
+          ...order,
         };
 
         if (tokenDetail) {
-          return res
-            .status(constants.RESPONSE_STATUS_CODES.OK)
-            .json({
-              message: constants.RESPONSE_STATUS.SUCCESS,
-              data: tokenDetail,
-            });
+          return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+            message: constants.RESPONSE_STATUS.SUCCESS,
+            data: tokenDetail,
+          });
         } else {
           return res
             .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
