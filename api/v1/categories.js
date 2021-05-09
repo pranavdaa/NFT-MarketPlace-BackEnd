@@ -51,6 +51,7 @@ router.post(
           !validate.isValidEthereumAddress(data.address) ||
           (await categoryServiceInstance.categoryAddressExists({
             address: data.address,
+            chain_id: data.chain_id,
           }))
         ) {
           return res
@@ -203,6 +204,7 @@ router.put(
             !validate.isValidEthereumAddress(data.address) ||
             (await categoryServiceInstance.categoryAddressExists({
               address: data.address,
+              chain_id: data.chain_id,
             }))
           ) {
             return res

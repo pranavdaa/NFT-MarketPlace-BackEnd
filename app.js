@@ -5,6 +5,7 @@ const cors = require("cors");
 const config = require("./config/config");
 const routeV1 = require("./api/v1/");
 
+
 /**
  * Root route, middlewares
  */

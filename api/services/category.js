@@ -94,7 +94,12 @@ class CategoryService {
     let { address } = params;
     try {
       let categories = await prisma.categoriesaddresses.findOne({
-        where: { address: address },
+        where: {
+          address_chain_id: {
+            address: params.address,
+            chain_id: params.chain_id,
+          },
+        },
       });
 
       categories;
