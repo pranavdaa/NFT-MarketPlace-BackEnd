@@ -137,7 +137,7 @@ class TokenService {
           external_url: params.external_url,
           attributes: params.attributes,
           name: params.name,
-          name_lowercase: (params.name).toLowerCase(),
+          name_lowercase: params.name ? params.name.toLowerCase() : "",
           categories: { connect: { id: parseInt(params.category_id) } },
         },
       });
