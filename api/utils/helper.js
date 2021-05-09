@@ -10,6 +10,8 @@ let { BigNumber, providerUtils } = require("@0x/utils");
 const root_web3 = new Web3(root_provider);
 const prisma = require("../../prisma");
 let constants = require("../../config/constants");
+let { ContractWrappers, OrderStatus } = require("@0x/contract-wrappers");
+
 
 let {
   MnemonicWalletSubprovider,
@@ -62,6 +64,25 @@ var getRate = async function (symbol) {
     console.log(err.message);
   }
 };
+
+async function getOwner(tokenId, contractAddress) {
+  const childContractInstance = new web3.eth.Contract(
+    artifacts.pos_ChildERC721,
+    contractAddress
+  );
+
+  try {
+    let owner = await childContractInstance.methods.ownerOf(tokenId).call();
+
+    if (owner) {
+      return toChecksumAddress(owner);
+    } else {
+      return null;
+    }
+  } catch (err) {
+    return null;
+  }
+}
 
 async function checkOwnerShip(userAddress, tokenId, contractAddress) {
   const childContractInstance = new web3.eth.Contract(
@@ -249,6 +270,32 @@ const encodeExchangeData = (signedOrder, functionName) => {
   return data;
 };
 
+const orderValidate = async (signature) => {
+  let orderInvalid = false;
+  if (signature) {
+    let signedOrder = JSON.parse(signature);
+    const contractWrappers = new ContractWrappers(providerEngine(), {
+      chainId: parseInt(constants.MATIC_CHAIN_ID),
+    });
+
+    const [
+      { orderStatus },
+      remainingFillableAmount,
+      isValidSignature,
+    ] = await contractWrappers.devUtils
+      .getOrderRelevantState(signedOrder, signedOrder.signature)
+      .callAsync();
+
+    orderInvalid = !(
+      orderStatus === OrderStatus.Fillable &&
+      remainingFillableAmount.isGreaterThan(0) &&
+      isValidSignature
+    );
+
+    return orderInvalid
+  }
+};
+
 module.exports = {
   isValidEthereumAddress,
   notify,
@@ -266,4 +313,6 @@ module.exports = {
   checkTokenBalance,
   fetchMetadata,
   fetchMetadataFromTokenURI,
+  getOwner,
+  orderValidate
 };

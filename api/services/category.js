@@ -9,18 +9,20 @@ let constants = require("../../config/constants");
 
 class CategoryService {
   async createCategory(params, file) {
+    let { name, description, url, address, type, tokenURI } = params;
     try {
       let category = await prisma.categories.create({
         data: {
-          name: params.name,
-          description: params.description,
-          url: params.url,
+          name: name,
+          description: description,
+          url: url,
           img_url: file ? file.path : "",
           categoriesaddresses: {
-            create: JSON.parse(params.address),
+            create: JSON.parse(address),
           },
-          type: params.type,
-          tokenURI: params.tokenURI,
+          type: type,
+          tokenURI: tokenURI,
+          name_lowercase: name.toLowerCase()
         },
       });
       return category;
@@ -77,8 +79,9 @@ class CategoryService {
 
   async categoryExists(params) {
     try {
+      let { name } = params;
       let categories = await prisma.categories.findOne({
-        where: { name: params.name },
+        where: { name_lowercase: name.toLowerCase() },
       });
       return categories;
     } catch (err) {
@@ -88,6 +91,7 @@ class CategoryService {
   }
 
   async categoryAddressExists(params) {
+    let { address } = params;
     try {
       let categories = await prisma.categoriesaddresses.findOne({
         where: {
@@ -108,8 +112,9 @@ class CategoryService {
 
   async getCategory(params) {
     try {
+      let { categoryId } = params;
       let categories = await prisma.categories.findOne({
-        where: { id: parseInt(params.categoryId) },
+        where: { id: parseInt(categoryId) },
       });
       return categories;
     } catch (err) {
@@ -121,18 +126,20 @@ class CategoryService {
   async updateCategory(params, file) {
     try {
       let current = await this.getCategory(params);
+      let { description: current_description, url: current_url, img_url: current_img_url, type: current_type } = current;
+      let { description: params_description, address: params_address, type: params_type, url: params_url } = params;
       let category = await prisma.categories.update({
         where: { id: parseInt(params.categoryId) },
         data: {
-          description: params.description
-            ? params.description
-            : current.description,
-          url: params.url ? params.url : current.url,
-          img_url: file ? file.path : current.img_url,
+          description: params_description
+            ? params_description
+            : current_description,
+          url: params_url ? params_url : current_url,
+          img_url: file ? file.path : current_img_url,
           categoriesaddresses: {
-            create: params.address ? JSON.parse(params.address) : [],
+            create: params_address ? JSON.parse(params_address) : [],
           },
-          type: params.type ? params.type : current.type,
+          type: params_type ? params_type : current_type,
         },
       });
       return category;
