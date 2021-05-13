@@ -2,8 +2,6 @@ const prisma = require("../../prisma");
 let { hasNextPage } = require("../utils/request-utils");
 let constants = require("../../config/constants");
 let zeroxUtil = require("../utils/zerox-util");
-const helper = require("../utils/helper");
-let { ContractWrappers, OrderStatus } = require("@0x/contract-wrappers");
 
 /**
  * Includes all the Order services that controls
@@ -13,32 +11,46 @@ let { ContractWrappers, OrderStatus } = require("@0x/contract-wrappers");
 class OrderService {
   async placeFixedOrder(params) {
     try {
+      let {
+        maker_address,
+        maker_token,
+        maker_token_id,
+        usd_price,
+        price,
+        token_type,
+        price_per_unit,
+        quantity,
+        signature,
+        taker_token,
+        type,
+        chain_id,
+      } = params;
       let order = await prisma.orders.create({
         data: {
-          seller_users: { connect: { id: parseInt(params.maker_address) } },
-          categories: { connect: { id: parseInt(params.maker_token) } },
-          maker_address: params.maker_address,
+          seller_users: { connect: { id: parseInt(maker_address) } },
+          categories: { connect: { id: parseInt(maker_token) } },
+          maker_address: maker_address,
           tokens: {
             connect: {
               token_id_categories_id: {
-                token_id: params.maker_token_id,
-                categories_id: parseInt(params.maker_token),
+                token_id: maker_token_id,
+                categories_id: parseInt(maker_token),
               },
             },
           },
           price: params.price,
-          usd_price: parseFloat(params.usd_price),
-          min_price: params.price,
-          token_type: params.token_type,
-          price_per_unit: params.price_per_unit,
-          min_price_per_unit: params.price_per_unit,
-          quantity: params.quantity,
-          taker_amount: params.price,
+          usd_price: parseFloat(usd_price),
+          min_price: price,
+          token_type: token_type,
+          price_per_unit: price_per_unit,
+          min_price_per_unit: price_per_unit,
+          quantity: quantity,
+          taker_amount: price,
           maker_amount: "1",
-          signature: params.signature,
-          erc20tokens: { connect: { id: parseInt(params.taker_token) } },
-          type: params.type,
-          chain_id: params.chain_id,
+          signature: signature,
+          erc20tokens: { connect: { id: parseInt(taker_token) } },
+          type: type,
+          chain_id: chain_id,
         },
       });
       return order;
@@ -50,30 +62,45 @@ class OrderService {
 
   async placeNegotiationOrder(params) {
     try {
+      let {
+        taker_address,
+        taker_token,
+        taker_token_id,
+        min_price,
+        price,
+        token_type,
+        price_per_unit,
+        min_price_per_unit,
+        quantity,
+        usd_price,
+        maker_token,
+        type,
+        chain_id,
+      } = params;
       let order = await prisma.orders.create({
         data: {
-          seller_users: { connect: { id: parseInt(params.taker_address) } },
-          categories: { connect: { id: parseInt(params.taker_token) } },
-          taker_address: params.taker_address,
+          seller_users: { connect: { id: parseInt(taker_address) } },
+          categories: { connect: { id: parseInt(taker_token) } },
+          taker_address: taker_address,
           tokens: {
             connect: {
               token_id_categories_id: {
-                token_id: params.taker_token_id,
-                categories_id: parseInt(params.taker_token),
+                token_id: taker_token_id,
+                categories_id: parseInt(taker_token),
               },
             },
           },
-          min_price: params.min_price,
-          price: params.price,
-          token_type: params.token_type,
-          price_per_unit: params.price_per_unit,
-          min_price_per_unit: params.min_price_per_unit,
-          quantity: params.quantity,
-          usd_price: parseFloat(params.usd_price),
+          min_price: min_price,
+          price: price,
+          token_type: token_type,
+          price_per_unit: price_per_unit,
+          min_price_per_unit: min_price_per_unit,
+          quantity: quantity,
+          usd_price: parseFloat(usd_price),
           taker_amount: "1",
-          erc20tokens: { connect: { id: parseInt(params.maker_token) } },
-          type: params.type,
-          chain_id: params.chain_id,
+          erc20tokens: { connect: { id: parseInt(maker_token) } },
+          type: type,
+          chain_id: chain_id,
         },
       });
       return order;
@@ -85,19 +112,28 @@ class OrderService {
 
   async placeAuctionOrder(params) {
     try {
+      let {
+        expiry_date,
+        taker_address,
+        taker_token,
+        maker_token,
+        min_price,
+        chain_id,
+        taker_token_id,
+      } = params;
       let order = await prisma.orders.create({
         data: {
-          expiry_date: new Date(parseInt(params.expiry_date)),
-          seller_users: { connect: { id: parseInt(params.taker_address) } },
-          taker_address: params.taker_address,
-          categories: { connect: { id: parseInt(params.taker_token) } },
-          tokens_id: params.taker_token_id,
-          min_price: params.min_price,
+          expiry_date: new Date(parseInt(expiry_date)),
+          seller_users: { connect: { id: parseInt(taker_address) } },
+          taker_address: taker_address,
+          categories: { connect: { id: parseInt(taker_token) } },
+          tokens_id: taker_token_id,
+          min_price: min_price,
           taker_amount: "1",
-          price: params.min_price,
-          erc20tokens: { connect: { id: parseInt(params.maker_token) } },
-          type: params.type,
-          chain_id: params.chain_id,
+          price: min_price,
+          erc20tokens: { connect: { id: parseInt(maker_token) } },
+          type: type,
+          chain_id: chain_id,
         },
       });
       return order;
@@ -278,9 +314,10 @@ class OrderService {
 
   async getOrder(params) {
     try {
+      let { orderId } = params;
       let order = await prisma.orders.findOne({
         where: {
-          id: parseInt(params.orderId),
+          id: parseInt(orderId),
         },
         select: {
           maker_address: true,
@@ -327,7 +364,10 @@ class OrderService {
           },
           tokens: true,
           views: true,
-          bids: { orderBy: { price: constants.SORT_DIRECTION.DESC } },
+          bids: {
+            where: { status: 0 },
+            orderBy: { price: constants.SORT_DIRECTION.DESC },
+          },
           updated: true,
         },
       });
@@ -340,9 +380,10 @@ class OrderService {
 
   async orderExists(params) {
     try {
+      let { orderId } = params;
       let order = await prisma.orders.findOne({
         where: {
-          id: parseInt(params.orderId),
+          id: parseInt(orderId),
         },
       });
       return order;
@@ -354,17 +395,21 @@ class OrderService {
 
   async checkValidOrder(params) {
     try {
+      let { tokenId, categoriesId } = params;
       let order = await prisma.orders.findMany({
         where: {
-          tokens_id: params.tokenId,
-          categories_id: params.categoriesId,
-          seller: parseInt(params.userId),
+          tokens_id: tokenId,
+          categories_id: categoriesId,
           status: 0,
         },
       });
 
       if (order.length > 0) {
-        return { order_id: order[0].id, active_order: true };
+        return {
+          order_id: order[0].id,
+          active_order: true,
+          seller: order[0].seller,
+        };
       } else {
         return { order_id: null, active_order: false };
       }
@@ -376,15 +421,16 @@ class OrderService {
 
   async buyFixedOrder(params) {
     try {
+      let { signature, takerSign, orderId, taker_address } = params;
       let txHash = await zeroxUtil.execute(
-        JSON.parse(params.signature),
-        JSON.parse(params.takerSign)
+        JSON.parse(signature),
+        JSON.parse(takerSign)
       );
       let order = await prisma.orders.update({
-        where: { id: parseInt(params.orderId) },
+        where: { id: parseInt(orderId) },
         data: {
-          buyer_users: { connect: { id: parseInt(params.taker_address) } },
-          taker_address: params.taker_address,
+          buyer_users: { connect: { id: parseInt(taker_address) } },
+          taker_address: taker_address,
           txhash: txHash,
           status: 2,
           updated: new Date(),
@@ -399,7 +445,8 @@ class OrderService {
 
   async swapToken(params) {
     try {
-      let tx = await zeroxUtil.executeSwap(params.signedOrder);
+      let { signedOrder } = params;
+      let tx = await zeroxUtil.executeSwap(signedOrder);
       return tx;
     } catch (err) {
       console.log(err);
@@ -409,10 +456,11 @@ class OrderService {
 
   async updateOrderPrice(params) {
     try {
+      let { orderId, usdPrice } = params;
       let order = await prisma.orders.update({
-        where: { id: parseInt(params.orderId) },
+        where: { id: parseInt(orderId) },
         data: {
-          usd_price: params.usdPrice,
+          usd_price: usdPrice,
         },
       });
       return order;
@@ -444,14 +492,15 @@ class OrderService {
   async cancelOrder(params) {
     try {
       let txHash = "";
+      let { orderId, signature, takerSign } = params;
       if (params.type === constants.ORDER_TYPES.FIXED) {
         txHash = await zeroxUtil.execute(
-          JSON.parse(params.signature),
-          JSON.parse(params.takerSign)
+          JSON.parse(signature),
+          JSON.parse(takerSign)
         );
       }
       let order = await prisma.orders.update({
-        where: { id: parseInt(params.orderId) },
+        where: { id: parseInt(orderId) },
         data: {
           status: 3,
           signature: "",
@@ -468,8 +517,9 @@ class OrderService {
 
   async expireOrder(params) {
     try {
+      let { orderId } = params;
       let order = await prisma.orders.update({
-        where: { id: parseInt(params.orderId) },
+        where: { id: parseInt(orderId) },
         data: {
           status: 3,
           signature: "",
@@ -484,12 +534,13 @@ class OrderService {
   }
 
   async cancelBid(params) {
+    let { signature, takerSign, bidId } = params;
     let txHash = await zeroxUtil.execute(
-      JSON.parse(params.signature),
-      JSON.parse(params.takerSign)
+      JSON.parse(signature),
+      JSON.parse(takerSign)
     );
     const order = await prisma.bids.update({
-      where: { id: parseInt(params.bidId) },
+      where: { id: parseInt(bidId) },
       data: {
         status: 3,
         signature: "",
@@ -499,8 +550,9 @@ class OrderService {
   }
 
   async clearBids(params) {
+    let { bidId } = params;
     const order = await prisma.bids.update({
-      where: { id: parseInt(params.bidId) },
+      where: { id: parseInt(bidId) },
       data: {
         status: 3,
         signature: "",
@@ -511,9 +563,10 @@ class OrderService {
 
   async bidExists(params) {
     try {
+      let { bidId } = params;
       let bid = await prisma.bids.findOne({
         where: {
-          id: parseInt(params.bidId),
+          id: parseInt(bidId),
         },
       });
       return bid;
@@ -525,6 +578,7 @@ class OrderService {
 
   async executeOrder(params) {
     try {
+      let { maker_address, maker_amount } = params;
       let txHash = await zeroxUtil.execute(
         JSON.parse(params.signature),
         JSON.parse(params.takerSign)
@@ -533,8 +587,8 @@ class OrderService {
         where: { id: parseInt(params.orderId) },
         data: {
           buyer_users: { connect: { id: parseInt(params.maker_address) } },
-          maker_address: params.maker_address,
-          maker_amount: params.maker_amount,
+          maker_address: maker_address,
+          maker_amount: maker_amount,
           txhash: txHash,
           status: 2,
           updated: new Date(),
@@ -547,69 +601,11 @@ class OrderService {
     }
   }
 
-  async getBids({ orderId, limit, offset, orderBy }) {
+  async getBids({ orderId, limit, offset }) {
     try {
       let where = {
         AND: [{ active: true }, { status: 0 }],
       };
-
-      let bids = await prisma.bids.findMany({
-        where: {
-          orders_id: parseInt(orderId),
-          status: 0,
-        },
-        include: {
-          users: true,
-          orders: {
-            select: {
-              erc20tokens: {
-                select: {
-                  erc20tokensaddresses: {
-                    where: { chain_id: constants.MATIC_CHAIN_ID },
-                  },
-                },
-              },
-            },
-          },
-        },
-      });
-      for (const data of bids) {
-        let orderInvalid = false;
-        if (data.signature) {
-          let signedOrder = JSON.parse(data.signature);
-          const contractWrappers = new ContractWrappers(
-            helper.providerEngine(),
-            {
-              chainId: parseInt(constants.MATIC_CHAIN_ID),
-            }
-          );
-
-          const [
-            { orderStatus, orderHash },
-            remainingFillableAmount,
-            isValidSignature,
-          ] = await contractWrappers.devUtils
-            .getOrderRelevantState(signedOrder, signedOrder.signature)
-            .callAsync();
-
-          orderInvalid = !(
-            orderStatus === OrderStatus.Fillable &&
-            remainingFillableAmount.isGreaterThan(0) &&
-            isValidSignature
-          );
-
-          if (
-            !(await helper.checkTokenBalance(
-              signedOrder.makerAddress,
-              signedOrder.makerAssetAmount,
-              data.orders.erc20tokens.erc20tokensaddresses[0].address
-            )) ||
-            orderInvalid
-          ) {
-            await this.clearBids({ bidId: data.id });
-          }
-        }
-      }
 
       let count = await prisma.bids.count({ where });
       let order = await prisma.bids.findMany({

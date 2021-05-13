@@ -12,8 +12,9 @@ let categoryServiceInstance = new categoryService();
 class AssetMigrateService {
   async createAssetMigrate(params) {
     try {
+      let { category_id, token_array, type, txhash, userId, block_number } = params;
       let category = await categoryServiceInstance.getCategory({
-        categoryId: params.category_id,
+        categoryId: category_id,
       });
 
       console.log(category);
@@ -23,7 +24,7 @@ class AssetMigrateService {
       if (params.type === "DEPOSIT") {
         message =
           "You initiated a deposit of " +
-          params.token_array.length +
+          token_array.length +
           " " +
           category.name +
           " tokens";
@@ -31,19 +32,19 @@ class AssetMigrateService {
       if (params.type === "WITHDRAW") {
         message =
           "You initiated a withdraw of " +
-          params.token_array.length +
+          token_array.length +
           " " +
           category.name +
           " tokens";
       }
       let assetMigrate = await prisma.assetmigrate.create({
         data: {
-          type: params.type,
-          txhash: params.txhash,
-          categories: { connect: { id: parseInt(params.category_id) } },
-          users: { connect: { id: parseInt(params.userId) } },
-          token_array: { set: params.token_array },
-          block_number: params.block_number,
+          type: type,
+          txhash: txhash,
+          categories: { connect: { id: parseInt(category_id) } },
+          users: { connect: { id: parseInt(userId) } },
+          token_array: { set: token_array },
+          block_number: block_number,
           message,
         },
       });
@@ -86,8 +87,9 @@ class AssetMigrateService {
 
   async getAssetMigration(params) {
     try {
+      let { assetMigrationId } = params;
       let assetMigration = await prisma.assetmigrate.findOne({
-        where: { id: parseInt(params.assetMigrationId) },
+        where: { id: parseInt(assetMigrationId) },
       });
       return assetMigration;
     } catch (err) {
@@ -99,9 +101,10 @@ class AssetMigrateService {
   async updateAssetMigration(params) {
     try {
       let current = await this.getAssetMigration(params);
-
+      let { assetMigrationId: params_assetMigrationId, status: params_status, exit_txhash: params_exit_txhash } = params;
+      let { categories_id: current_categories_id, token_array: current_token_array, status: current_status, exit_txhash: current_exit_txhash } = current;
       let category = await categoryServiceInstance.getCategory({
-        categoryId: current.categories_id,
+        categoryId: current_categories_id,
       });
 
       let message;
@@ -109,19 +112,19 @@ class AssetMigrateService {
       if (current.type === "WITHDRAW") {
         message =
           "You finished a withdraw of " +
-          current.token_array.length +
+          current_token_array.length +
           " " +
           category.name +
           " tokens";
       }
       let assetMigration = await prisma.assetmigrate.update({
-        where: { id: parseInt(params.assetMigrationId) },
+        where: { id: parseInt(params_assetMigrationId) },
         data: {
           message,
-          status: params.status ? parseInt(params.status) : current.status,
+          status: params_status ? parseInt(params_status) : current_status,
           exit_txhash: params.exit_txhash
-            ? params.exit_txhash
-            : current.exit_txhash,
+            ? params_exit_txhash
+            : current_exit_txhash,
         },
       });
       return assetMigration;

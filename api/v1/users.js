@@ -193,6 +193,36 @@ router.get(
 );
 
 /**
+ *  Gets user detail by address
+ */
+
+router.get(
+  "/address/:address",
+  [check("address", "A valid id is required").exists()],
+  async (req, res) => {
+    try {
+      let address = req.params.address;
+
+      let users = await userServiceInstance.getUserByAddress({ address });
+      if (users) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: users });
+      } else {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
+          .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
+      }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+  }
+);
+
+/**
  *  Gets users sell orders(maker order)
  */
 
@@ -331,7 +361,7 @@ router.get(
  *  Gets users bids on orders
  */
 
-router.get(
+router.get( 
   "/:userId/bids",
   [check("userId", "A valid id is required").exists()],
   async (req, res) => {
