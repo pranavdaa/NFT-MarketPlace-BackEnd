@@ -138,14 +138,14 @@ class TokenService {
       } = params;
       let token = await prisma.tokens.create({
         data: {
-          token_id: token_id,
-          description: description,
-          image_url: image_url,
-          external_url: external_url,
-          attributes: attributes,
-          name: name,
-          name_lowercase: name ? name.toLowerCase() : "",
-          categories: { connect: { id: parseInt(category_id) } },
+          token_id: params.token_id,
+          description: params.description,
+          image_url: params.image_url,
+          external_url: params.external_url,
+          attributes: params.attributes,
+          name: params.name,
+          name_lowercase: params.name ? params.name.toLowerCase() : "",
+          categories: { connect: { id: parseInt(params.category_id) } },
         },
       });
       return token;
