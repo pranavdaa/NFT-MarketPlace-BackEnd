@@ -11,7 +11,6 @@ let orderServiceInstance = new orderService();
 let requestUtil = require("../utils/request-utils");
 let config = require("../../config/config");
 let constants = require("../../config/constants");
-let redisCache = require("../utils/redis-cache");
 const Web3 = require("web3");
 let rpc = config.MATIC_RPC;
 const provider = new Web3.providers.HttpProvider(rpc);
@@ -194,6 +193,36 @@ router.get(
 );
 
 /**
+ *  Gets user detail by address
+ */
+
+router.get(
+  "/address/:address",
+  [check("address", "A valid id is required").exists()],
+  async (req, res) => {
+    try {
+      let address = req.params.address;
+
+      let users = await userServiceInstance.getUserByAddress({ address });
+      if (users) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.OK)
+          .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: users });
+      } else {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
+          .json({ message: constants.RESPONSE_STATUS.NOT_FOUND });
+      }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+  }
+);
+
+/**
  *  Gets users sell orders(maker order)
  */
 
@@ -218,13 +247,7 @@ router.get(
       let ordersList = [];
       if (orders) {
         for (order of orders.orders[0].seller_orders) {
-          let metadata = await redisCache.getTokenData(
-            order.tokens_id,
-            order.categories.categoriesaddresses[0].ethereum_address,
-            constants.MATIC_CHAIN_ID
-          );
-
-          ordersList.push({ ...order, ...metadata });
+          ordersList.push({ ...order });
         }
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
@@ -268,14 +291,7 @@ router.get(
       let ordersList = [];
       if (orders) {
         for (order of orders.orders[0].seller_orders) {
-          let metadata = await redisCache.getTokenData(
-            order.tokens_id,
-            order.categories.categoriesaddresses[0].address,
-            order.categories.isOpenseaCompatible,
-            order.categories.tokenURI?order.categories.tokenURI + order.tokens_id:order.categories.tokenURI,
-          );
-
-          ordersList.push({ ...order, ...metadata });
+          ordersList.push({ ...order });
         }
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
@@ -321,13 +337,7 @@ router.get(
 
       if (orders) {
         for (order of orders.orders[0].buyer_orders) {
-          let metadata = await redisCache.getTokenData(
-            order.tokens_id,
-            order.categories.categoriesaddresses[0].ethereum_address,
-            constants.MATIC_CHAIN_ID
-          );
-
-          ordersList.push({ ...order, ...metadata });
+          ordersList.push({ ...order });
         }
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
@@ -351,7 +361,7 @@ router.get(
  *  Gets users bids on orders
  */
 
-router.get(
+router.get( 
   "/:userId/bids",
   [check("userId", "A valid id is required").exists()],
   async (req, res) => {
@@ -470,12 +480,7 @@ router.get("/:userId/favourites", async (req, res) => {
     let favList = [];
     if (favourites.favourites.length > 0) {
       for (order of favourites.favourites) {
-        let metadata = await redisCache.getTokenData(
-          order.orders.tokens_id,
-          order.orders.categories.categoriesaddresses[0].ethereum_address,
-          constants.MATIC_CHAIN_ID
-        );
-        favList.push({ ...order, ...metadata });
+        favList.push({ ...order });
       }
       return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
         message: constants.RESPONSE_STATUS.SUCCESS,

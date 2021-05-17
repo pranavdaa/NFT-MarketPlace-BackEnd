@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = "***"
 }
 
 model bids {
@@ -28,7 +28,6 @@ model categories {
   id                  Int                   @id @default(autoincrement())
   img_url             String?
   name                String                @unique
-  name_lowercase      String                @default("")
   updated             DateTime              @default(now())
   url                 String?
   type                String?               @default("ERC721")

@@ -7,10 +7,11 @@ const erc20TokenService = require("../services/erc20-token");
 let erc20TokenServiceInstance = new erc20TokenService();
 const categoryService = require("../services/category");
 let categoryServiceInstance = new categoryService();
+const TokenService = require("../services/tokens");
+const tokenServiceInstance = new TokenService();
 const verifyToken = require("../middlewares/verify-token");
 let requestUtil = require("../utils/request-utils");
 let helper = require("../utils/helper");
-let redisCache = require("../utils/redis-cache");
 let constants = require("../../config/constants");
 let config = require("../../config/config");
 let { BigNumber } = require("@0x/utils");
@@ -110,11 +111,11 @@ router.post(
         type === constants.ORDER_TYPES.FIXED ? maker_token_id : taker_token_id;
 
       let validOrder = await orderServiceInstance.checkValidOrder({
-        userId: req.userId,
         tokenId,
+        categoryId: category.id,
       });
 
-      if (validOrder) {
+      if (validOrder.active_order) {
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.MESSAGES.INPUT_VALIDATION_ERROR,
         });
@@ -272,33 +273,25 @@ router.get(
       let offset = requestUtil.getOffset(req.query);
       let orderBy = requestUtil.getSortBy(req.query, "+id");
 
-      let { categoryArray } = req.query;
+      let { categoryArray, searchString } = req.query;
+
+      if (!searchString) {
+        searchString = "";
+      }
 
       let orders = await orderServiceInstance.getOrders({
         categoryArray,
         limit,
         offset,
         orderBy,
+        searchString: searchString.toLowerCase(),
       });
 
-      let ordersList = [];
-
       if (orders) {
-        for (order of orders.order) {
-          let metadata = await redisCache.getTokenData(
-            order.tokens_id,
-            order.categories.categoriesaddresses[0].address,
-            order.categories.isOpenseaCompatible,
-            order.categories.tokenURI
-              ? order.categories.tokenURI + order.tokens_id
-              : order.categories.tokenURI
-          );
-          ordersList.push({ ...order, ...metadata });
-        }
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
           data: {
-            order: ordersList,
+            order: orders.order,
             limit: orders.limit,
             offset: orders.offset,
             has_next_page: orders.has_next_page,
@@ -328,70 +321,101 @@ router.get(
   [check("orderId", "A valid id is required").exists()],
   async (req, res) => {
     try {
+
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
+      }
+
       let order = await orderServiceInstance.getOrder(req.params);
       if (order) {
-        let checkOwnerShip = await helper.checkOwnerShip(
-          order.seller_users.address,
-          order.tokens_id,
-          order.categories.categoriesaddresses[0].address
-        );
-
+        let checkOwnerShip = false;
         let orderInvalid = false;
 
-        if (order.signature) {
-          let signedOrder = JSON.parse(order.signature);
-          const contractWrappers = new ContractWrappers(helper.providerEngine(), {
-            chainId: parseInt(constants.MATIC_CHAIN_ID),
-          });
-  
-          const [
-            { orderStatus, orderHash },
-            remainingFillableAmount,
-            isValidSignature,
-          ] = await contractWrappers.devUtils
-            .getOrderRelevantState(signedOrder, signedOrder.signature)
-            .callAsync();
-  
-          orderInvalid = !(
-            orderStatus === OrderStatus.Fillable &&
-            remainingFillableAmount.isGreaterThan(0) &&
-            isValidSignature
+        if (order.token_type !== "ERC1155") {
+          checkOwnerShip = await helper.checkOwnerShip(
+            order.seller_users.address,
+            order.tokens_id,
+            order.categories.categoriesaddresses[0].address
           );
-        }
-
-        let metadata = await redisCache.getTokenData(
-          order.tokens_id,
-          order.categories.categoriesaddresses[0].address,
-          order.categories.isOpenseaCompatible,
-          order.categories.tokenURI
-            ? order.categories.tokenURI + order.tokens_id
-            : order.categories.tokenURI
-        );
-
-        let limit = requestUtil.getLimit(req.query);
-        let offset = requestUtil.getOffset(req.query);
-        let orderBy = requestUtil.getSortBy(req.query, "+id");
-
-        if (order.type !== constants.ORDER_TYPES.FIXED) {
-          let bids = await orderServiceInstance.getBids({
-            orderId: order.id,
-            limit,
-            offset,
-            orderBy,
-          });
-
-          if (bids.order.length > 0) {
-            order["highest_bid"] = bids.order[0].price;
-            order["lowest_bid"] = bids.order[bids.order.length - 1].price;
-          }
         } else {
-          if (order.status !== 0) {
-            order.signature = null;
+          checkOwnerShip = true;
+        }
+
+        if (order.signature) {
+          orderInvalid = await helper.orderValidate(order.signature);
+        }
+
+        let token = await tokenServiceInstance.getToken({
+          token_id: order.tokens_id,
+          category_id: order.categories.id,
+        });
+
+        let metadata;
+        if (order.categories.tokenURI) {
+          metadata = await helper.fetchMetadataFromTokenURI(
+            order.categories.tokenURI + order.tokens_id
+          );
+        } else {
+          let tokenDetails = await helper.fetchMetadata(
+            order.categories.categoriesaddresses[0].address,
+            order.tokens_id
+          );
+
+          if (tokenDetails) {
+            if (!tokenDetails.metadata) {
+              if (tokenDetails.token_uri) {
+                metadata = await helper.fetchMetadataFromTokenURI(
+                  tokenDetails.token_uri
+                );
+              }
+            } else {
+              metadata = JSON.parse(tokenDetails.metadata);
+            }
           }
         }
 
-        let orderData = { ...order, ...metadata };
-        if ((!checkOwnerShip && order.token_type !== "ERC1155") || orderInvalid) {
+        if (!token) {
+          token = await tokenServiceInstance.createToken({
+            token_id: order.tokens_id,
+            category_id: order.categories.id,
+            name: metadata ? metadata.name : "",
+            description: metadata ? metadata.description : "",
+            image_url: metadata ? metadata.image : "",
+            external_url: metadata ? metadata.external_url : "",
+            attributes: metadata ? JSON.stringify(metadata.attributes) : "",
+          });
+        } else {
+          token = await tokenServiceInstance.updateToken({
+            token_id: order.tokens_id,
+            category_id: order.categories.id,
+            name: metadata ? metadata.name : "",
+            description: metadata ? metadata.description : "",
+            image_url: metadata ? metadata.image : "",
+            external_url: metadata ? metadata.external_url : "",
+            attributes: metadata ? JSON.stringify(metadata.attributes) : "",
+          });
+        }
+
+        if (order.type === constants.ORDER_TYPES.NEGOTIATION) {
+          if (order.bids.length > 0) {
+            order["highest_bid"] = order.bids[0].price;
+            order["lowest_bid"] = order.bids[order.bids.length - 1].price;
+          }
+        }
+
+        const formattedMetadata = {
+          name: metadata ? metadata.name : "",
+          description: metadata ? metadata.description : "",
+          image_url: metadata ? metadata.image : "",
+          external_url: metadata ? metadata.external_url : "",
+          attributes: metadata ? metadata.attributes : "",
+        };
+        let orderData = { ...order, ...{ tokens: formattedMetadata } };
+        if (!checkOwnerShip || orderInvalid) {
           return res
             .status(constants.RESPONSE_STATUS_CODES.ORDER_EXPIRED)
             .json({
@@ -625,6 +649,15 @@ router.patch(
   verifyToken,
   async (req, res) => {
     try {
+
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
+      }
+
       let order = await orderServiceInstance.orderExists(req.params);
 
       if (!order || order.status !== 0) {
@@ -740,6 +773,15 @@ router.patch(
   verifyToken,
   async (req, res) => {
     try {
+
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
+      }
+
       let bid = await orderServiceInstance.bidExists(req.params);
 
       if (!bid || bid.status !== 0) {
@@ -929,6 +971,15 @@ router.get(
   [check("orderId", "A valid id is required").exists()],
   async (req, res) => {
     try {
+
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
+      }
+
       let orderId = req.params.orderId;
       let limit = requestUtil.getLimit(req.query);
       let offset = requestUtil.getOffset(req.query);
@@ -969,6 +1020,15 @@ router.get(
   [check("orderId", "A valid id is required").exists()],
   async (req, res) => {
     try {
+
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
+      }
+
       let { orderId, functionName } = req.query;
 
       let order = await orderServiceInstance.orderExists({ orderId });
@@ -1006,6 +1066,15 @@ router.get(
   [check("bidId", "A valid id is required").exists()],
   async (req, res) => {
     try {
+
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
+      }
+
       let { bidId, functionName } = req.query;
 
       let bid = await orderServiceInstance.bidExists({ bidId });
@@ -1043,7 +1112,17 @@ router.post(
   [check("orderId", "A valid id is required").exists()],
   verifyToken,
   async (req, res) => {
+    
     try {
+
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
+      }
+
       let { orderId } = req.body;
 
       let order = await orderServiceInstance.getOrder({ orderId });
@@ -1104,47 +1183,66 @@ router.post(
 );
 
 /**
- *  Validate bids
+ *  Validate bid
  *  @params orderId type: int
+ *  @params bidId type: int
  */
 
 router.post(
-  "/validate/bids",
+  "/validate/bid",
+  [check("bidId", "A valid id is required").exists()],
   [check("orderId", "A valid id is required").exists()],
-  verifyToken,
+  // verifyToken,
   async (req, res) => {
     try {
-      let { orderId } = req.body;
 
-      let order = await orderServiceInstance.getOrder({ orderId });
+      const errors = validationResult(req);
 
-      if (!order || order.status !== 0) {
+      if (!errors.isEmpty()) {
+        return res
+          .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+          .json({ error: errors.array() });
+      }
+
+      let { orderId, bidId } = req.body;
+      let checkOwnerShip = false;
+      let orderInvalid = false;
+
+      let order = await orderServiceInstance.getOrder({
+        orderId,
+      });
+      let bid = await orderServiceInstance.bidExists({
+        bidId,
+      });
+
+      if (!order || order.status !== 0 || !bid) {
         return res
           .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
           .json({ message: constants.MESSAGES.INPUT_VALIDATION_ERROR });
       }
 
-      let bids = await orderServiceInstance.getBids({
-        orderId,
-      });
-
-      for (data of bids.order) {
-        let signedOrder = JSON.parse(data.signature);
-        if (
-          !(await helper.checkTokenBalance(
-            signedOrder.makerAddress,
-            signedOrder.makerAssetAmount,
-            data.orders.erc20tokens.erc20tokensaddresses[0].address
-          ))
-        ) {
-          await orderServiceInstance.clearBids({ bidId: data.id });
-        }
+      if (bid.signature) {
+        let signedOrder = JSON.parse(bid.signature);
+        checkOwnerShip = await helper.checkTokenBalance(
+          signedOrder.makerAddress,
+          signedOrder.makerAssetAmount,
+          order.erc20tokens.erc20tokensaddresses[0].address
+        );
+        orderInvalid = await helper.orderValidate(bid.signature);
       }
 
-      return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
-        message: constants.RESPONSE_STATUS.SUCCESS,
-        data: bids,
-      });
+      if (!checkOwnerShip || orderInvalid) {
+        await orderServiceInstance.clearBids({ bidId: bid.id });
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
+          bid_valid: false
+        });
+      } else {
+        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+          message: constants.RESPONSE_STATUS.SUCCESS,
+          bid_valid: true,
+        });
+      }
     } catch (err) {
       console.log(err);
       return res

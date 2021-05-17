@@ -1,0 +1,51 @@
+{
+  "version": "0.3.14-fixed",
+  "steps": [
+    {
+      "tag": "CreateField",
+      "model": "orders",
+      "field": "tokens",
+      "type": "tokens",
+      "arity": "Required"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "tokens"
+        },
+        "directive": "relation"
+      }
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "tokens"
+        },
+        "directive": "relation"
+      },
+      "argument": "fields",
+      "value": "[tokens_id, categories_id]"
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "orders",
+          "field": "tokens"
+        },
+        "directive": "relation"
+      },
+      "argument": "references",
+      "value": "[token_id, categories_id]"
+    }
+  ]
+}

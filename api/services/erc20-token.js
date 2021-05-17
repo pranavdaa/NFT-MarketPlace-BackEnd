@@ -1,5 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = require("../../prisma")
 let { hasNextPage } = require("../utils/request-utils");
 let constants = require("../../config/constants");
 
@@ -10,14 +9,15 @@ let constants = require("../../config/constants");
 
 class ERC20TokenService {
   async addERC20Token(params) {
+    let { name, decimal, symbol, address } = params;
     try {
       let erc20Token = await prisma.erc20tokens.create({
         data: {
-          name: params.name,
-          decimal: parseInt(params.decimal),
-          symbol: params.symbol,
+          name: name,
+          decimal: parseInt(decimal),
+          symbol: symbol,
           erc20tokensaddresses: {
-            create: JSON.parse(params.address),
+            create: JSON.parse(address),
           },
         },
       });
@@ -72,8 +72,9 @@ class ERC20TokenService {
 
   async erc20TokenExists(params) {
     try {
+      let { symbol } = params;
       let erc20Tokens = await prisma.erc20tokens.findOne({
-        where: { symbol: params.symbol },
+        where: { symbol: symbol },
       });
       return erc20Tokens;
     } catch (err) {
@@ -84,8 +85,9 @@ class ERC20TokenService {
 
   async erc20TokenAddressExists(params) {
     try {
+      let { address } = params;
       let erc20Tokens = await prisma.erc20tokensaddresses.findOne({
-        where: { address: params.address },
+        where: { address: address },
       });
       return erc20Tokens;
     } catch (err) {
@@ -96,8 +98,9 @@ class ERC20TokenService {
 
   async getERC20Token(params) {
     try {
+      let { id } = params;
       let erc20Tokens = await prisma.erc20tokens.findOne({
-        where: { id: parseInt(params.id) },
+        where: { id: parseInt(id) },
         include: { erc20tokensaddresses: true },
       });
       return erc20Tokens;
@@ -110,15 +113,16 @@ class ERC20TokenService {
   async updateERC20Token(params) {
     try {
       let current = await this.getERC20Token(params);
-
+      let { name: params_name, decimal: params_decimal, market_price: params_market_price } = params
+      let { decimal: current_decimal, market_price: current_market_price, name: current_name } = current
       let category = await prisma.erc20tokens.update({
         where: { id: parseInt(params.id) },
         data: {
-          name: params.name ? params.name : current.name,
-          decimal: params.decimal ? parseInt(params.decimal) : current.decimal,
-          market_price: params.market_price
-            ? (params.market_price)
-            : current.market_price,
+          name: params_name ? params.name : current_name,
+          decimal: params_decimal ? parseInt(params_decimal) : current_decimal,
+          market_price: params_market_price
+            ? (params_market_price)
+            : current_market_price,
         },
       });
       return category;

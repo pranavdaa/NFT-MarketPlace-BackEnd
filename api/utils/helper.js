@@ -8,11 +8,11 @@ const web3 = new Web3(provider);
 const root_provider = new Web3.providers.HttpProvider(config.ETHEREUM_RPC);
 let { BigNumber, providerUtils } = require("@0x/utils");
 const root_web3 = new Web3(root_provider);
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
-let redisCache = require("../utils/redis-cache");
-const rp = require("request-promise");
+const prisma = require("../../prisma");
 let constants = require("../../config/constants");
+let { ContractWrappers, OrderStatus } = require("@0x/contract-wrappers");
+
+
 let {
   MnemonicWalletSubprovider,
   RPCSubprovider,
@@ -55,13 +55,34 @@ async function notify({ userId, message, order_id, type }) {
 
 var getRate = async function (symbol) {
   try {
-    let response = await fetch(`${constants.PRICE_API}${symbol.toLowerCase()}&vs_currencies=usd`);
+    let response = await fetch(
+      `${constants.PRICE_API}${symbol.toLowerCase()}&vs_currencies=usd`
+    );
     let data = await response.json();
-    return (data[symbol.toLowerCase()].usd).toString();
+    return data[symbol.toLowerCase()].usd.toString();
   } catch (err) {
     console.log(err.message);
   }
 };
+
+async function getOwner(tokenId, contractAddress) {
+  const childContractInstance = new web3.eth.Contract(
+    artifacts.pos_ChildERC721,
+    contractAddress
+  );
+
+  try {
+    let owner = await childContractInstance.methods.ownerOf(tokenId).call();
+
+    if (owner) {
+      return toChecksumAddress(owner);
+    } else {
+      return null;
+    }
+  } catch (err) {
+    return null;
+  }
+}
 
 async function checkOwnerShip(userAddress, tokenId, contractAddress) {
   const childContractInstance = new web3.eth.Contract(
@@ -91,7 +112,7 @@ async function checkTokenBalance(userAddress, amount, contractAddress) {
     .balanceOf(userAddress)
     .call();
 
-  if (balance >= amount) {
+  if (parseInt(balance) >= parseInt(amount)) {
     return true;
   } else {
     return false;
@@ -105,9 +126,6 @@ async function ethereum_balance(
   userId,
   type
 ) {
-  const orderService = require("../services/order");
-  let orderServiceInstance = new orderService();
-
   const rootContractInstance = new root_web3.eth.Contract(
     artifacts.pos_RootERC721,
     rootContractAddress
@@ -126,80 +144,40 @@ async function ethereum_balance(
   tokenId_array = await Promise.all(tokenId_array);
 
   for (data of tokenId_array) {
-    let metadata = await redisCache.getTokenData(
-      data,
-      ethereumAddress,
-      true,
-      null,
-    );
-
     token_array.push({
       contract: rootContractAddress,
       token_id: data,
       owner: owner,
-      active_order: await orderServiceInstance.checkValidOrder({
-        userId,
-        tokenId: data,
-      }),
-      name: metadata.name,
-      description: metadata.description,
-      attributes: metadata.attributes,
-      image: metadata.image,
-      external_link: metadata.external_link,
-      type
+      type,
     });
   }
   return token_array;
 }
 
-async function matic_balance(
-  owner,
-  childContractAddress,
-  userId,
-  type
-) {
-  const orderService = require("../services/order");
-  let orderServiceInstance = new orderService();
-
-  let token_array = [];
-  let tokenId_array = [];
-
-  url =
-    config.BALANCE_URL +
-    owner +
-    "&contract=" +
-    childContractAddress + '&limit=500&offset=0';
-
+async function matic_balance(owner) {
+  url = config.BALANCE_URL + owner;
   let response = await fetch(url);
-  tokenId_array = (await response.json()).data.tokens;
+  let tokenIdArray = (await response.json()).data.tokens;
+  return tokenIdArray;
+}
 
-  for (data of tokenId_array) {
-    let metadata = await redisCache.getTokenData(
-      data.id,
-      childContractAddress,
-      false,
-      data.token_uri,
-    );
-
-    token_array.push({
-      contract: childContractAddress,
-      token_id: data.id,
-      owner: owner,
-      active_order: await orderServiceInstance.checkValidOrder({
-        userId,
-        tokenId: data.id,
-      }),
-      name: metadata.name,
-      description: metadata.description,
-      attributes: metadata.attributes,
-      image: metadata.image,
-      external_link: metadata.external_link,
-      amount: data.amount,
-      type
-    });
+async function fetchMetadata(contract, token_id) {
+  let tokenDetail = null;
+  url = config.TOKEN_DETAILS_URL + contract + "&id=" + token_id;
+  let response = await fetch(url);
+  if (response) {
+    tokenDetail = (await response.json()).data;
   }
+  return tokenDetail;
+}
 
-  return token_array;
+async function fetchMetadataFromTokenURI(url) {
+  let tokenDetail = null;
+  let response = await fetch(url);
+  if (response) {
+    tokenDetail = await response.json();
+  }
+  return tokenDetail;
 }
 
 function getSignatureParameters(signature) {
@@ -292,6 +270,32 @@ const encodeExchangeData = (signedOrder, functionName) => {
   return data;
 };
 
+const orderValidate = async (signature) => {
+  let orderInvalid = false;
+  if (signature) {
+    let signedOrder = JSON.parse(signature);
+    const contractWrappers = new ContractWrappers(providerEngine(), {
+      chainId: parseInt(constants.MATIC_CHAIN_ID),
+    });
+
+    const [
+      { orderStatus },
+      remainingFillableAmount,
+      isValidSignature,
+    ] = await contractWrappers.devUtils
+      .getOrderRelevantState(signedOrder, signedOrder.signature)
+      .callAsync();
+
+    orderInvalid = !(
+      orderStatus === OrderStatus.Fillable &&
+      remainingFillableAmount.isGreaterThan(0) &&
+      isValidSignature
+    );
+
+    return orderInvalid
+  }
+};
+
 module.exports = {
   isValidEthereumAddress,
   notify,
@@ -307,4 +311,8 @@ module.exports = {
   encodeExchangeData,
   checkOwnerShip,
   checkTokenBalance,
+  fetchMetadata,
+  fetchMetadataFromTokenURI,
+  getOwner,
+  orderValidate
 };
