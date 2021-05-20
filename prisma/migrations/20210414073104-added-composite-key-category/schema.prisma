@@ -4,13 +4,13 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = "***"
 }
 
 model bids {
   active    Boolean? @default(true)
   created   DateTime @default(now())
-  id        Int      @id @default(autoincrement())
+  id        Int      @default(autoincrement()) @id
   orders_id Int
   price     String
   signature String
@@ -25,10 +25,9 @@ model categories {
   active              Boolean?              @default(true)
   created             DateTime              @default(now())
   description         String?
-  id                  Int                   @id @default(autoincrement())
+  id                  Int                   @default(autoincrement()) @id
   img_url             String?
   name                String                @unique
-  name_lowercase      String                @default("")
   updated             DateTime              @default(now())
   url                 String?
   type                String?               @default("ERC721")
@@ -38,13 +37,12 @@ model categories {
   categoriesaddresses categoriesaddresses[]
   orders              orders[]
   assetmigrate        assetmigrate[]
-  disabled            Boolean?              @default(false)
-  tokens              tokens[]
+  disabled            Boolean?               @default(false)
 }
 
 model categoriesaddresses {
   active           Boolean?   @default(true)
-  address          String
+  address          String     
   ethereum_address String
   categories_id    Int
   chain_id         String
@@ -52,33 +50,14 @@ model categoriesaddresses {
   id               Int        @default(autoincrement())
   updated          DateTime   @default(now())
   categories       categories @relation(fields: [categories_id], references: [id])
-
   @@id([address, chain_id])
-}
-
-model tokens {
-  token_id       String
-  categories_id  Int
-  image_url      String?
-  description    String?
-  external_url   String?
-  name           String?
-  name_lowercase String?    @default("")
-  attributes     String?
-  created        DateTime   @default(now())
-  id             Int        @default(autoincrement())
-  updated        DateTime   @default(now())
-  categories     categories @relation(fields: [categories_id], references: [id])
-  orders         orders[]
-
-  @@id([token_id, categories_id])
 }
 
 model erc20tokens {
   active               Boolean?               @default(true)
   created              DateTime               @default(now())
   decimal              Int
-  id                   Int                    @id @default(autoincrement())
+  id                   Int                    @default(autoincrement()) @id
   name                 String
   symbol               String                 @unique
   isMetaTx             Boolean                @default(true)
@@ -93,7 +72,7 @@ model erc20tokensaddresses {
   address     String      @unique
   chain_id    String
   created     DateTime    @default(now())
-  id          Int         @id @default(autoincrement())
+  id          Int         @default(autoincrement()) @id
   token_id    Int
   updated     DateTime    @default(now())
   erc20tokens erc20tokens @relation(fields: [token_id], references: [id])
@@ -101,7 +80,7 @@ model erc20tokensaddresses {
 
 model favourites {
   created  DateTime @default(now())
-  id       Int      @id @default(autoincrement())
+  id       Int      @default(autoincrement()) @id
   order_id Int
   updated  DateTime @default(now())
   users_id Int
@@ -110,48 +89,48 @@ model favourites {
 }
 
 model orders {
-  active             Boolean?        @default(true)
-  chain_id           String
-  categories_id      Int
-  created            DateTime        @default(now())
-  erc20tokens_id     Int
-  expiry_date        DateTime?
-  id                 Int             @id @default(autoincrement())
-  maker_address      Int?
-  min_price          String
-  price              String
-  price_per_unit     String?
-  min_price_per_unit String?
-  quantity           String?
-  token_type         String?         @default("ERC721")
-  usd_price          Float?
-  signature          String?
-  status             Int?            @default(0)
-  taker_address      Int?
-  taker_amount       String?
-  maker_amount       String?
-  tokens_id          String
-  txhash             String?
-  type               String
-  buyer              Int?
-  seller             Int?
-  updated            DateTime        @default(now())
-  views              Int?            @default(0)
-  categories         categories      @relation(fields: [categories_id], references: [id])
-  tokens             tokens          @relation(fields: [tokens_id, categories_id], references: [token_id, categories_id])
-  erc20tokens        erc20tokens     @relation(fields: [erc20tokens_id], references: [id])
-  buyer_users        users?          @relation("buyer_orders", fields: [buyer], references: [id])
-  seller_users       users?          @relation("seller_orders", fields: [seller], references: [id])
-  bids               bids[]
-  notifications      notifications[]
-  favourites         favourites[]
+  active         Boolean?        @default(true)
+  chain_id       String
+  categories_id  Int
+  created        DateTime        @default(now())
+  erc20tokens_id Int
+  expiry_date    DateTime?
+  id             Int             @default(autoincrement()) @id
+  maker_address  Int?
+  min_price      String
+  price          String
+  price_per_unit String? 
+  min_price_per_unit String?        
+  quantity       String?         
+  token_type     String?         @default("ERC721")
+  usd_price      Float?
+  signature      String?
+  status         Int?            @default(0)
+  taker_address  Int?
+  taker_amount   String?
+  maker_amount   String?
+  tokens_id      String
+  txhash         String?
+  name           String?         @default("")
+  type           String
+  buyer          Int?
+  seller         Int?
+  updated        DateTime        @default(now())
+  views          Int?            @default(0)
+  categories     categories      @relation(fields: [categories_id], references: [id])
+  erc20tokens    erc20tokens     @relation(fields: [erc20tokens_id], references: [id])
+  buyer_users    users?          @relation("buyer_orders", fields: [buyer], references: [id])
+  seller_users   users?          @relation("seller_orders", fields: [seller], references: [id])
+  bids           bids[]
+  notifications  notifications[]
+  favourites     favourites[]
 }
 
 model users {
   active        Boolean?        @default(true)
   address       String          @unique
   created       DateTime        @default(now())
-  id            Int             @id @default(autoincrement())
+  id            Int             @default(autoincrement()) @id
   updated       DateTime        @default(now())
   bids          bids[]
   favourites    favourites[]
@@ -166,7 +145,7 @@ model admins {
   username String   @unique
   password String
   created  DateTime @default(now())
-  id       Int      @id @default(autoincrement())
+  id       Int      @default(autoincrement()) @id
   updated  DateTime @default(now())
 }
 
@@ -174,7 +153,7 @@ model notifications {
   read     Boolean  @default(false)
   active   Boolean  @default(true)
   created  DateTime @default(now())
-  id       Int      @id @default(autoincrement())
+  id       Int      @default(autoincrement()) @id
   message  String
   type     String   @default("ORDER")
   updated  DateTime @default(now())
@@ -186,7 +165,7 @@ model notifications {
 
 model assetmigrate {
   created       DateTime   @default(now())
-  id            Int        @id @default(autoincrement())
+  id            Int        @default(autoincrement()) @id
   updated       DateTime   @default(now())
   type          String
   txhash        String     @unique

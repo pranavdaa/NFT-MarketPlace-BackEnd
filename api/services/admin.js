@@ -1,5 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = require("../../prisma")
 let constants = require("../../config/constants");
 
 /**
@@ -10,10 +9,11 @@ let constants = require("../../config/constants");
 class AdminService {
   async createAdmin(params) {
     try {
+      let { username, password } = params;
       let admin = await prisma.admins.create({
         data: {
-          username: params.username,
-          password: params.password,
+          username: username,
+          password: password,
         },
       });
       return admin;
@@ -25,9 +25,10 @@ class AdminService {
 
   async getAdmin(params) {
     try {
+      let { username } = params;
       let admin = await prisma.admins.findOne({
         where: {
-          username: params.username,
+          username: username,
         },
       });
       return admin;

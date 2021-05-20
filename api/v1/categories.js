@@ -51,6 +51,7 @@ router.post(
           !validate.isValidEthereumAddress(data.address) ||
           (await categoryServiceInstance.categoryAddressExists({
             address: data.address,
+            chain_id: data.chain_id,
           }))
         ) {
           return res
@@ -104,6 +105,10 @@ router.get("/", async (req, res) => {
 
       categoriesArray.map((categoryDetail) => {
         return (categoryDetail.orders = categoryDetail.orders.length);
+      });
+
+      categoriesArray.sort((a, b) => {
+        return b.orders - a.orders;
       });
 
       return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
@@ -199,6 +204,7 @@ router.put(
             !validate.isValidEthereumAddress(data.address) ||
             (await categoryServiceInstance.categoryAddressExists({
               address: data.address,
+              chain_id: data.chain_id,
             }))
           ) {
             return res

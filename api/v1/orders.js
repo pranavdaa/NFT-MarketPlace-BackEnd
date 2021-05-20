@@ -7,11 +7,15 @@ const erc20TokenService = require("../services/erc20-token");
 let erc20TokenServiceInstance = new erc20TokenService();
 const categoryService = require("../services/category");
 let categoryServiceInstance = new categoryService();
+const TokenService = require("../services/tokens");
+const tokenServiceInstance = new TokenService();
 const verifyToken = require("../middlewares/verify-token");
 let requestUtil = require("../utils/request-utils");
 let helper = require("../utils/helper");
-let redisCache = require("../utils/redis-cache");
 let constants = require("../../config/constants");
+let config = require("../../config/config");
+let { BigNumber } = require("@0x/utils");
+let { ContractWrappers, OrderStatus } = require("@0x/contract-wrappers");
 
 /**
  * Order routes
@@ -109,9 +113,10 @@ router.post(
       let validOrder = await orderServiceInstance.checkValidOrder({
         userId: req.userId,
         tokenId,
+        categoryId: category.id,
       });
 
-      if (validOrder) {
+      if (validOrder.active_order) {
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.MESSAGES.INPUT_VALIDATION_ERROR,
         });
@@ -269,31 +274,25 @@ router.get(
       let offset = requestUtil.getOffset(req.query);
       let orderBy = requestUtil.getSortBy(req.query, "+id");
 
-      let { categoryArray } = req.query;
+      let { categoryArray, searchString } = req.query;
+
+      if (!searchString) {
+        searchString = "";
+      }
 
       let orders = await orderServiceInstance.getOrders({
         categoryArray,
         limit,
         offset,
         orderBy,
+        searchString: searchString.toLowerCase(),
       });
 
-      let ordersList = [];
-
       if (orders) {
-        for (order of orders.order) {
-          let metadata = await redisCache.getTokenData(
-            order.tokens_id,
-            order.categories.categoriesaddresses[0].address,
-            order.categories.isOpenseaCompatible,
-            order.categories.tokenURI + order.tokens_id
-          );
-          ordersList.push({ ...order, ...metadata });
-        }
         return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
           message: constants.RESPONSE_STATUS.SUCCESS,
           data: {
-            order: ordersList,
+            order: orders.order,
             limit: orders.limit,
             offset: orders.offset,
             has_next_page: orders.has_next_page,
@@ -331,17 +330,82 @@ router.get(
           order.categories.categoriesaddresses[0].address
         );
 
-        if(!checkOwnerShip){
-          return res
-          .status(constants.RESPONSE_STATUS_CODES.ORDER_EXPIRED)
-          .json({ message: constants.RESPONSE_STATUS.ORDER_EXPIRED });
+        let orderInvalid = false;
+
+        if (order.signature) {
+          let signedOrder = JSON.parse(order.signature);
+          const contractWrappers = new ContractWrappers(
+            helper.providerEngine(),
+            {
+              chainId: parseInt(constants.MATIC_CHAIN_ID),
+            }
+          );
+
+          const [
+            { orderStatus, orderHash },
+            remainingFillableAmount,
+            isValidSignature,
+          ] = await contractWrappers.devUtils
+            .getOrderRelevantState(signedOrder, signedOrder.signature)
+            .callAsync();
+
+          orderInvalid = !(
+            orderStatus === OrderStatus.Fillable &&
+            remainingFillableAmount.isGreaterThan(0) &&
+            isValidSignature
+          );
         }
-        let metadata = await redisCache.getTokenData(
-          order.tokens_id,
-          order.categories.categoriesaddresses[0].address,
-          order.categories.isOpenseaCompatible,
-          order.categories.tokenURI + order.tokens_id
-        );
+
+        let token = await tokenServiceInstance.getToken({
+          token_id: order.tokens_id,
+          category_id: order.categories.id,
+        });
+
+        let metadata;
+        if (order.categories.tokenURI) {
+          metadata = await helper.fetchMetadataFromTokenURI(
+            order.categories.tokenURI + order.tokens_id
+          );
+        } else {
+          let tokenDetails = await helper.fetchMetadata(
+            order.categories.categoriesaddresses[0].address,
+            order.tokens_id
+          );
+
+          if (tokenDetails) {
+            if (!tokenDetails.metadata) {
+              if (tokenDetails.token_uri) {
+                metadata = await helper.fetchMetadataFromTokenURI(
+                  tokenDetails.token_uri
+                );
+              }
+            } else {
+              metadata = JSON.parse(tokenDetails.metadata);
+            }
+          }
+        }
+
+        if (!token) {
+          token = await tokenServiceInstance.createToken({
+            token_id: order.tokens_id,
+            category_id: order.categories.id,
+            name: metadata ? metadata.name : "",
+            description: metadata ? metadata.description : "",
+            image_url: metadata ? metadata.image : "",
+            external_url: metadata ? metadata.external_url : "",
+            attributes: metadata ? JSON.stringify(metadata.attributes) : "",
+          });
+        } else {
+          token = await tokenServiceInstance.updateToken({
+            token_id: order.tokens_id,
+            category_id: order.categories.id,
+            name: metadata ? metadata.name : "",
+            description: metadata ? metadata.description : "",
+            image_url: metadata ? metadata.image : "",
+            external_url: metadata ? metadata.external_url : "",
+            attributes: metadata ? JSON.stringify(metadata.attributes) : "",
+          });
+        }
 
         let limit = requestUtil.getLimit(req.query);
         let offset = requestUtil.getOffset(req.query);
@@ -365,11 +429,30 @@ router.get(
           }
         }
 
-        let orderData = { ...order, ...metadata };
-        return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
-          message: constants.RESPONSE_STATUS.SUCCESS,
-          data: orderData,
-        });
+        const formattedMetadata = {
+          name: metadata ? metadata.name : "",
+          description: metadata ? metadata.description : "",
+          image_url: metadata ? metadata.image : "",
+          external_url: metadata ? metadata.external_url : "",
+          attributes: metadata ? metadata.attributes : "",
+        };
+        let orderData = { ...order, ...{ tokens: formattedMetadata } };
+        if (
+          (!checkOwnerShip && order.token_type !== "ERC1155") ||
+          orderInvalid
+        ) {
+          return res
+            .status(constants.RESPONSE_STATUS_CODES.ORDER_EXPIRED)
+            .json({
+              message: constants.RESPONSE_STATUS.ORDER_EXPIRED,
+              data: orderData,
+            });
+        } else {
+          return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
+            message: constants.RESPONSE_STATUS.SUCCESS,
+            data: orderData,
+          });
+        }
       } else {
         return res
           .status(constants.RESPONSE_STATUS_CODES.NOT_FOUND)
@@ -637,6 +720,64 @@ router.patch(
     }
   }
 );
+
+/**
+ *  swap token
+ */
+
+router.post("/swap-token", async (req, res) => {
+  try {
+    let signedOrder = req.body.signedOrder;
+
+    const contractWrappers = new ContractWrappers(helper.providerEngine(), {
+      chainId: parseInt(constants.MATIC_CHAIN_ID),
+    });
+
+    const makerAssetData = await contractWrappers.devUtils
+      .encodeERC20AssetData(config.WETH_ADDRESS)
+      .callAsync();
+
+    if (
+      !new BigNumber(signedOrder.takerAssetAmount).eq(
+        new BigNumber(signedOrder.makerAssetAmount)
+      )
+    ) {
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+        .json({ message: constants.RESPONSE_STATUS.FAILURE });
+    }
+
+    if (
+      !(
+        makerAssetData.toLowerCase() ===
+        signedOrder.makerAssetData.toLowerCase()
+      )
+    ) {
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+        .json({ message: constants.RESPONSE_STATUS.FAILURE });
+    }
+
+    let tx = await orderServiceInstance.swapToken({
+      signedOrder,
+    });
+
+    if (tx) {
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.OK)
+        .json({ message: constants.RESPONSE_STATUS.SUCCESS, data: tx });
+    } else {
+      return res
+        .status(constants.RESPONSE_STATUS_CODES.BAD_REQUEST)
+        .json({ message: constants.RESPONSE_STATUS.FAILURE });
+    }
+  } catch (err) {
+    console.log(err);
+    return res
+      .status(constants.RESPONSE_STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ message: constants.MESSAGES.INTERNAL_SERVER_ERROR });
+  }
+});
 
 /**
  *  cancel bid
@@ -972,13 +1113,36 @@ router.post(
         contractAddress
       );
 
-      if (!valid) {
+      let orderInvalid = false;
+
+      if (order.signature) {
+        let signedOrder = JSON.parse(order.signature);
+        const contractWrappers = new ContractWrappers(helper.providerEngine(), {
+          chainId: parseInt(constants.MATIC_CHAIN_ID),
+        });
+
+        const [
+          { orderStatus, orderHash },
+          remainingFillableAmount,
+          isValidSignature,
+        ] = await contractWrappers.devUtils
+          .getOrderRelevantState(signedOrder, signedOrder.signature)
+          .callAsync();
+
+        orderInvalid = !(
+          orderStatus === OrderStatus.Fillable &&
+          remainingFillableAmount.isGreaterThan(0) &&
+          isValidSignature
+        );
+      }
+
+      if (!valid || orderInvalid) {
         await orderServiceInstance.expireOrder({ orderId });
       }
 
       return res.status(constants.RESPONSE_STATUS_CODES.OK).json({
         message: constants.RESPONSE_STATUS.SUCCESS,
-        data: valid,
+        data: order,
       });
     } catch (err) {
       console.log(err);

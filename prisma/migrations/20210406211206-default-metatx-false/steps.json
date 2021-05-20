@@ -1,0 +1,33 @@
+{
+  "version": "0.3.14-fixed",
+  "steps": [
+    {
+      "tag": "UpdateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "categories",
+          "field": "isOpenseaCompatible"
+        },
+        "directive": "default"
+      },
+      "argument": "",
+      "newValue": "false"
+    },
+    {
+      "tag": "UpdateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "categories",
+          "field": "isMetaTx"
+        },
+        "directive": "default"
+      },
+      "argument": "",
+      "newValue": "false"
+    }
+  ]
+}
